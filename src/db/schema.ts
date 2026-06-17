@@ -1,7 +1,7 @@
 import type { DBSchema } from 'idb';
 
 export const DB_NAME = 'shoop';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 export interface Store {
   id: string;
@@ -34,9 +34,15 @@ export interface DefaultListEntry {
   notes: string;
 }
 
-export interface WeeklyListEntry {
+export interface ShoppingList {
   id: string;
-  week_start: string;
+  name: string;
+  created_at: string;
+}
+
+export interface ListItem {
+  id: string;
+  list_id: string;
   item_id: string;
   quantity: number;
   checked: boolean;
@@ -48,5 +54,6 @@ export interface ShoopDB extends DBSchema {
   aisles: { key: string; value: Aisle; indexes: { store_id: string } };
   items: { key: string; value: Item; indexes: { aisle_id: string; store_id: string } };
   default_list: { key: string; value: DefaultListEntry; indexes: Record<never, never> };
-  weekly_list: { key: string; value: WeeklyListEntry; indexes: Record<never, never> };
+  shopping_lists: { key: string; value: ShoppingList; indexes: Record<never, never> };
+  list_items: { key: string; value: ListItem; indexes: { list_id: string } };
 }

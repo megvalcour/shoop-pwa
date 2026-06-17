@@ -16,7 +16,16 @@ function upgrade(db: IDBPDatabase<ShoopDB>, oldVersion: number): void {
     items.createIndex('store_id', 'store_id');
 
     db.createObjectStore('default_list', { keyPath: 'id' });
-    db.createObjectStore('weekly_list', { keyPath: 'id' });
+    // weekly_list was removed from ShoopDB in v2; cast required because idb's typed
+    // wrapper rejects store names not present in the current schema type.
+    (db as unknown as IDBDatabase).createObjectStore('weekly_list', { keyPath: 'id' });
+  }
+
+  if (oldVersion < 2) {
+    (db as unknown as IDBDatabase).deleteObjectStore('weekly_list');
+    db.createObjectStore('shopping_lists', { keyPath: 'id' });
+    const listItems = db.createObjectStore('list_items', { keyPath: 'id' });
+    listItems.createIndex('list_id', 'list_id');
   }
 }
 

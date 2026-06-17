@@ -58,7 +58,7 @@ When writing a plan (Step 1 of Workflow Requirements), cite any ADRs that constr
 3. **Atomic Design:** Follow the folder hierarchy in `src/components/` strictly:
    - **Atoms:** Smallest units (Button, Checkbox, Input, Badge, Icon). No business logic.
    - **Molecules:** Groups of atoms (GroceryItem, AisleGroup, SearchBar). No direct store access.
-   - **Organisms:** Complex UI blocks (DefaultListEditor, WeeklyListBuilder, ShoppingView, AddItemForm). Can interact with stores and hooks.
+   - **Organisms:** Complex UI blocks (DefaultListEditor, ShoppingListBuilder, ShoppingView, AddItemForm). Can interact with stores and hooks.
    - **Templates:** Page layouts/wireframes (AppShell).
 4. **State Management:** Do not create a single monolithic store. Zustand is for ephemeral/session UI state only. All persistent data goes through TanStack Query hooks backed by IndexedDB.
 
@@ -69,7 +69,7 @@ src/
   components/
     atoms/                    # Button, Checkbox, Input, Badge, Icon
     molecules/                # GroceryItem, AisleGroup, SearchBar
-    organisms/                # DefaultListEditor, WeeklyListBuilder, ShoppingView, AddItemForm
+    organisms/                # DefaultListEditor, ShoppingListBuilder, ShoppingView, AddItemForm
     templates/                # AppShell
   routes/                     # React Router v7 route components
   db/                         # IndexedDB initialization, migration logic, and schemas
@@ -97,11 +97,12 @@ e2e/                          # Playwright end-to-end tests
 ## Data Model (IndexedDB Object Stores)
 
 ```
-stores        — id (string, PK), name, address, slug
-aisles        — id (string, PK), store_id (Index), number, label, sort_order
-items         — id (string, PK), name, canonical_name, aisle_id (Index), store_id (Index)
-default_list  — id (string, PK), item_id, quantity, unit, notes
-weekly_list   — id (string, PK), week_start, item_id, quantity, checked, added_from_default
+stores         — id (string, PK), name, address, slug
+aisles         — id (string, PK), store_id (Index), number, label, sort_order
+items          — id (string, PK), name, canonical_name, aisle_id (Index), store_id (Index)
+default_list   — id (string, PK), item_id, quantity, unit, notes
+shopping_lists — id (string, PK), name, created_at
+list_items     — id (string, PK), list_id (Index), item_id, quantity, checked, added_from_default
 ```
 
 Canonical TypeScript interfaces for these shapes live in `src/db/schema.ts`.

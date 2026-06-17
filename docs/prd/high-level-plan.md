@@ -69,8 +69,11 @@ items
 default_list
   id (string, PK), item_id (string), quantity (number), unit (string), notes (string)
 
-weekly_list
-  id (string, PK), week_start (string/date), item_id (string), quantity (number),
+shopping_lists
+  id (string, PK), name (string), created_at (string)
+
+list_items
+  id (string, PK), list_id (string, Index), item_id (string), quantity (number),
   checked (boolean), added_from_default (boolean)
 
 ```
@@ -84,7 +87,7 @@ src/
   components/                 # Atomic Design implementation
     atoms/                    # Smallest units: Button, Checkbox, Input, Badge, Icon
     molecules/                # Groups of atoms: GroceryItem, AisleGroup, SearchBar
-    organisms/                # Complex UI blocks: DefaultListEditor, WeeklyListBuilder
+    organisms/                # Complex UI blocks: DefaultListEditor, ShoppingListBuilder
     templates/                # Page layouts/wireframes: AppShell
   routes/                     # React Router v7 route components
   db/                         # IndexedDB initialization, migration logic, and schemas
@@ -154,10 +157,11 @@ The MVP delivers a complete local-first application scoped to one initial locati
 - Add items via descriptive text input. Semantic matching parses data in-browser via `@huggingface/transformers` to intelligently flag the correct grocery aisle automatically.
 - Adjust values, quantities, and operational item context tags locally.
 
-**Weekly List Builder**
+**Shopping Lists**
 
-- Single-tap action duplication mapping the structural `default_list` store straight into active `weekly_list` records.
-- Add instant one-off items unique to the current calendar shopping trip.
+- Create on-demand shopping lists with a "New List" FAB; each list is independent of a calendar week.
+- Single-tap action duplicating the structural `default_list` store straight into a new `list_items` record set.
+- Add instant one-off items to any active shopping list.
 
 **Shopping View**
 

@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Bottom nav navigation', () => {
-  test('/ — Weekly tab is active, others are not', async ({ page }) => {
+  test('/ — Shop tab is active, others are not', async ({ page }) => {
     await page.goto('/');
-    const weeklyLink = page.getByRole('link', { name: /weekly/i });
+    const shopLink = page.getByRole('link', { name: /shop/i });
     const defaultLink = page.getByRole('link', { name: /default list/i });
     const settingsLink = page.getByRole('link', { name: /settings/i });
 
-    await expect(weeklyLink).toHaveClass(/text-accent/);
+    await expect(shopLink).toHaveClass(/text-accent/);
     await expect(defaultLink).not.toHaveClass(/text-accent/);
     await expect(settingsLink).not.toHaveClass(/text-accent/);
   });
@@ -17,7 +17,7 @@ test.describe('Bottom nav navigation', () => {
     await page.getByRole('link', { name: /default list/i }).click();
     await expect(page).toHaveURL('/default-list');
     await expect(page.getByRole('link', { name: /default list/i })).toHaveClass(/text-accent/);
-    await expect(page.getByRole('link', { name: /weekly/i })).not.toHaveClass(/text-accent/);
+    await expect(page.getByRole('link', { name: /shop/i })).not.toHaveClass(/text-accent/);
   });
 
   test('clicking Settings tab navigates to /settings and activates that tab', async ({ page }) => {
@@ -25,19 +25,19 @@ test.describe('Bottom nav navigation', () => {
     await page.getByRole('link', { name: /settings/i }).click();
     await expect(page).toHaveURL('/settings');
     await expect(page.getByRole('link', { name: /settings/i })).toHaveClass(/text-accent/);
-    await expect(page.getByRole('link', { name: /weekly/i })).not.toHaveClass(/text-accent/);
+    await expect(page.getByRole('link', { name: /shop/i })).not.toHaveClass(/text-accent/);
   });
 
-  test('clicking Weekly tab from Settings returns to / and activates Weekly', async ({ page }) => {
+  test('clicking Shop tab from Settings returns to / and activates Shop', async ({ page }) => {
     await page.goto('/settings');
-    await page.getByRole('link', { name: /weekly/i }).click();
+    await page.getByRole('link', { name: /shop/i }).click();
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('link', { name: /weekly/i })).toHaveClass(/text-accent/);
+    await expect(page.getByRole('link', { name: /shop/i })).toHaveClass(/text-accent/);
   });
 
   test('direct navigation to /settings highlights Settings tab without clicking', async ({ page }) => {
     await page.goto('/settings');
     await expect(page.getByRole('link', { name: /settings/i })).toHaveClass(/text-accent/);
-    await expect(page.getByRole('link', { name: /weekly/i })).not.toHaveClass(/text-accent/);
+    await expect(page.getByRole('link', { name: /shop/i })).not.toHaveClass(/text-accent/);
   });
 });

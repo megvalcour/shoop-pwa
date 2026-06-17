@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartShopping, faClipboardList, faGear } from '@fortawesome/free-solid-svg-icons';
 
 const NAV_ITEMS = [
-  { to: '/', end: true, icon: faCartShopping, label: 'Weekly' },
+  { to: '/', end: true, icon: faCartShopping, label: 'Shop' },
   { to: '/default-list', end: false, icon: faClipboardList, label: 'Default List' },
   { to: '/settings', end: false, icon: faGear, label: 'Settings' },
 ] as const;
