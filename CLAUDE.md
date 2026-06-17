@@ -34,7 +34,7 @@ When a task completes:
 
 ## Architecture Decision Records
 
-ADRs live in `docs/adr/`. Before designing any solution that touches:
+ADRs live in `docs/adrs/`. Before designing any solution that touches:
 
 - State management strategy
 - Data persistence or caching
@@ -50,17 +50,6 @@ ADRs live in `docs/adr/`. Before designing any solution that touches:
 2. Change the `Status` field of the old ADR to `Superseded by ADR-NNN` (the only permitted edit to an accepted ADR).
 
 When writing a plan (Step 1 of Workflow Requirements), cite any ADRs that constrain the design.
-
-### ADR Summaries
-
-| #    | Decision                             | Rationale                                                                                                      |
-| ---- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| 0001 | Single-Repo Vite Architecture        | Eliminates monorepo orchestration complexity; app logic, assets, and config sit in a unified root.             |
-| 0002 | IndexedDB for Core Storage           | Zero infrastructure costs, true offline functionality, instant on-device reads/writes.                         |
-| 0003 | Migrate to @huggingface/transformers | Official v3 continuation of Transformers.js; execution via client WASM threads.                                |
-| 0004 | Zustand + TanStack Query persistent  | Zustand owns non-persistent UI toggles; TanStack Query interacts with IndexedDB via async storage abstraction. |
-| 0005 | Atomic Design                        | Enforces clean UI reusability boundaries early.                                                                |
-| 0006 | React Router v7 in library mode      | Eliminates SSR complexity while providing optimized client-side routing.                                       |
 
 ## Workflow Requirements
 
@@ -100,7 +89,7 @@ public/
   manifest.json
   service-worker.js
 docs/
-  adr/                        # Architecture Decision Records
+  adrs/                       # Architecture Decision Records
   prd/                        # Product Requirements Documents
 e2e/                          # Playwright end-to-end tests
 ```
