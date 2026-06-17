@@ -1,6 +1,6 @@
 ## Current Status
 
-`feat(db): bootstrap IndexedDB foundation with schema, migrations, Oxford seed data, and Vitest setup`
+`feat(shell): scaffold app shell with bottom nav, route stubs, design tokens, and Playwright E2E`
 
 ## Active Task
 
@@ -10,7 +10,6 @@ None.
 
 ### Weekly List
 
-- Scaffold app shell with bottom nav and route stubs (Weekly, Default List, Settings); includes Tailwind scaffold
 - Create weekly list screen showing empty state with a "New List" prompt
 - Implement `useWeeklyList` hook (create, read, delete a list by week_start)
 - Build `AddItemForm` organism — text input + submit, writes item to `items` store and adds to `weekly_list`

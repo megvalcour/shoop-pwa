@@ -1,1 +1,36 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-primary: #1B3A2D;
+  --color-primary-foreground: #A8C5B8;
+  --color-accent: #D4783A;
+  --color-destructive: #8B1C3A;
+  --color-surface: #F9F3E8;
+  --color-text: #1C1814;
+  --color-text-muted: #7A6A5A;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/playfair-display-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/dm-sans.woff2') format('woff2');
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}

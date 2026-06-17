@@ -10,18 +10,27 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "validate": "npm run typecheck && npm run lint && npm run test",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.2.0",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
+    "@fortawesome/react-fontawesome": "^3.3.1",
     "@tailwindcss/vite": "^4.3.1",
     "idb": "^8.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router": "^7.18.0",
     "tailwindcss": "^4.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
+    "@playwright/test": "^1.61.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.6.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

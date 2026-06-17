@@ -17,7 +17,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      injectRegister: false,
+      injectRegister: 'auto',
 
       pwaAssets: {
         disabled: false,
@@ -25,10 +25,10 @@ export default defineConfig({
       },
 
       manifest: {
-        name: 'shoop-pwa',
-        short_name: 'shoop-pwa',
+        name: 'Shoop',
+        short_name: 'Shoop',
         description: 'Grocery store shopping application',
-        theme_color: '#eba900',
+        theme_color: '#1B3A2D',
       },
 
       injectManifest: {
@@ -49,7 +49,9 @@ export default defineConfig({
     },
   },
   test: {
+    globals: true,
     environment: 'happy-dom',
     include: ['src/**/*.test.ts?(x)'],
+    setupFiles: ['./src/test-setup.ts'],
   },
 });
