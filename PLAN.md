@@ -8,68 +8,35 @@ None.
 
 ## Backlog
 
-Each slice is a task.
+### Weekly List
 
-**Slice 2 — TanStack Query + IDB Adapter**
+- Scaffold app shell with bottom nav and route stubs (Weekly, Default List, Settings); includes Tailwind scaffold
+- Create weekly list screen showing empty state with a "New List" prompt
+- Implement `useWeeklyList` hook (create, read, delete a list by week_start)
+- Build `AddItemForm` organism — text input + submit, writes item to `items` store and adds to `weekly_list`
+- Render `WeeklyListBuilder` organism — scrollable list of added items with inline delete
+- Wire item check-off: toggle `checked` on a `weekly_list` row with optimistic update
+- Delete weekly list (confirmation prompt, purges all rows for that week)
 
-- Wire `persistQueryClient` to IndexedDB as the storage backend
-- Build custom hooks: `useStores`, `useAisles`, `useItems`, `useDefaultList`, `useWeeklyList`
-- Establish query key conventions and invalidation patterns
-- Unit test: each hook returns correct shape, mutations invalidate correctly
+### Smart Aisle Location (Market Basket 62)
 
-**Slice 3 — Zustand UI Store**
+- Build `useAisleMatcher` hook that loads `Xenova/all-MiniLM-L6-v2` via WASM and exposes a `classify(itemName)` → `aisleId` function
+- Pre-compute and cache aisle embeddings from `oxford-62.json` on first model load
+- Integrate matcher into `AddItemForm`: resolve aisle on submit, store `aisle_id` on the `items` row
+- Group `WeeklyListBuilder` items by aisle with `AisleGroup` molecule, sorted by `sort_order`
+- Show aisle badge on each `GroceryItem` molecule; allow manual aisle override
 
-- Create `useUIStore` slice for active tab, expanded aisles, search state
-- Unit test: slice actions update state correctly
+### Default List
 
-**Slice 4 — Atomic Design Shell**
+- Create default list screen with empty state
+- Implement `useDefaultList` hook (add, remove, reorder items)
+- Build `DefaultListEditor` organism — editable list of default items with drag-to-reorder
+- "Copy to weekly list" button — bulk-inserts default items into the current week's `weekly_list`
+- Skip items already present in the weekly list when pre-populating (de-dupe by `canonical_name`)
 
-- Atoms: `Button`, `Checkbox`, `Input`, `Badge`, `Icon`
-- Molecules: `GroceryItem`, `AisleGroup`, `SearchBar`
-- Template: `AppShell` with bottom nav and route outlet
-- Configure path aliases (`@/components/...`)
-- Unit test: atoms render and respond to props; molecules compose correctly
+### Store Switcher
 
-**Slice 5 — React Router v7 Routes**
-
-- Define routes: `/default-list`, `/weekly`, `/shop`, `/settings`
-- Nest under `AppShell`, lazy-load route components
-- Unit test: routes resolve to correct components
-
-**Slice 6 — Default List View**
-
-- Organism: `DefaultListEditor` — items grouped by aisle, sorted by `sort_order`
-- Add/edit/delete mutations via hooks, empty states, loading skeletons
-- Unit test: grouping logic, mutation calls, empty/loading state rendering
-
-**Slice 7 — Semantic Classifier (parallel-able)**
-
-- Load `Xenova/all-MiniLM-L6-v2` in a Web Worker via `classifier.ts`
-- Cosine-similarity match against aisle embeddings, return top suggestion + confidence
-- Unit test: known items resolve to correct aisles, low-confidence inputs handled gracefully
-
-**Slice 8 — Add Item Flow**
-
-- `SearchBar` triggers classifier, displays aisle suggestion with accept/override UI
-- Commit new item to IndexedDB via mutation hook
-- Unit test: classifier result populates form, override saves correctly, duplicate handling
-
-**Slice 9 — Weekly List Builder**
-
-- Bulk-copy `default_list` → `weekly_list` scoped to current `week_start`
-- One-off item add (reuses Slice 8 flow, weekly-scoped)
-- Organism: `WeeklyListBuilder` — grouped with per-aisle item counts
-- Unit test: bulk copy idempotent on re-run, one-offs don't bleed into default list
-
-**Slice 10 — Shopping View**
-
-- Read `weekly_list` sorted by aisle `sort_order`, fully offline
-- Tap-to-check: optimistic UI update + background IndexedDB write
-- Checked items muted, collapsible per aisle
-- Unit test: check state persists after remount, optimistic rollback on write failure
-
-**Slice 11 — PWA Hardening**
-
-- `vite-plugin-pwa` manifest, service worker pre-caches assets + WASM weights
-- `beforeinstallprompt` capture for custom install banner
-- E2E (Playwright): full add → weekly → shop → check-off flow across mobile viewport
+- Create Settings screen with active store selector (reads from `stores` object store)
+- Implement `useStores` hook (list stores, set active store in Zustand UI state)
+- Persist active store choice across sessions (write to a `preferences` key in IndexedDB)
+- Re-scope weekly list and aisle views to the active store's aisles on store change
