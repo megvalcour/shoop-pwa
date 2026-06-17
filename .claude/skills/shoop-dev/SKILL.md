@@ -183,7 +183,7 @@ Using the user's answers and `CLAUDE.md`:
 
 1. Ask the user if they want to proceed with a validation; if no, skip steps 2-4 and continue on step 5 (update frontmatter).
 2. Run `npm run validate` (covers typecheck + lint + Vitest; does **not** run Playwright E2E).
-3. If `e2e_required: true` in frontmatter, run the E2E suite: `npm run db:start` then `npm run test:e2e --workspace web-app`. Fix any failures.
+3. If `e2e_required: true` in frontmatter, run the E2E suite. Fix any failures.
 4. If errors are found, fix them and repeat Step 9 (or Step 7 for Lightweight tasks).
 5. If clean, update frontmatter: `step: 10`, `status: final_checks`. Say: "Final checks passed. Reply 'wrap up' to finalize."
 
