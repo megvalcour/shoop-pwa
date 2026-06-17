@@ -1,0 +1,1503 @@
+{
+  "store": {
+    "id": "176870f4-f444-44cb-8857-1ef123f7211d",
+    "name": "Oxford Market Basket #62",
+    "address": "95 Sutton Avenue, Oxford, MA 01540",
+    "slug": "oxford-62"
+  },
+  "aisles": [
+    {
+      "id": "e56c69f2-fd0e-4e6d-bc4d-2c354406a5ea",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Produce Dept",
+      "label": "Produce",
+      "sort_order": 0
+    },
+    {
+      "id": "fa03217e-3e5e-45c2-849f-0ef6f050a3f0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "1",
+      "label": "Dairy & Eggs",
+      "sort_order": 1
+    },
+    {
+      "id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "2",
+      "label": "Condiments & Canned Meats",
+      "sort_order": 2
+    },
+    {
+      "id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "3",
+      "label": "Cereal & Breakfast",
+      "sort_order": 3
+    },
+    {
+      "id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "4",
+      "label": "Pasta & Sauces",
+      "sort_order": 4
+    },
+    {
+      "id": "790cec1e-84c2-4543-9442-60737387cc9d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "5",
+      "label": "International & Rice",
+      "sort_order": 5
+    },
+    {
+      "id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "6",
+      "label": "Baking & Beverages",
+      "sort_order": 6
+    },
+    {
+      "id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "7",
+      "label": "Canned Vegetables & Juice",
+      "sort_order": 7
+    },
+    {
+      "id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "8",
+      "label": "Soups & Snacks",
+      "sort_order": 8
+    },
+    {
+      "id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "9",
+      "label": "Paper & Health",
+      "sort_order": 9
+    },
+    {
+      "id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "10",
+      "label": "Personal Care",
+      "sort_order": 10
+    },
+    {
+      "id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "11",
+      "label": "Baby & Health",
+      "sort_order": 11
+    },
+    {
+      "id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "12",
+      "label": "Household Supplies",
+      "sort_order": 12
+    },
+    {
+      "id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "13",
+      "label": "Snacks & Spreads",
+      "sort_order": 13
+    },
+    {
+      "id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "14",
+      "label": "Automotive & Pet",
+      "sort_order": 14
+    },
+    {
+      "id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "15",
+      "label": "Cleaning & Laundry",
+      "sort_order": 15
+    },
+    {
+      "id": "cd65e4a6-c7f6-411f-a41a-a48485f22eb8",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "16",
+      "label": "Water & Drinks",
+      "sort_order": 16
+    },
+    {
+      "id": "b757eec0-04ef-4e05-8d8b-6851dfcbb7f6",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "17",
+      "label": "Beverages",
+      "sort_order": 17
+    },
+    {
+      "id": "13247159-b187-4e87-8fd1-da46603c333f",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "18",
+      "label": "Chips & Snacks",
+      "sort_order": 18
+    },
+    {
+      "id": "4f507945-fd7a-4695-883c-a486639ca460",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "19",
+      "label": "Frozen Foods",
+      "sort_order": 19
+    },
+    {
+      "id": "7ebcee6d-b8e3-456d-8655-4e50eda9d077",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "20",
+      "label": "Ice & Freezer",
+      "sort_order": 20
+    },
+    {
+      "id": "3ff28eda-42b1-4cde-bdbb-3d8dd64a65ab",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "21",
+      "label": "Bread & Packaging",
+      "sort_order": 21
+    },
+    {
+      "id": "55dbb55f-b63f-474e-8f40-7517e3894983",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Deli/Fish Dept",
+      "label": "Deli & Fish",
+      "sort_order": 22
+    },
+    {
+      "id": "86e1098a-671f-434e-acd1-8429ce62d3e6",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Meat Dept",
+      "label": "Meat",
+      "sort_order": 23
+    },
+    {
+      "id": "97391d2e-3be0-4bd6-9a7d-019ca47c6bd9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Front Corner",
+      "label": "Front Corner (Bakery)",
+      "sort_order": 24
+    },
+    {
+      "id": "ec25cc59-8fcd-4167-94c1-e23003cb29e0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Cheese Case",
+      "label": "Cheese Case",
+      "sort_order": 25
+    },
+    {
+      "id": "229a3fc8-33f8-4f1c-9d7b-24d08dd33564",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Freezer Wall",
+      "label": "Freezer Wall",
+      "sort_order": 26
+    },
+    {
+      "id": "d8fea710-72fc-4abb-8c9d-db34669382ac",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Freezer",
+      "label": "Freezer",
+      "sort_order": 27
+    },
+    {
+      "id": "7f5d115e-fbfe-4b47-813f-c45bacca5d1e",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Back Main Aisle",
+      "label": "Back Main Aisle",
+      "sort_order": 28
+    },
+    {
+      "id": "b617b0d0-5cc3-4fec-88b7-6207ac4888c4",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Market's Kitchen",
+      "label": "Market's Kitchen",
+      "sort_order": 29
+    },
+    {
+      "id": "e37a3100-f8d1-4a3e-9bd3-ad019fed0874",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d",
+      "number": "Registers",
+      "label": "Registers",
+      "sort_order": 30
+    }
+  ],
+  "items": [
+    {
+      "id": "7f547b35-7272-4997-b447-f2cce7a136df",
+      "name": "Air Freshener",
+      "canonical_name": "air freshener",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "59aa4f35-6abf-41f3-8249-1e818f2c29b0",
+      "name": "Aluminum Foil",
+      "canonical_name": "aluminum foil",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "0058a2ae-0c92-431b-a2a6-5556d8710cb8",
+      "name": "Ammonia",
+      "canonical_name": "ammonia",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c2ce318e-6f2f-4137-a2d6-bd4d8189b2a4",
+      "name": "Applesauce",
+      "canonical_name": "applesauce",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "620de6a4-659d-41e4-b316-a5681e75bc4b",
+      "name": "Automotive",
+      "canonical_name": "automotive",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "75d5ba9f-4199-4cbe-b99f-f3b45e7c5f6a",
+      "name": "Baby Food",
+      "canonical_name": "baby food",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "952d6e07-137a-4603-91f9-db8aee5a3bef",
+      "name": "Baby Powder",
+      "canonical_name": "baby powder",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "2ed65743-6015-4d26-9292-2ad91290a8be",
+      "name": "Bags: Lunch-Sandwich",
+      "canonical_name": "bags: lunch-sandwich",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "0698cdbc-68d8-4ec2-b1aa-b564c38821b6",
+      "name": "Bags: Garbage-Trash",
+      "canonical_name": "bags: garbage-trash",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "73ed44c1-6172-4ff9-bdf3-8ad25d75885b",
+      "name": "Bags: Packaged",
+      "canonical_name": "bags: packaged",
+      "aisle_id": "3ff28eda-42b1-4cde-bdbb-3d8dd64a65ab",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9e0e8557-05f1-4c24-9c61-703da9cf4393",
+      "name": "Bakeware",
+      "canonical_name": "bakeware",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c319e358-2374-4392-b349-075ee4ad68bb",
+      "name": "Baking Needs",
+      "canonical_name": "baking needs",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "3bbc5296-bd4c-4a93-ab09-a59b1f50f382",
+      "name": "Bakery: Fresh",
+      "canonical_name": "bakery: fresh",
+      "aisle_id": "97391d2e-3be0-4bd6-9a7d-019ca47c6bd9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d161da7d-46bc-4679-af67-76c6228f378f",
+      "name": "Barbecue Sauce",
+      "canonical_name": "barbecue sauce",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d0be73e3-1fde-47b0-86e4-cf86bfc66e74",
+      "name": "Bath Tissue",
+      "canonical_name": "bath tissue",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "92dde37c-157d-4afe-a5e3-6c3ab8d9e390",
+      "name": "Batteries",
+      "canonical_name": "batteries",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "6c5913ce-2205-45fa-b6df-eaca49c3a91e",
+      "name": "Beans: Baked",
+      "canonical_name": "beans: baked",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1637dd85-28b1-4c70-83e4-f473303f612f",
+      "name": "Beans: Dry",
+      "canonical_name": "beans: dry",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4318ef2e-ecfe-41c6-a7be-88a369f46cbb",
+      "name": "Bisquick",
+      "canonical_name": "bisquick",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "28f85258-0abd-4d0f-816a-e04609b5fc18",
+      "name": "Bleach",
+      "canonical_name": "bleach",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "a80e912d-4ab0-4c53-9211-417c9db8d002",
+      "name": "Bouillon Cubes",
+      "canonical_name": "bouillon cubes",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "80accbdd-8b0d-47a3-a757-6ce2e1de4266",
+      "name": "Bread",
+      "canonical_name": "bread",
+      "aisle_id": "3ff28eda-42b1-4cde-bdbb-3d8dd64a65ab",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9b6ac907-ce8a-4725-b915-2bbb66cbf5ce",
+      "name": "Bread Crumbs",
+      "canonical_name": "bread crumbs",
+      "aisle_id": "4f507945-fd7a-4695-883c-a486639ca460",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "05c9bc9f-76f6-486b-af36-67549ff0617b",
+      "name": "Brooms",
+      "canonical_name": "brooms",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e4800139-d78f-47d1-8133-667a47f32d45",
+      "name": "Bug Spray",
+      "canonical_name": "bug spray",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "db75b96b-2410-4b9d-b1be-0b2c7f7b10b4",
+      "name": "Butter",
+      "canonical_name": "butter",
+      "aisle_id": "fa03217e-3e5e-45c2-849f-0ef6f050a3f0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4da9d25d-5e6c-490d-ba15-d2ecfed9a619",
+      "name": "Butter Buds",
+      "canonical_name": "butter buds",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "7e61ab14-b87e-408b-b365-15c983ab7bd4",
+      "name": "Cake Mix",
+      "canonical_name": "cake mix",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "3a065e76-7c3a-433b-8761-d4bdfb1bc433",
+      "name": "Candles: Birthday",
+      "canonical_name": "candles: birthday",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e4c8b77a-f529-4434-bf01-fc03396e3b2d",
+      "name": "Candles: Household",
+      "canonical_name": "candles: household",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f9911d0e-bc4f-4cab-887b-8ab375e4acd6",
+      "name": "Candy",
+      "canonical_name": "candy",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "bc9b6250-676e-4309-81e5-3dc77f098366",
+      "name": "Canning Supplies",
+      "canonical_name": "canning supplies",
+      "aisle_id": "7f5d115e-fbfe-4b47-813f-c45bacca5d1e",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "65032490-e7bd-4b34-a734-0b85611f6110",
+      "name": "Cat Food / Cat Litter / Cat Needs",
+      "canonical_name": "cat food / cat litter / cat needs",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "20aa9481-2302-4910-87d0-796fd88bf50e",
+      "name": "Cereal",
+      "canonical_name": "cereal",
+      "aisle_id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "fff2bbd8-7846-4d39-8fef-844079a6bad1",
+      "name": "Charcoal",
+      "canonical_name": "charcoal",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "93216e15-0571-491f-9e69-a7d8847746b9",
+      "name": "Cheese: Grated Parmesan",
+      "canonical_name": "cheese: grated parmesan",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "43238e4e-e7b6-4161-abf0-ab3ccc5435c6",
+      "name": "Cheese: Prepackaged",
+      "canonical_name": "cheese: prepackaged",
+      "aisle_id": "fa03217e-3e5e-45c2-849f-0ef6f050a3f0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "12f3e79e-52b3-4ff8-b793-846f6bbe469d",
+      "name": "Cheese: Specialty",
+      "canonical_name": "cheese: specialty",
+      "aisle_id": "ec25cc59-8fcd-4167-94c1-e23003cb29e0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "16d74210-c3a0-49da-8dbd-af458c20a6a4",
+      "name": "Cherries: Canned",
+      "canonical_name": "cherries: canned",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "0caa49fa-3d74-427e-842d-ca90f9c2765c",
+      "name": "Cherries: Jar",
+      "canonical_name": "cherries: jar",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e0c67210-2ee5-4b11-a1d7-656fb1afded7",
+      "name": "Chili Sauce",
+      "canonical_name": "chili sauce",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f662dd20-7592-4278-9ac0-51f6a3688505",
+      "name": "Chinese Food: Canned",
+      "canonical_name": "chinese food: canned",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "adedf796-5ae9-42c0-a5e0-b5cd1ae621e0",
+      "name": "Chowder: Clam-Corn-Potato",
+      "canonical_name": "chowder: clam-corn-potato",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e58f443c-7a28-455e-b8a0-c6ceb9f3bf87",
+      "name": "Clams: Canned-Minced-Juice",
+      "canonical_name": "clams: canned-minced-juice",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "0c347fbb-2257-42fe-996c-092d91c89537",
+      "name": "Coffee",
+      "canonical_name": "coffee",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e9de6363-c2b2-4a31-a761-761e6d1e445d",
+      "name": "Cold Remedies",
+      "canonical_name": "cold remedies",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "64de0688-16c3-4a41-83fe-3f77ee2e18cf",
+      "name": "Cookies",
+      "canonical_name": "cookies",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "13acbc64-4290-43a9-a06e-d6cf71494a9f",
+      "name": "Cottage Cheese",
+      "canonical_name": "cottage cheese",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "533df9d2-a03d-491e-94d3-560fc2067c56",
+      "name": "Crackers",
+      "canonical_name": "crackers",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "58e50e06-dac3-41c2-96ff-a160366483af",
+      "name": "Cranberry Sauce",
+      "canonical_name": "cranberry sauce",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d0461b61-b818-4abb-a4f8-f433fb936702",
+      "name": "Croutons",
+      "canonical_name": "croutons",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "7320b319-cf4c-47b4-9055-bbdb1e83e6d9",
+      "name": "Deodorant",
+      "canonical_name": "deodorant",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "180d7a4a-5ef3-4cce-9d7d-f3deec4809e0",
+      "name": "Detergent: Dish / Dishwasher",
+      "canonical_name": "detergent: dish / dishwasher",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "07937ff5-8f5e-41c2-8f1f-104494c749bb",
+      "name": "Detergent: Laundry",
+      "canonical_name": "detergent: laundry",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "6b8eec1b-e4dd-4b93-bc64-20041754efe0",
+      "name": "Diapers",
+      "canonical_name": "diapers",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e7caf68d-8425-4b6f-abca-f2966316700e",
+      "name": "Disinfectant Spray",
+      "canonical_name": "disinfectant spray",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d59422b2-1c46-4575-8af8-803d6b068740",
+      "name": "Dog Food / Dog Needs",
+      "canonical_name": "dog food / dog needs",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "7d82d0a9-dfc2-498d-a008-06b47995ca5b",
+      "name": "Drain Cleaner",
+      "canonical_name": "drain cleaner",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "2d49375c-af65-407e-9400-9d1afbf9e2ba",
+      "name": "Dried Fruit: Currants-Dates",
+      "canonical_name": "dried fruit: currants-dates",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "2f8185b7-1034-49a8-9c29-dfa2787c6d27",
+      "name": "Dried Fruit: Prunes-Raisins",
+      "canonical_name": "dried fruit: prunes-raisins",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e1219618-f7ac-432f-918d-b2146b8d91ce",
+      "name": "Dye: Fabric",
+      "canonical_name": "dye: fabric",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "b90e64aa-3fbc-4b03-88e7-bedc409bb9cc",
+      "name": "Eggs",
+      "canonical_name": "eggs",
+      "aisle_id": "fa03217e-3e5e-45c2-849f-0ef6f050a3f0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "7609c365-f3ee-42da-9bfb-43ec672d1cd3",
+      "name": "Electrical Supplies",
+      "canonical_name": "electrical supplies",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c99e310a-7fc6-42be-8ab2-4167f690c384",
+      "name": "Escargot",
+      "canonical_name": "escargot",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "365a8ccd-cb04-4b9d-a0b9-30bbc825136a",
+      "name": "Eye Care",
+      "canonical_name": "eye care",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c3616e0a-2adc-4a13-878e-5658988c3126",
+      "name": "Fabric Softener",
+      "canonical_name": "fabric softener",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "447e0bc5-9f54-49be-a0dd-85f5eb8a8e87",
+      "name": "Facial Tissue",
+      "canonical_name": "facial tissue",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "81dfa87e-f069-4d35-b302-20646964d650",
+      "name": "Feminine Needs",
+      "canonical_name": "feminine needs",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "a8a31b75-dbdc-4491-8a59-de486a9f9fc3",
+      "name": "Figs: Dry",
+      "canonical_name": "figs: dry",
+      "aisle_id": "e56c69f2-fd0e-4e6d-bc4d-2c354406a5ea",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "288c1dcb-4414-4344-8481-bba18a481e30",
+      "name": "Fish: Canned",
+      "canonical_name": "fish: canned",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f34d5ec6-afa2-4ec8-b9dd-1e048ee23550",
+      "name": "Fish: Fresh",
+      "canonical_name": "fish: fresh",
+      "aisle_id": "55dbb55f-b63f-474e-8f40-7517e3894983",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "0c5e1275-4eab-46da-9805-586e172f7b08",
+      "name": "Flour",
+      "canonical_name": "flour",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "ca5dec34-29e3-4bf3-b9d3-7ab4f5f9e219",
+      "name": "Food Coloring",
+      "canonical_name": "food coloring",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f2324cc4-f419-46e6-b301-d457493de0eb",
+      "name": "Freezer Wrap",
+      "canonical_name": "freezer wrap",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1a737613-8e7f-435c-9773-9bb3abf5d197",
+      "name": "Frozen Foods",
+      "canonical_name": "frozen foods",
+      "aisle_id": "4f507945-fd7a-4695-883c-a486639ca460",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d6da99d0-af44-4a66-93b9-a1a74a142804",
+      "name": "Fruit: Canned",
+      "canonical_name": "fruit: canned",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f6187e7a-104d-4aef-928b-9ad2f8c0dc4a",
+      "name": "Fruit: Fresh",
+      "canonical_name": "fruit: fresh",
+      "aisle_id": "e56c69f2-fd0e-4e6d-bc4d-2c354406a5ea",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4fa5d7cb-43b9-4d82-aa76-805bc27629ad",
+      "name": "Gloves: Work",
+      "canonical_name": "gloves: work",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e99c40fd-1c5a-41f3-9aca-ef74ea722f1e",
+      "name": "Granola Bars",
+      "canonical_name": "granola bars",
+      "aisle_id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f4180502-f2ff-47bf-9ea8-9a8bc5475026",
+      "name": "Gravy",
+      "canonical_name": "gravy",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "69ae4dfd-d219-4d1c-b8cc-d6664b5729fb",
+      "name": "Grits",
+      "canonical_name": "grits",
+      "aisle_id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "6f13639b-87aa-4d63-8bb7-b14441301d79",
+      "name": "Ham Glaze",
+      "canonical_name": "ham glaze",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e47eac7d-0075-4784-b841-dcf3dffd2178",
+      "name": "Hamburger Helper",
+      "canonical_name": "hamburger helper",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "96cd6f7e-0817-4431-b11f-f55f8c3910e0",
+      "name": "Honey",
+      "canonical_name": "honey",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "8ad78d02-b86f-42a4-b686-91af405a3d80",
+      "name": "Household Cleaners",
+      "canonical_name": "household cleaners",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f2dcb479-376f-44a2-a4eb-ff641984cafc",
+      "name": "Ice Cream",
+      "canonical_name": "ice cream",
+      "aisle_id": "229a3fc8-33f8-4f1c-9d7b-24d08dd33564",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "8d4c7bdd-bcef-4a50-9306-68851f1e7c60",
+      "name": "Ice Cream Cones",
+      "canonical_name": "ice cream cones",
+      "aisle_id": "d8fea710-72fc-4abb-8c9d-db34669382ac",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "20dc9741-54a1-47b3-b159-87c0798510dc",
+      "name": "Ice Cubes",
+      "canonical_name": "ice cubes",
+      "aisle_id": "7ebcee6d-b8e3-456d-8655-4e50eda9d077",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "87ab4f28-9c31-464f-9c27-029b964969b1",
+      "name": "Iced Tea Mix",
+      "canonical_name": "iced tea mix",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "72728afd-b393-4252-94a5-4d3848f04f88",
+      "name": "Jam & Jelly",
+      "canonical_name": "jam & jelly",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "7eb2daf3-265e-4f7f-9f66-698e6be535f8",
+      "name": "Jello",
+      "canonical_name": "jello",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "43e1ea9b-b6b0-467b-b4e6-787b82fed2f5",
+      "name": "Juice",
+      "canonical_name": "juice",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "b12dcb04-6c73-4976-9161-558d696c4a76",
+      "name": "Ketchup",
+      "canonical_name": "ketchup",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "5980a509-85dd-4717-af1b-c340bfbd6724",
+      "name": "Kitchen Gadgets",
+      "canonical_name": "kitchen gadgets",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "5251efa5-d09c-46b1-86b6-08bdfb91114d",
+      "name": "Kool Aid",
+      "canonical_name": "kool aid",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4778f891-cfdf-4ff7-afc0-3733747ebd59",
+      "name": "Kosher Foods",
+      "canonical_name": "kosher foods",
+      "aisle_id": "790cec1e-84c2-4543-9442-60737387cc9d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9d3666bc-cbb9-4531-a4f1-8159830465ce",
+      "name": "Laundry Detergent",
+      "canonical_name": "laundry detergent",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "eed3627f-3ce7-46bf-945c-96ca8a2df29f",
+      "name": "Laxative",
+      "canonical_name": "laxative",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "bcee5fd7-d895-41dd-a46a-65f2231fd24c",
+      "name": "Lightbulbs",
+      "canonical_name": "lightbulbs",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "28b3e4c9-513f-4e80-882a-2ec34debea55",
+      "name": "Mac & Cheese: Packaged",
+      "canonical_name": "mac & cheese: packaged",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f202190c-9a19-4488-b407-0881e8110efd",
+      "name": "Magazines",
+      "canonical_name": "magazines",
+      "aisle_id": "e37a3100-f8d1-4a3e-9bd3-ad019fed0874",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "5bc0b9b6-651d-494e-adec-fc5c4779d49a",
+      "name": "Mayonnaise",
+      "canonical_name": "mayonnaise",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c09ba744-b234-4b37-8e44-c2340151d9fe",
+      "name": "Meat: Canned",
+      "canonical_name": "meat: canned",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4b3b49a1-871e-44c5-83dd-0c89978bb219",
+      "name": "Meat: Fresh",
+      "canonical_name": "meat: fresh",
+      "aisle_id": "86e1098a-671f-434e-acd1-8429ce62d3e6",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d306b44f-602e-412c-aa34-1ef8bfa9c448",
+      "name": "Mexican Food",
+      "canonical_name": "mexican food",
+      "aisle_id": "790cec1e-84c2-4543-9442-60737387cc9d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "8f8e6f7e-0131-4782-a366-03f0dd42c5c8",
+      "name": "Milk: Fluid",
+      "canonical_name": "milk: fluid",
+      "aisle_id": "fa03217e-3e5e-45c2-849f-0ef6f050a3f0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "72b5ad53-8f78-49fd-96d1-6c592b04ca6d",
+      "name": "Milk: Evaporated-Powdered",
+      "canonical_name": "milk: evaporated-powdered",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1cff14cd-07b9-459a-b22f-e8187bbac0d8",
+      "name": "Molasses",
+      "canonical_name": "molasses",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "079e237d-c8f9-46bd-af10-263d63961f2a",
+      "name": "Mops",
+      "canonical_name": "mops",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "48eed745-8e1c-4d72-a9de-8d8a7a007ea8",
+      "name": "Mouthwash",
+      "canonical_name": "mouthwash",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1bb76ca5-fbb7-42cc-9a9c-b99715ef26e2",
+      "name": "Mushrooms: Canned",
+      "canonical_name": "mushrooms: canned",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1acbc22f-5558-49f2-b40f-8e184571fe54",
+      "name": "Mustard",
+      "canonical_name": "mustard",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9cd22746-eebb-4a63-8e8e-a37f3a087842",
+      "name": "Napkins",
+      "canonical_name": "napkins",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "3dc1536b-5b75-429c-8fdb-2fe1bd445838",
+      "name": "Noodles",
+      "canonical_name": "noodles",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "6451c2ed-744e-4079-aba0-11a44eb0888c",
+      "name": "Nuts: Baking",
+      "canonical_name": "nuts: baking",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c1d598df-b833-47a0-873d-64e0b7f50866",
+      "name": "Nuts: Snack",
+      "canonical_name": "nuts: snack",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1ee7f171-9d00-4e28-8285-6cb6940b7897",
+      "name": "Oil: Canola-Cooking-Corn",
+      "canonical_name": "oil: canola-cooking-corn",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f8c52da6-a7ba-420d-ad48-77a9c349572a",
+      "name": "Oil: Olive-Vegetable",
+      "canonical_name": "oil: olive-vegetable",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "421240f3-6900-42dd-8ea8-79dc75678a6f",
+      "name": "Oil: Motor",
+      "canonical_name": "oil: motor",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "59c64c49-04b0-4620-88ea-609b128c0d69",
+      "name": "Olives",
+      "canonical_name": "olives",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1114ad87-576c-4287-8e0d-626d4be7691c",
+      "name": "Pancake Mix",
+      "canonical_name": "pancake mix",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "a317ec8f-043d-45ee-8a93-993889f71365",
+      "name": "Paper: Cups-Plates",
+      "canonical_name": "paper: cups-plates",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "cb486da0-ca12-4f6e-b1c9-e5810f4d97ec",
+      "name": "Paper Towels",
+      "canonical_name": "paper towels",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9164684e-b9ab-4047-9da0-651b3b4ab8d4",
+      "name": "Pasta",
+      "canonical_name": "pasta",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "cb93c9b0-e46e-45a5-8a56-61766ad99394",
+      "name": "Peanut Butter",
+      "canonical_name": "peanut butter",
+      "aisle_id": "cf14e281-5756-4c1f-9bd5-7cbc1b999266",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "546109d1-4db2-43a8-bf70-0efe1750a08e",
+      "name": "Peanuts in Shell",
+      "canonical_name": "peanuts in shell",
+      "aisle_id": "e56c69f2-fd0e-4e6d-bc4d-2c354406a5ea",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "b17d71bf-e57b-4642-92a0-31af5fd57a85",
+      "name": "Pie Filling",
+      "canonical_name": "pie filling",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "74d534c7-d91b-45da-8913-0cf64f5d9888",
+      "name": "Pizza: Fresh",
+      "canonical_name": "pizza: fresh",
+      "aisle_id": "b617b0d0-5cc3-4fec-88b7-6207ac4888c4",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "be2efffe-781e-43ab-9d87-cde283cd8ffb",
+      "name": "Plasticware",
+      "canonical_name": "plasticware",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "2509551a-01c8-48c9-b1c0-829aae0006e8",
+      "name": "Pop Tarts",
+      "canonical_name": "pop tarts",
+      "aisle_id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "86171cff-a12c-4bf7-9d2c-7d4858667ff0",
+      "name": "Popping Corn",
+      "canonical_name": "popping corn",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "f30f5f40-7442-4ffd-8755-4727a851e8af",
+      "name": "Potato Chips",
+      "canonical_name": "potato chips",
+      "aisle_id": "13247159-b187-4e87-8fd1-da46603c333f",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e704a5fd-adcd-44e9-af10-9455fe32b291",
+      "name": "Potatoes: Canned-Instant",
+      "canonical_name": "potatoes: canned-instant",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "adb9fada-3ac0-48f0-bc3f-697b9bc93e0e",
+      "name": "Potatoes: Fresh",
+      "canonical_name": "potatoes: fresh",
+      "aisle_id": "e56c69f2-fd0e-4e6d-bc4d-2c354406a5ea",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9bc5f6a1-ab04-4efb-9d8d-0d238634942f",
+      "name": "Pudding Mix",
+      "canonical_name": "pudding mix",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "bd2cc645-e5f5-43d9-ae2e-809868268481",
+      "name": "Raisins",
+      "canonical_name": "raisins",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1601fc6d-ce97-45aa-bf2f-cad533859624",
+      "name": "Razor Blades",
+      "canonical_name": "razor blades",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "969f8362-9c18-4308-936c-ea0a3c20403d",
+      "name": "Rice: Packaged",
+      "canonical_name": "rice: packaged",
+      "aisle_id": "790cec1e-84c2-4543-9442-60737387cc9d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "86a78314-52fb-4a9f-bf9c-5bb4299f657b",
+      "name": "Rice Cakes",
+      "canonical_name": "rice cakes",
+      "aisle_id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1c99201b-86d9-468b-8b93-e4eba392aedd",
+      "name": "Rubbermaid",
+      "canonical_name": "rubbermaid",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9c77e835-a968-4fec-af48-b439961e17b5",
+      "name": "Rubbing Alcohol",
+      "canonical_name": "rubbing alcohol",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "597ba989-d3df-4010-acc3-5f099febc3ae",
+      "name": "Salad Dressing",
+      "canonical_name": "salad dressing",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "8e9128fa-55cf-4a82-a157-83165722ed47",
+      "name": "Salt",
+      "canonical_name": "salt",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "23eadfc4-83e8-4d9c-b546-413ffbfeda5a",
+      "name": "Sanitary Napkins",
+      "canonical_name": "sanitary napkins",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c3a734c5-e2bf-4f05-bdad-1b66558426cd",
+      "name": "Sardines: Canned",
+      "canonical_name": "sardines: canned",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "dadf9d7a-596c-46d2-b82a-387dd21e8e3e",
+      "name": "Sauce: BBQ-Chili-Steak",
+      "canonical_name": "sauce: bbq-chili-steak",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c1be902e-c570-4a4d-b66b-a89aa62c0020",
+      "name": "Sauce: Tabasco / Tartar",
+      "canonical_name": "sauce: tabasco / tartar",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e7af1a5d-4812-4794-82e8-47342de6d068",
+      "name": "Sauce: Soy",
+      "canonical_name": "sauce: soy",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "19e7b69d-8b38-4b31-baf6-5124d0925fc9",
+      "name": "Shake & Bake",
+      "canonical_name": "shake & bake",
+      "aisle_id": "7f5d115e-fbfe-4b47-813f-c45bacca5d1e",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "38f8c341-7582-41d2-9ade-8b3cd1d33f30",
+      "name": "Shaving Needs",
+      "canonical_name": "shaving needs",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1038bfa2-c964-4860-8298-370bc726d41b",
+      "name": "Shoe Care",
+      "canonical_name": "shoe care",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4f061d2d-2ed5-4dcb-92b9-2714e4b2646c",
+      "name": "Shortening",
+      "canonical_name": "shortening",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d6fb9e72-de3e-4183-b137-21de11deafd4",
+      "name": "Soap: Bar-Body-Hand-Liquid",
+      "canonical_name": "soap: bar-body-hand-liquid",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "80aba3d3-0fca-4562-bf18-db1b1af7ae13",
+      "name": "Soda",
+      "canonical_name": "soda",
+      "aisle_id": "b757eec0-04ef-4e05-8d8b-6851dfcbb7f6",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "7d83f4bf-6652-48e4-8687-632ae2872bd4",
+      "name": "Soup",
+      "canonical_name": "soup",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "282a3815-e583-4761-afd5-9945d3efcad3",
+      "name": "Spaghetti Sauce",
+      "canonical_name": "spaghetti sauce",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "6270d513-fe72-4f6f-b0d9-9f0f647c1f0c",
+      "name": "Spam",
+      "canonical_name": "spam",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "ed058a15-f4cf-42e2-96b8-1f3d37018bb3",
+      "name": "Spices",
+      "canonical_name": "spices",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "99cfe90e-19d7-4711-9aa1-84ebe853ef65",
+      "name": "Sponges",
+      "canonical_name": "sponges",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4c5dc2ca-39c8-4d69-aac9-ebe80b003b14",
+      "name": "Stationery",
+      "canonical_name": "stationery",
+      "aisle_id": "65543189-7e5b-40f3-a3f9-a063c7d8f0a1",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "62e36a11-40f8-4ba4-9115-8cc640395a1e",
+      "name": "Steel Wool",
+      "canonical_name": "steel wool",
+      "aisle_id": "0c4387cb-b0d9-4d7c-af00-6b440d9c5416",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "4c38f565-77a4-4cc8-9162-588015c7fa78",
+      "name": "Straws",
+      "canonical_name": "straws",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e53e6b24-171d-491e-8503-06ccbeedcdeb",
+      "name": "Stuffing Mix",
+      "canonical_name": "stuffing mix",
+      "aisle_id": "7f5d115e-fbfe-4b47-813f-c45bacca5d1e",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "ab381d5b-4309-4e22-9a27-b047c07a19a9",
+      "name": "Sugar",
+      "canonical_name": "sugar",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "324c581f-b1b6-4139-900b-3a65d7ddea29",
+      "name": "Taco: Sauce-Shells",
+      "canonical_name": "taco: sauce-shells",
+      "aisle_id": "790cec1e-84c2-4543-9442-60737387cc9d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "d1454761-d72d-4fee-a434-ea4faf255a40",
+      "name": "Tea Bags",
+      "canonical_name": "tea bags",
+      "aisle_id": "133a9c3a-1ad5-4ca1-ba4c-153e3e8d1c36",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "c5def049-e25e-4363-96e7-6dbd9f7ab67a",
+      "name": "Tissue: Bath",
+      "canonical_name": "tissue: bath",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "9ef279db-b562-4ff0-bb01-08ee8418624a",
+      "name": "Tissue: Facial",
+      "canonical_name": "tissue: facial",
+      "aisle_id": "e6ab7d86-fa81-4f5b-ab81-89465b29258d",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "213be71a-2383-475a-b398-bea5159a8c59",
+      "name": "Tomato: Canned",
+      "canonical_name": "tomato: canned",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "23dd5017-f611-4ecd-8366-0ee1fabd559e",
+      "name": "Tomato: Paste",
+      "canonical_name": "tomato: paste",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "830bdd09-9181-4c27-84dc-c2cd5544554e",
+      "name": "Tomato: Sauce",
+      "canonical_name": "tomato: sauce",
+      "aisle_id": "fa49d85c-1f13-4c94-93a3-5bf7a1f52d4b",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "50ad920b-430d-42f4-bea4-8b7104b92314",
+      "name": "Toothbrushes / Toothpaste",
+      "canonical_name": "toothbrushes / toothpaste",
+      "aisle_id": "21ec0681-f661-4691-b384-871ce2e381d9",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "51e3c0ec-2884-48b4-a6cc-cc8a7db9f8f0",
+      "name": "Toothpicks",
+      "canonical_name": "toothpicks",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "951afe02-f488-40ce-b602-2651af881f30",
+      "name": "Tuna: Canned",
+      "canonical_name": "tuna: canned",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "07407ac3-7ad6-4c2a-8f1f-5befdec07557",
+      "name": "Vegetables: Canned",
+      "canonical_name": "vegetables: canned",
+      "aisle_id": "58117282-5fd1-4c4d-98ae-3292c75d87d0",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "2229c566-dfdd-4c08-a872-af1b093f6eff",
+      "name": "Vegetables: Fresh",
+      "canonical_name": "vegetables: fresh",
+      "aisle_id": "e56c69f2-fd0e-4e6d-bc4d-2c354406a5ea",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "99ab453f-5e0e-4636-bc05-f5c94205c1e4",
+      "name": "Vinegar",
+      "canonical_name": "vinegar",
+      "aisle_id": "4aaaa7e3-8f72-4482-9b5d-6f3e6b53fcdc",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "e004d6b7-8af4-4332-8d55-572ba2113c54",
+      "name": "Vitamins",
+      "canonical_name": "vitamins",
+      "aisle_id": "733f8117-bc76-459e-b063-d0985f092927",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "ea260724-13f2-4bf2-9898-d8b8b6c0edb3",
+      "name": "Water: Distilled-Spring",
+      "canonical_name": "water: distilled-spring",
+      "aisle_id": "cd65e4a6-c7f6-411f-a41a-a48485f22eb8",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "349299dd-c2c8-489c-bb5e-284718f9a3f9",
+      "name": "Wax Paper",
+      "canonical_name": "wax paper",
+      "aisle_id": "a16fd91e-d733-4206-abac-a2f0039afcd5",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "48cc2d43-7c39-4401-988b-0228b7737968",
+      "name": "Wheat Germ",
+      "canonical_name": "wheat germ",
+      "aisle_id": "b7f8df40-c611-48ea-9f6e-abd07b268609",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    },
+    {
+      "id": "1c8a42c5-12e1-4517-9430-a6319e53d0a7",
+      "name": "Windshield Washer Fluid",
+      "canonical_name": "windshield washer fluid",
+      "aisle_id": "915ad0e8-1567-4067-aed6-50a56ce83c0a",
+      "store_id": "176870f4-f444-44cb-8857-1ef123f7211d"
+    }
+  ]
+}

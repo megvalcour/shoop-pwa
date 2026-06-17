@@ -56,10 +56,10 @@ When writing a plan (Step 1 of Workflow Requirements), cite any ADRs that constr
 1. **Plan Before Action:** Before writing any code, generate a full implementation plan and save it to `tasks/active--<feature-name>.md`. Do not begin implementation until the plan file exists.
 2. **Type Safety:** Ensure every component and utility has strict TypeScript definitions. Prefer interfaces over types for public APIs.
 3. **Atomic Design:** Follow the folder hierarchy in `src/components/` strictly:
-    - **Atoms:** Smallest units (Button, Checkbox, Input, Badge, Icon). No business logic.
-    - **Molecules:** Groups of atoms (GroceryItem, AisleGroup, SearchBar). No direct store access.
-    - **Organisms:** Complex UI blocks (DefaultListEditor, WeeklyListBuilder, ShoppingView, AddItemForm). Can interact with stores and hooks.
-    - **Templates:** Page layouts/wireframes (AppShell).
+   - **Atoms:** Smallest units (Button, Checkbox, Input, Badge, Icon). No business logic.
+   - **Molecules:** Groups of atoms (GroceryItem, AisleGroup, SearchBar). No direct store access.
+   - **Organisms:** Complex UI blocks (DefaultListEditor, WeeklyListBuilder, ShoppingView, AddItemForm). Can interact with stores and hooks.
+   - **Templates:** Page layouts/wireframes (AppShell).
 4. **State Management:** Do not create a single monolithic store. Zustand is for ephemeral/session UI state only. All persistent data goes through TanStack Query hooks backed by IndexedDB.
 
 ## Directory Structure
@@ -109,10 +109,16 @@ Canonical TypeScript interfaces for these shapes live in `src/db/schema.ts`.
 ## Interaction Patterns
 
 - If a task is ambiguous, ask for clarification before proceeding.
-- When editing components, check if existing **Atoms** can be reused before creating new ones.
-- Maintain separation of concerns: all IndexedDB logic lives in `db/` and `hooks/`. Never write inline IndexedDB queries inside UI components.
-- No relative imports. Use path-aliased imports (e.g., `@/components/atoms/Button`, `@/db/idbClient`).
+- When editing components, check if existing **Atoms** or **Molecules** can be reused before creating new ones.
+
+## Coding Conventions
+
+- **Entity IDs:** Always generate with `crypto.randomUUID()`. All `id` fields across every object store are `string` (UUID v4). Never use auto-increment integers or any other ID scheme.
+- **DB schema migrations:** When `DB_VERSION` is bumped, add a new `case` inside the `upgrade()` callback in `src/db/idbClient.ts`, guarded by `if (oldVersion < N)`. Never rewrite existing cases — migrations are append-only.
+- **Maintain separation of concerns**: all IndexedDB logic lives in `db/` and `hooks/`. Never write inline IndexedDB queries inside UI components.
+- **No relative imports**. Use path-aliased imports (e.g., `@/components/atoms/Button`, `@/db/idbClient`).
 - No barrel files.
+- Unit tests in the parent folder's `/__tests__`
 
 ## Data & Service Layer
 
