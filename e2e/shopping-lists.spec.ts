@@ -30,3 +30,28 @@ test.describe('Shopping Lists', () => {
     await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
   });
 });
+
+test.describe('AddItemForm', () => {
+  test('renders input and submit button on list detail page', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    await expect(page.getByPlaceholder(/add an item/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /^add$/i })).toBeVisible();
+  });
+
+  test('submitting an item clears the input', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    const input = page.getByPlaceholder(/add an item/i);
+    await input.fill('Apples');
+    await page.getByRole('button', { name: /^add$/i }).click();
+
+    // Wait for isPending to clear (input re-enabled) before asserting value cleared by onSuccess
+    await expect(input).toBeEnabled();
+    await expect(input).toHaveValue('');
+  });
+});

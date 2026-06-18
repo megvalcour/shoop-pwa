@@ -4,13 +4,12 @@ feat: add shopping lists index screen, useShoppingLists hook, and ShoppingListCa
 
 ## Active Task
 
-None.
+`tasks/active--add-item-form.md` — Build `AddItemForm` organism
 
 ## Backlog
 
 ### Shopping Lists
 
-- Build `AddItemForm` organism — text input + submit, writes item to `items` store and adds to `list_items` for the active list
 - Render `ShoppingListBuilder` organism — scrollable list of added items for the active list with inline delete
 - Wire item check-off: toggle `checked` on a `list_items` row with optimistic update
 - Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows)
