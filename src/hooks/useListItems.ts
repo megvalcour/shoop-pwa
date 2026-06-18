@@ -30,7 +30,6 @@ export function useAddListItem() {
   return useMutation({
     mutationFn: async ({ listId, name }: AddListItemInput): Promise<AddListItemResult> => {
       const trimmed = name.trim();
-      // Finding 4: throw so onSuccess doesn't fire as a false positive on empty input
       if (!trimmed) throw new Error('Item name cannot be empty');
 
       const canonical = trimmed.toLowerCase();
@@ -52,13 +51,11 @@ export function useAddListItem() {
       if (existing) {
         itemId = existing.id;
       } else {
-        // Finding 1: throw rather than silently writing store_id = ''
         if (!allStores[0]) throw new Error('No store found — add a store before adding items');
         itemId = crypto.randomUUID();
         itemCreated = true;
       }
 
-      // Finding 2: skip if (list_id, item_id) pair already exists
       if (allListItems.some((li) => li.list_id === listId && li.item_id === itemId)) {
         return { itemCreated: false };
       }
@@ -94,10 +91,41 @@ export function useAddListItem() {
     },
     onSuccess: ({ itemCreated }, { listId }) => {
       queryClient.invalidateQueries({ queryKey: listItemsKey(listId) });
-      // Finding 3: invalidate items cache when a new Item row was written
       if (itemCreated) {
         queryClient.invalidateQueries({ queryKey: ['items'] });
       }
+    },
+  });
+}
+
+interface DeleteListItemInput {
+  id: string;
+  listId: string;
+}
+
+export function useDeleteListItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: DeleteListItemInput) => {
+      const db = await dbPromise;
+      await db.delete('list_items', id);
+    },
+    onMutate: async ({ id, listId }) => {
+      await queryClient.cancelQueries({ queryKey: listItemsKey(listId) });
+      const snapshot = queryClient.getQueryData<ListItem[]>(listItemsKey(listId));
+      queryClient.setQueryData<ListItem[]>(
+        listItemsKey(listId),
+        (old) => (old ?? []).filter((li) => li.id !== id),
+      );
+      return { snapshot };
+    },
+    onError: (_err, { listId }, context) => {
+      if (context?.snapshot !== undefined) {
+        queryClient.setQueryData(listItemsKey(listId), context.snapshot);
+      }
+    },
+    onSettled: (_data, _err, { listId }) => {
+      queryClient.invalidateQueries({ queryKey: listItemsKey(listId) });
     },
   });
 }

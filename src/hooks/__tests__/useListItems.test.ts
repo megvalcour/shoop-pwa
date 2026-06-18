@@ -132,3 +132,53 @@ describe('useAddListItem', () => {
     expect(listResult.current.data).toHaveLength(0);
   });
 });
+
+describe('useDeleteListItem', () => {
+  beforeEach(() => {
+    globalThis.indexedDB = new IDBFactory() as unknown as IDBFactory;
+    vi.resetModules();
+  });
+
+  it('deletes the list_items row from IDB on success', async () => {
+    const { useAddListItem, useDeleteListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const { result: addResult } = renderHook(() => useAddListItem(), { wrapper });
+    await act(() => addResult.current.mutateAsync({ listId: 'list-1', name: 'Milk' }));
+
+    const db = await dbPromise;
+    const [listItem] = await db.getAll('list_items');
+    expect(listItem).toBeDefined();
+
+    const { result: delResult } = renderHook(() => useDeleteListItem(), { wrapper });
+    await act(() => delResult.current.mutateAsync({ id: listItem.id, listId: 'list-1' }));
+
+    const remaining = await db.getAll('list_items');
+    expect(remaining).toHaveLength(0);
+  });
+
+  it('useListItems query shrinks by 1 after delete settles', async () => {
+    const { useListItems, useAddListItem, useDeleteListItem } = await import(
+      '@/hooks/useListItems'
+    );
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({
+        list: useListItems('list-1'),
+        add: useAddListItem(),
+        del: useDeleteListItem(),
+      }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'Eggs' }));
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+
+    const id = result.current.list.data![0].id;
+    await act(() => result.current.del.mutateAsync({ id, listId: 'list-1' }));
+    await waitFor(() => expect(result.current.list.data).toHaveLength(0));
+  });
+});

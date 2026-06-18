@@ -47,6 +47,9 @@ export function useDeleteShoppingList() {
       await Promise.all(itemKeys.map((key) => tx.objectStore('list_items').delete(key)));
       await tx.done;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['list_items', id] });
+    },
   });
 }

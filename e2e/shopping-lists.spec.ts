@@ -54,4 +54,22 @@ test.describe('AddItemForm', () => {
     await expect(input).toBeEnabled();
     await expect(input).toHaveValue('');
   });
+
+  test('deleting an item removes it from the list', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    const input = page.getByPlaceholder(/add an item/i);
+    await input.fill('Bananas');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+
+    await expect(page.getByText('Bananas')).toBeVisible();
+
+    await page.getByRole('button', { name: /delete item/i }).click();
+
+    await expect(page.getByText('Bananas')).not.toBeVisible();
+    await expect(page.getByText(/no items yet/i)).toBeVisible();
+  });
 });

@@ -1,16 +1,15 @@
 ## Current Status
 
-feat: add shopping lists index screen, useShoppingLists hook, and ShoppingListCard molecule
+feat: add ShoppingListBuilder organism with inline delete and optimistic remove
 
 ## Active Task
 
-`tasks/active--add-item-form.md` — Build `AddItemForm` organism
+None.
 
 ## Backlog
 
 ### Shopping Lists
 
-- Render `ShoppingListBuilder` organism — scrollable list of added items for the active list with inline delete
 - Wire item check-off: toggle `checked` on a `list_items` row with optimistic update
 - Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows)
 
