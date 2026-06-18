@@ -31,6 +31,63 @@ test.describe('Shopping Lists', () => {
   });
 });
 
+test.describe('Item check-off', () => {
+  test('checking an item moves it to the bottom and applies line-through', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    const input = page.getByPlaceholder(/add an item/i);
+    await input.fill('Apples');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+
+    await input.fill('Bread');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+
+    await expect(page.getByText('Apples')).toBeVisible();
+    await expect(page.getByText('Bread')).toBeVisible();
+
+    // Click the first item row (Apples)
+    await page.getByText('Apples').click();
+
+    // Apples should now appear last in the list
+    const items = page.locator('ul li');
+    await expect(items.nth(0)).toHaveText(/Bread/);
+    await expect(items.nth(1)).toHaveText(/Apples/);
+
+    // Apples name should have line-through styling
+    const applesSpan = page.getByText('Apples');
+    await expect(applesSpan).toHaveClass(/line-through/);
+  });
+
+  test('unchecking a checked item moves it back to the top and removes strikethrough', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    const input = page.getByPlaceholder(/add an item/i);
+    await input.fill('Apples');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+
+    await input.fill('Bread');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+
+    // Check Apples
+    await page.getByText('Apples').click();
+    const items = page.locator('ul li');
+    await expect(items.nth(1)).toHaveText(/Apples/);
+
+    // Uncheck Apples
+    await page.getByText('Apples').click();
+    await expect(items.nth(0)).toHaveText(/Apples/);
+    await expect(page.getByText('Apples')).not.toHaveClass(/line-through/);
+  });
+});
+
 test.describe('AddItemForm', () => {
   test('renders input and submit button on list detail page', async ({ page }) => {
     await page.goto('/');

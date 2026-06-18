@@ -133,6 +133,93 @@ describe('useAddListItem', () => {
   });
 });
 
+describe('useToggleListItem', () => {
+  beforeEach(() => {
+    globalThis.indexedDB = new IDBFactory() as unknown as IDBFactory;
+    vi.resetModules();
+  });
+
+  it('flips checked from false to true in IDB', async () => {
+    const { useListItems, useToggleListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const db = await dbPromise;
+    const row = {
+      id: 'li-1',
+      list_id: 'list-1',
+      item_id: 'item-1',
+      quantity: 1,
+      checked: false,
+      added_from_default: false,
+      created_at: Date.now(),
+    };
+    await db.add('list_items', row);
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), toggle: useToggleListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.toggle.mutateAsync({ id: 'li-1', listId: 'list-1' }));
+
+    const updated = await db.get('list_items', 'li-1');
+    expect(updated?.checked).toBe(true);
+  });
+
+  it('flips checked back to false on a second call', async () => {
+    const { useToggleListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const db = await dbPromise;
+    await db.add('list_items', {
+      id: 'li-1',
+      list_id: 'list-1',
+      item_id: 'item-1',
+      quantity: 1,
+      checked: false,
+      added_from_default: false,
+      created_at: Date.now(),
+    });
+
+    const { result } = renderHook(() => useToggleListItem(), { wrapper });
+    await act(() => result.current.mutateAsync({ id: 'li-1', listId: 'list-1' }));
+    await act(() => result.current.mutateAsync({ id: 'li-1', listId: 'list-1' }));
+
+    const updated = await db.get('list_items', 'li-1');
+    expect(updated?.checked).toBe(false);
+  });
+
+  it('useListItems query reflects updated checked state after toggle settles', async () => {
+    const { useListItems, useToggleListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const db = await dbPromise;
+    await db.add('list_items', {
+      id: 'li-1',
+      list_id: 'list-1',
+      item_id: 'item-1',
+      quantity: 1,
+      checked: false,
+      added_from_default: false,
+      created_at: Date.now(),
+    });
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), toggle: useToggleListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+    expect(result.current.list.data?.[0].checked).toBe(false);
+
+    await act(() => result.current.toggle.mutateAsync({ id: 'li-1', listId: 'list-1' }));
+    await waitFor(() => expect(result.current.list.data?.[0].checked).toBe(true));
+  });
+});
+
 describe('useDeleteListItem', () => {
   beforeEach(() => {
     globalThis.indexedDB = new IDBFactory() as unknown as IDBFactory;

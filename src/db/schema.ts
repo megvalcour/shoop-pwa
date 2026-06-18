@@ -47,6 +47,7 @@ export interface ListItem {
   quantity: number;
   checked: boolean;
   added_from_default: boolean;
+  created_at: number;
 }
 
 export interface ShoopDB extends DBSchema {

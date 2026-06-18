@@ -1,4 +1,4 @@
-import { useListItems, useDeleteListItem } from '@/hooks/useListItems';
+import { useListItems, useDeleteListItem, useToggleListItem } from '@/hooks/useListItems';
 import { useItems } from '@/hooks/useItems';
 import GroceryListItem from '@/components/molecules/GroceryListItem';
 
@@ -10,6 +10,7 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   const { data: listItems, isPending, isError } = useListItems(listId);
   const { data: items } = useItems();
   const deleteItem = useDeleteListItem();
+  const toggleItem = useToggleListItem();
 
   const nameById = new Map((items ?? []).map((item) => [item.id, item.name]));
 
@@ -25,14 +26,20 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
     return <p className="text-text-muted mt-4">No items yet.</p>;
   }
 
+  const sorted = [...listItems].sort(
+    (a, b) => Number(a.checked) - Number(b.checked) || (a.created_at ?? 0) - (b.created_at ?? 0),
+  );
+
   return (
     <div className="mt-4">
       <ul className="flex flex-col gap-2">
-        {listItems.map((li) => (
+        {sorted.map((li) => (
           <GroceryListItem
             key={li.id}
             name={nameById.get(li.item_id) ?? 'Unknown item'}
             quantity={li.quantity}
+            checked={li.checked}
+            onToggle={() => toggleItem.mutate({ id: li.id, listId })}
             onDelete={() => deleteItem.mutate({ id: li.id, listId })}
           />
         ))}

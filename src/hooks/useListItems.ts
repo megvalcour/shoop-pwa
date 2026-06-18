@@ -67,6 +67,7 @@ export function useAddListItem() {
         quantity: 1,
         checked: false,
         added_from_default: false,
+        created_at: Date.now(),
       };
 
       // Write phase — queue all writes synchronously within a transaction so
@@ -94,6 +95,39 @@ export function useAddListItem() {
       if (itemCreated) {
         queryClient.invalidateQueries({ queryKey: ['items'] });
       }
+    },
+  });
+}
+
+interface ToggleListItemInput {
+  id: string;
+  listId: string;
+}
+
+export function useToggleListItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: ToggleListItemInput) => {
+      const db = await dbPromise;
+      const row = await db.get('list_items', id);
+      if (!row) throw new Error(`list_items row not found: ${id}`);
+      await db.put('list_items', { ...row, checked: !row.checked });
+    },
+    onMutate: async ({ id, listId }) => {
+      await queryClient.cancelQueries({ queryKey: listItemsKey(listId) });
+      const snapshot = queryClient.getQueryData<ListItem[]>(listItemsKey(listId));
+      queryClient.setQueryData<ListItem[]>(listItemsKey(listId), (old) =>
+        (old ?? []).map((li) => (li.id === id ? { ...li, checked: !li.checked } : li)),
+      );
+      return { snapshot };
+    },
+    onError: (_err, { listId }, context) => {
+      if (context?.snapshot !== undefined) {
+        queryClient.setQueryData(listItemsKey(listId), context.snapshot);
+      }
+    },
+    onSettled: (_data, _err, { listId }) => {
+      queryClient.invalidateQueries({ queryKey: listItemsKey(listId) });
     },
   });
 }

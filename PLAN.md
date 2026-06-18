@@ -1,6 +1,6 @@
 ## Current Status
 
-feat: add ShoppingListBuilder organism with inline delete and optimistic remove
+feat: wire item check-off with optimistic toggle, strikethrough + sink-to-bottom UX, and E2E coverage
 
 ## Active Task
 
@@ -10,7 +10,6 @@ None.
 
 ### Shopping Lists
 
-- Wire item check-off: toggle `checked` on a `list_items` row with optimistic update
 - Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows)
 
 ### Smart Aisle Location (Market Basket 62)
