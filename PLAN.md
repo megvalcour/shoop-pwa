@@ -1,16 +1,14 @@
 ## Current Status
 
-ci: add GitHub Actions CI/CD pipeline with quality gates and Cloudflare Pages deploy
+refactor: harden Atomic structure
 
 ## Active Task
 
-None
+None.
 
 ## Backlog
 
 ### Audit
-
-- Audit components for Atomic Design structure. Create components as needed to stay dry and on-theme (especially missing Button, Input, and any other atoms)
 
 ### Shopping Lists
 

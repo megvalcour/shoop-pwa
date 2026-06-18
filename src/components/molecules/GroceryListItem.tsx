@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import type { Aisle } from '@/db/schema';
 import AislePickerSheet from '@/components/molecules/AislePickerSheet';
+import Button from '@/components/atoms/Button';
+import Badge from '@/components/atoms/Badge';
 
 interface GroceryListItemProps {
   name: string;
@@ -42,36 +44,33 @@ export default function GroceryListItem({
             {name}
           </span>
           {isAnalyzing && (
-            <span className="shrink-0 rounded px-1.5 py-0.5 text-xs bg-surface text-text-muted animate-pulse">
-              …
-            </span>
+            <Badge variant="muted" className="animate-pulse">…</Badge>
           )}
           {!isAnalyzing && aisleLabel && (
-            <button
+            <Badge
               onClick={(e) => {
                 e.stopPropagation();
                 setSheetOpen(true);
               }}
-              className="shrink-0 rounded px-1.5 py-0.5 text-xs bg-primary/10 text-primary"
               aria-label={`Change aisle: ${aisleLabel}`}
             >
               {aisleLabel}
-            </button>
+            </Badge>
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-sm text-text-muted">×{quantity}</span>
           {onDelete && (
-            <button
+            <Button
+              variant="destructive"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
               aria-label="Delete item"
-              className="p-1 text-destructive"
             >
               <FontAwesomeIcon icon={faTrash} />
-            </button>
+            </Button>
           )}
         </div>
       </li>

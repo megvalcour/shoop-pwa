@@ -3,6 +3,8 @@ import { useAddListItem } from '@/hooks/useListItems';
 import { useItems, useUpdateItemAisle } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
 import { useAisleMatcher } from '@/hooks/useAisleMatcher';
+import Button from '@/components/atoms/Button';
+import Input from '@/components/atoms/Input';
 
 interface AddItemFormProps {
   listId: string;
@@ -69,23 +71,23 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
         <label htmlFor="add-item-input" className="sr-only">
           Item name
         </label>
-        <input
+        <Input
           id="add-item-input"
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={primeMatcher}
           placeholder="Add an item…"
-          className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1"
           disabled={isPending}
         />
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={isPending || !value.trim()}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           Add
-        </button>
+        </Button>
       </form>
       {showClassifying && (
         <p className="mt-1 text-xs text-text-muted animate-pulse">Classifying…</p>

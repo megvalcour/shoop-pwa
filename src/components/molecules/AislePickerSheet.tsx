@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import type { Aisle } from '@/db/schema';
+import Button from '@/components/atoms/Button';
 
 export interface AislePickerSheetProps {
   aisles: Aisle[];
@@ -25,13 +26,9 @@ export default function AislePickerSheet({
       <div className="relative bg-surface rounded-t-2xl max-h-[60vh] flex flex-col shadow-xl">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <span className="font-semibold text-text">Choose aisle</span>
-          <button
-            onClick={onClose}
-            aria-label="Close aisle picker"
-            className="p-1 text-text-muted"
-          >
+          <Button onClick={onClose} aria-label="Close aisle picker">
             <FontAwesomeIcon icon={faXmark} />
-          </button>
+          </Button>
         </div>
         <ul className="overflow-y-auto flex-1">
           {aisles.map((aisle) => {
