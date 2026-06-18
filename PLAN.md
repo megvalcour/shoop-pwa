@@ -1,10 +1,10 @@
 ## Current Status
 
-feat: smart aisle location — grouping by aisle, aisle picker sheet, HuggingFace WASM classifier
+ci: add GitHub Actions CI/CD pipeline with quality gates and Cloudflare Pages deploy
 
 ## Active Task
 
-None
+None.
 
 ## Backlog
 
