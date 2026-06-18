@@ -34,7 +34,7 @@ export default function GroceryListItem({
   return (
     <>
       <li
-        className={`px-4 py-3 bg-white rounded-lg shadow-sm flex items-center justify-between ${onToggle ? 'cursor-pointer select-none' : ''} ${checked ? 'opacity-60' : ''}`}
+        className={`px-4 py-3 bg-card rounded-lg shadow-sm flex items-center justify-between ${onToggle ? 'cursor-pointer select-none' : ''} ${checked ? 'opacity-60' : ''}`}
         onClick={onToggle}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -42,7 +42,7 @@ export default function GroceryListItem({
             {name}
           </span>
           {isAnalyzing && (
-            <span className="shrink-0 rounded px-1.5 py-0.5 text-xs bg-gray-100 text-text-muted animate-pulse">
+            <span className="shrink-0 rounded px-1.5 py-0.5 text-xs bg-surface text-text-muted animate-pulse">
               …
             </span>
           )}

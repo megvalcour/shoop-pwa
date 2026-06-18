@@ -1,32 +1,28 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #1B3A2D;
-  --color-primary-foreground: #A8C5B8;
-  --color-accent: #D4783A;
-  --color-destructive: #8B1C3A;
-  --color-surface: #F9F3E8;
-  --color-text: #1C1814;
-  --color-text-muted: #7A6A5A;
+  --color-primary: #084887;
+  --color-primary-foreground: #EEF2FF;
+  --color-accent: #F58A07;
+  --color-accent-secondary: #F9AB55;
+  --color-destructive: #E53E3E;
+  --color-surface: #FAFBFF;
+  --color-card: #FFFFFF;
+  --color-text: #0F172A;
+  --color-text-muted: #909CC2;
+  --color-border: #D4D9EE;
+  --color-background: #FAFBFF;
 
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
 }
 
 @font-face {
-  font-family: 'Playfair Display';
+  font-family: 'Nunito';
   font-style: normal;
-  font-weight: 700;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('/fonts/playfair-display-700.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 400 500;
-  font-display: swap;
-  src: url('/fonts/dm-sans.woff2') format('woff2');
+  src: url('/fonts/nunito.woff2') format('woff2');
 }
 
 body {

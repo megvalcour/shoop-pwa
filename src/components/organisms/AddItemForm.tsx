@@ -61,8 +61,7 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
     );
   }
 
-  const showClassifying =
-    hasPrimed && !isReady && (items ?? []).some((i) => i.aisle_id === '');
+  const showClassifying = hasPrimed && !isReady && (items ?? []).some((i) => i.aisle_id === '');
 
   return (
     <div>
@@ -77,7 +76,7 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
           onChange={(e) => setValue(e.target.value)}
           onBlur={primeMatcher}
           placeholder="Add an item…"
-          className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
           disabled={isPending}
         />
         <button
