@@ -1,6 +1,6 @@
 ## Current Status
 
-`feat: migrate weekly_list to on-demand shopping_lists + list_items (schema v2, route rename, nav label, docs)`
+feat: add shopping lists index screen, useShoppingLists hook, and ShoppingListCard molecule
 
 ## Active Task
 
@@ -10,7 +10,6 @@ None.
 
 ### Shopping Lists
 
-- Create shopping lists screen: index view lists all saved lists (name + created date) with a "New List" FAB; implement `useShoppingLists` hook (create with auto-generated name, read all, delete by id) — data model changes `weekly_list` → `shopping_lists` (id, name, created_at) + `list_items` (id, list_id Index, item_id, quantity, checked, added_from_default); remove `week_start`
 - Build `AddItemForm` organism — text input + submit, writes item to `items` store and adds to `list_items` for the active list
 - Render `ShoppingListBuilder` organism — scrollable list of added items for the active list with inline delete
 - Wire item check-off: toggle `checked` on a `list_items` row with optimistic update
