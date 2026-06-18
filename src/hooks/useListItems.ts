@@ -23,6 +23,7 @@ interface AddListItemInput {
 
 interface AddListItemResult {
   itemCreated: boolean;
+  newItemId: string;
 }
 
 export function useAddListItem() {
@@ -57,7 +58,7 @@ export function useAddListItem() {
       }
 
       if (allListItems.some((li) => li.list_id === listId && li.item_id === itemId)) {
-        return { itemCreated: false };
+        return { itemCreated: false, newItemId: '' };
       }
 
       const listItem: ListItem = {
@@ -88,7 +89,7 @@ export function useAddListItem() {
         await db.add('list_items', listItem);
       }
 
-      return { itemCreated };
+      return { itemCreated, newItemId: itemId };
     },
     onSuccess: ({ itemCreated }, { listId }) => {
       queryClient.invalidateQueries({ queryKey: listItemsKey(listId) });

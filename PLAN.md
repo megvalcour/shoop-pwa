@@ -1,24 +1,16 @@
 ## Current Status
 
-feat: wire item check-off with optimistic toggle, strikethrough + sink-to-bottom UX, and E2E coverage
+feat: smart aisle location — grouping by aisle, aisle picker sheet, HuggingFace WASM classifier
 
 ## Active Task
 
-None.
+None
 
 ## Backlog
 
 ### Shopping Lists
 
 - Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows)
-
-### Smart Aisle Location (Market Basket 62)
-
-- Build `useAisleMatcher` hook that loads `Xenova/all-MiniLM-L6-v2` via WASM and exposes a `classify(itemName)` → `aisleId` function
-- Pre-compute and cache aisle embeddings from `oxford-62.json` on first model load
-- Integrate matcher into `AddItemForm`: resolve aisle on submit, store `aisle_id` on the `items` row
-- Group `ShoppingListBuilder` items by aisle with `AisleGroup` molecule, sorted by `sort_order`
-- Show aisle badge on each `GroceryItem` molecule; allow manual aisle override
 
 ### Default List
 
