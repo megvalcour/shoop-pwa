@@ -14,7 +14,7 @@ export default function AppShell() {
       <main className="flex-1 min-h-0 overflow-y-auto">
         <Outlet />
       </main>
-      <nav className="bg-primary h-16 shrink-0 flex items-center justify-around px-2">
+      <nav className="bg-[#0a1b2e] h-[78px] shrink-0 flex items-center justify-around px-2">
         {NAV_ITEMS.map(({ to, end, icon, label }) => (
           <NavLink
             key={to}
@@ -22,8 +22,8 @@ export default function AppShell() {
             end={end}
             className={({ isActive }) =>
               [
-                'flex flex-col items-center gap-0.5 px-4 py-2 rounded-lg transition-colors',
-                isActive ? 'text-accent bg-accent/10' : 'text-primary-foreground',
+                'flex flex-col items-center gap-0.5 px-4 py-2',
+                isActive ? 'text-[#f9a23b]' : 'text-white/50',
               ].join(' ')
             }
           >

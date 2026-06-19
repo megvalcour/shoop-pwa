@@ -1,25 +1,45 @@
 interface AisleGroupProps {
   label: string;
   number?: string;
+  color: string;
+  tint: string;
+  count: number;
   children: React.ReactNode;
-  isSpecial?: boolean;
 }
 
-export default function AisleGroup({ label, number, children, isSpecial = false }: AisleGroupProps) {
-  const headerText = number ? `Aisle ${number} — ${label}` : label;
-
+export default function AisleGroup({ label, color, tint, count, children }: AisleGroupProps) {
   return (
-    <section>
-      <div
-        className={`sticky top-0 px-4 py-1 text-xs font-semibold uppercase tracking-wide bg-background ${
-          isSpecial ? 'text-text-muted italic' : 'text-primary'
-        }`}
-      >
-        {headerText}
+    <div
+      style={{
+        border: '1px solid #eef1f7',
+        borderLeft: `5px solid ${color}`,
+        borderRadius: 16,
+        boxShadow: '0 2px 10px rgba(15,23,42,.05)',
+        animation: 'popIn 0.2s ease both',
+        backgroundColor: '#ffffff',
+      }}
+    >
+      <div className="flex items-center gap-2 px-4 py-3">
+        <span
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ backgroundColor: color }}
+        />
+        <span
+          className="flex-1 text-xs font-bold uppercase tracking-wide"
+          style={{ color }}
+        >
+          {label}
+        </span>
+        <span
+          className="text-xs font-semibold rounded-full px-2 py-0.5"
+          style={{ backgroundColor: tint, color }}
+        >
+          {count}
+        </span>
       </div>
-      <ul className="flex flex-col gap-2 mt-1">
+      <ul className="divide-y divide-[#f1f4f9]">
         {children}
       </ul>
-    </section>
+    </div>
   );
 }

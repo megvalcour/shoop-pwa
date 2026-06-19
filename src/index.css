@@ -6,12 +6,12 @@
   --color-accent: #F58A07;
   --color-accent-secondary: #F9AB55;
   --color-destructive: #E53E3E;
-  --color-surface: #FAFBFF;
+  --color-surface: #f5f7fb;
   --color-card: #FFFFFF;
   --color-text: #0F172A;
   --color-text-muted: #909CC2;
   --color-border: #D4D9EE;
-  --color-background: #FAFBFF;
+  --color-background: #f5f7fb;
 
   --font-display: 'Nunito', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
@@ -29,4 +29,19 @@ body {
   font-family: var(--font-body);
   background-color: var(--color-surface);
   color: var(--color-text);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }

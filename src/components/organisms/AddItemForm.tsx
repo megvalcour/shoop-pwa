@@ -3,8 +3,6 @@ import { useAddListItem } from '@/hooks/useListItems';
 import { useItems, useUpdateItemAisle } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
 import { useAisleMatcher } from '@/hooks/useAisleMatcher';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
 
 interface AddItemFormProps {
   listId: string;
@@ -67,27 +65,45 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
-        <label htmlFor="add-item-input" className="sr-only">
-          Item name
-        </label>
-        <Input
-          id="add-item-input"
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onBlur={primeMatcher}
-          placeholder="Add an item…"
-          className="flex-1"
-          disabled={isPending}
-        />
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={isPending || !value.trim()}
+      <form onSubmit={handleSubmit}>
+        <div
+          style={{
+            boxShadow: '0 8px 24px -8px rgba(8,72,135,.4)',
+            border: '1px solid #eaeef6',
+            borderRadius: 16,
+            backgroundColor: '#ffffff',
+          }}
+          className="flex items-center gap-3 px-4 py-3"
         >
-          Add
-        </Button>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0"
+          >
+            <path
+              d="M10 4v12M4 10h12"
+              stroke="#084887"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+          <label htmlFor="add-item-input" className="sr-only">
+            Item name
+          </label>
+          <input
+            id="add-item-input"
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={primeMatcher}
+            placeholder="Add an item…"
+            disabled={isPending}
+            className="flex-1 bg-transparent text-text placeholder:text-text-muted focus:outline-none text-base"
+          />
+        </div>
       </form>
       {showClassifying && (
         <p className="mt-1 text-xs text-text-muted animate-pulse">Classifying…</p>

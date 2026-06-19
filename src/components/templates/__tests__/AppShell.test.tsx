@@ -41,21 +41,21 @@ describe('AppShell', () => {
 
   it('Shop link is active on /', () => {
     renderWithRouter('/');
-    expect(screen.getByRole('link', { name: /Shop/ })).toHaveClass('text-accent');
-    expect(screen.getByRole('link', { name: /Default List/ })).not.toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Shop/ })).toHaveClass('text-[#f9a23b]');
+    expect(screen.getByRole('link', { name: /Default List/ })).not.toHaveClass('text-[#f9a23b]');
   });
 
   it('Default List link becomes active and Shop becomes inactive after navigating to /default-list', async () => {
     const user = userEvent.setup();
     renderWithRouter('/');
     await user.click(screen.getByRole('link', { name: /Default List/ }));
-    expect(screen.getByRole('link', { name: /Default List/ })).toHaveClass('text-accent');
-    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Default List/ })).toHaveClass('text-[#f9a23b]');
+    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-[#f9a23b]');
   });
 
   it('correct tab is highlighted on direct navigation to /settings', () => {
     renderWithRouter('/settings');
-    expect(screen.getByRole('link', { name: /Settings/ })).toHaveClass('text-accent');
-    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Settings/ })).toHaveClass('text-[#f9a23b]');
+    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-[#f9a23b]');
   });
 });

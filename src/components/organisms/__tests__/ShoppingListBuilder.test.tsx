@@ -11,7 +11,6 @@ vi.mock('@/hooks/useListItems', () => ({
 
 vi.mock('@/hooks/useItems', () => ({
   useItems: vi.fn(),
-  useUpdateItemAisle: vi.fn(),
 }));
 
 vi.mock('@/hooks/useAisles', () => ({
@@ -30,7 +29,7 @@ async function setup() {
   const { useListItems, useDeleteListItem, useToggleListItem } = await import(
     '@/hooks/useListItems'
   );
-  const { useItems, useUpdateItemAisle } = await import('@/hooks/useItems');
+  const { useItems } = await import('@/hooks/useItems');
   const { useAisles } = await import('@/hooks/useAisles');
   const ShoppingListBuilder = (await import('@/components/organisms/ShoppingListBuilder'))
     .default;
@@ -40,7 +39,6 @@ async function setup() {
     useDeleteListItem: vi.mocked(useDeleteListItem),
     useToggleListItem: vi.mocked(useToggleListItem),
     useItems: vi.mocked(useItems),
-    useUpdateItemAisle: vi.mocked(useUpdateItemAisle),
     useAisles: vi.mocked(useAisles),
     ShoppingListBuilder,
   };
@@ -48,7 +46,6 @@ async function setup() {
 
 const mockMutate = vi.fn();
 const mockToggleMutate = vi.fn();
-const mockUpdateAisleMutate = vi.fn();
 
 const AISLE_DAIRY = {
   id: 'aisle-1',
@@ -71,13 +68,11 @@ describe('ShoppingListBuilder', () => {
     vi.clearAllMocks();
     mockMutate.mockReset();
     mockToggleMutate.mockReset();
-    mockUpdateAisleMutate.mockReset();
   });
 
   function defaultMocks(mocks: Awaited<ReturnType<typeof setup>>) {
     mocks.useDeleteListItem.mockReturnValue({ mutate: mockMutate } as unknown as ReturnType<typeof mocks.useDeleteListItem>);
     mocks.useToggleListItem.mockReturnValue({ mutate: mockToggleMutate } as unknown as ReturnType<typeof mocks.useToggleListItem>);
-    mocks.useUpdateItemAisle.mockReturnValue({ mutate: mockUpdateAisleMutate } as unknown as ReturnType<typeof mocks.useUpdateItemAisle>);
     mocks.useAisles.mockReturnValue({ data: [] } as unknown as ReturnType<typeof mocks.useAisles>);
   }
 
@@ -176,7 +171,7 @@ describe('ShoppingListBuilder', () => {
     expect(mockToggleMutate).toHaveBeenCalledWith({ id: 'li-1', listId: 'list-1' });
   });
 
-  it('unchecked items with known aisle_id are grouped under the correct AisleGroup header', async () => {
+  it('unchecked items with known aisle_id are grouped under the correct AisleGroup label', async () => {
     const mocks = await setup();
     defaultMocks(mocks);
 
@@ -202,9 +197,9 @@ describe('ShoppingListBuilder', () => {
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
 
-    expect(screen.getByText('Aisle 1 — Dairy & Eggs')).toBeInTheDocument();
+    expect(screen.getByText('Dairy & Eggs')).toBeInTheDocument();
     expect(screen.getByText('Milk')).toBeInTheDocument();
-    expect(screen.getByText('Aisle 21 — Bread & Bakery')).toBeInTheDocument();
+    expect(screen.getByText('Bread & Bakery')).toBeInTheDocument();
     expect(screen.getByText('Bread')).toBeInTheDocument();
   });
 
@@ -230,7 +225,7 @@ describe('ShoppingListBuilder', () => {
     expect(screen.getByText('Mystery Item')).toBeInTheDocument();
   });
 
-  it('checked items appear in Done group below aisle groups', async () => {
+  it('checked items appear in Got it section below aisle groups', async () => {
     const mocks = await setup();
     defaultMocks(mocks);
 
@@ -256,14 +251,14 @@ describe('ShoppingListBuilder', () => {
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
 
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText(/got it/i)).toBeInTheDocument();
     expect(screen.getByText('Eggs')).toBeInTheDocument();
 
-    const doneHeader = screen.getByText('Done');
+    const gotItHeader = screen.getByText(/got it/i);
     const milkEl = screen.getByText('Milk');
-    // Done section appears after aisle groups in DOM
+    // Got it section appears after aisle groups in DOM
     expect(
-      doneHeader.compareDocumentPosition(milkEl) & Node.DOCUMENT_POSITION_PRECEDING,
+      gotItHeader.compareDocumentPosition(milkEl) & Node.DOCUMENT_POSITION_PRECEDING,
     ).toBeTruthy();
   });
 });

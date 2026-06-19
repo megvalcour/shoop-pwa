@@ -1,10 +1,10 @@
 ## Current Status
 
-refactor: harden Atomic structure
+feat: Redesign based off of Claude Design
 
 ## Active Task
 
-None.
+None
 
 ## Backlog
 
@@ -12,7 +12,10 @@ None.
 
 ### Shopping Lists
 
+- Let user categorize uncategorizable items (aisle picker removed from item rows in the design overhaul).
+- Most
 - Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows)
+- Edit item quantity on the shopping list (display/edit removed in the design overhaul; data model still stores it)
 
 ### Default List
 

@@ -1,6 +1,7 @@
 import { useListItems, useDeleteListItem, useToggleListItem } from '@/hooks/useListItems';
-import { useItems, useUpdateItemAisle } from '@/hooks/useItems';
+import { useItems } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
+import { aisleColorFor } from '@/utils/aisleColor';
 import GroceryListItem from '@/components/molecules/GroceryListItem';
 import AisleGroup from '@/components/molecules/AisleGroup';
 import type { Aisle, Item, ListItem } from '@/db/schema';
@@ -20,7 +21,6 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   const { data: aisles } = useAisles();
   const deleteItem = useDeleteListItem();
   const toggleItem = useToggleListItem();
-  const updateItemAisle = useUpdateItemAisle();
 
   const itemById = new Map<string, Item>((items ?? []).map((item) => [item.id, item]));
   const aisleById = new Map<string, Aisle>((aisles ?? []).map((a) => [a.id, a]));
@@ -38,7 +38,13 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   }
 
   const unchecked = listItems.filter((li) => !li.checked);
-  const checked = listItems.filter((li) => li.checked);
+  const checked = listItems
+    .filter((li) => li.checked)
+    .sort((a, b) => {
+      const aisleA = aisleById.get(itemById.get(a.item_id)?.aisle_id ?? '');
+      const aisleB = aisleById.get(itemById.get(b.item_id)?.aisle_id ?? '');
+      return (aisleA?.sort_order ?? Infinity) - (aisleB?.sort_order ?? Infinity);
+    });
 
   // Group unchecked by aisle
   const bucketMap = new Map<string, ListItem[]>();
@@ -64,49 +70,73 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
     .map(([aisleId, lis]) => ({ aisle: aisleById.get(aisleId)!, listItems: lis }))
     .sort((a, b) => a.aisle.sort_order - b.aisle.sort_order);
 
-  function renderListItem(li: ListItem) {
+  function renderListItem(li: ListItem, color: string) {
     const item = itemById.get(li.item_id);
-    const aisleId = item?.aisle_id ?? '';
-    const aisle = aisleById.get(aisleId);
-    const isAnalyzing = !li.checked && (!aisleId || !aisleById.has(aisleId));
-
     return (
       <GroceryListItem
         key={li.id}
         name={item?.name ?? 'Unknown item'}
-        quantity={li.quantity}
+        color={color}
         checked={li.checked}
         onToggle={() => toggleItem.mutate({ id: li.id, listId })}
         onDelete={() => deleteItem.mutate({ id: li.id, listId })}
-        aisleLabel={aisle?.label}
-        isAnalyzing={isAnalyzing}
-        aisles={aisles}
-        currentAisleId={aisleId}
-        onAisleChange={(newAisleId) =>
-          updateItemAisle.mutate({ itemId: li.item_id, aisleId: newAisleId })
-        }
       />
     );
   }
 
+  const fallbackColor = aisleColorFor('');
+
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      {sortedBuckets.map(({ aisle, listItems: lis }) => (
-        <AisleGroup key={aisle.id} label={aisle.label} number={aisle.number}>
-          {lis.map(renderListItem)}
-        </AisleGroup>
-      ))}
+    <div className="flex flex-col gap-4">
+      {sortedBuckets.map(({ aisle, listItems: lis }) => {
+        const { color, tint } = aisleColorFor(aisle.label);
+        return (
+          <AisleGroup
+            key={aisle.id}
+            label={aisle.label}
+            number={aisle.number}
+            color={color}
+            tint={tint}
+            count={lis.length}
+          >
+            {lis.map((li) => renderListItem(li, color))}
+          </AisleGroup>
+        );
+      })}
 
       {uncategorized.length > 0 && (
-        <AisleGroup label="Uncategorized" isSpecial>
-          {uncategorized.map(renderListItem)}
+        <AisleGroup
+          label="Uncategorized"
+          color={fallbackColor.color}
+          tint={fallbackColor.tint}
+          count={uncategorized.length}
+        >
+          {uncategorized.map((li) => renderListItem(li, fallbackColor.color))}
         </AisleGroup>
       )}
 
       {checked.length > 0 && (
-        <AisleGroup label="Done" isSpecial>
-          {checked.map(renderListItem)}
-        </AisleGroup>
+        <div>
+          <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2">
+            Got it · {checked.length}
+          </div>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#eef1f6' }}>
+            {checked.map((li) => {
+              const item = itemById.get(li.item_id);
+              const aisle = aisleById.get(item?.aisle_id ?? '');
+              const { color } = aisleColorFor(aisle?.label ?? '');
+              return (
+                <GroceryListItem
+                  key={li.id}
+                  name={item?.name ?? 'Unknown item'}
+                  color={color}
+                  checked={true}
+                  onToggle={() => toggleItem.mutate({ id: li.id, listId })}
+                />
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
