@@ -1,10 +1,10 @@
 ## Current Status
 
-refactor: harden Atomic structure
+feat: aisle matcher accuracy (layered lexical + semantic matching)
 
 ## Active Task
 
-Aisle matcher accuracy — see `tasks/active--aisle-matcher-accuracy.md` (plan only; not yet implemented).
+Aisle matcher accuracy — see `tasks/active--aisle-matcher-accuracy.md`. Phases 0–3, 5, 6 implemented (root-cause filter removed, pure `classifier.ts` service + alias layer + ADR-0011). **Phase 4 (oxford-62.json data-quality corrections) is deferred pending user confirmation** — see Open Questions in the task file. E2E (`test:e2e`) not runnable in the dev sandbox (Playwright browser download blocked); deterministic seeds mean it should be unaffected — confirm in CI.
 
 ## Backlog
 
