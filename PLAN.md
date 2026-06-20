@@ -1,10 +1,10 @@
 ## Current Status
 
-refactor: harden Atomic structure
+Aisle matcher accuracy — complete (see `tasks/complete--aisle-matcher-accuracy.md`). Layered lexical + semantic matching; Phase 4 data-quality pass skipped per user. E2E not runnable in the dev sandbox (Playwright browser download blocked) — confirm green in CI.
 
 ## Active Task
 
-Aisle matcher accuracy — see `tasks/active--aisle-matcher-accuracy.md` (plan only; not yet implemented).
+None — pick the next item from the backlog below.
 
 ## Backlog
 

@@ -2,28 +2,54 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { pipeline } from '@huggingface/transformers';
 import type { Aisle } from '@/db/schema';
 import catalogData from '@/assets/aisles/oxford-62.json';
+import aliasData from '@/assets/aisles/oxford-62-aliases.json';
+import {
+  buildCandidates,
+  lexicalMatch,
+  aggregateTopK,
+  THRESHOLD,
+  TOP_K,
+  type AliasMap,
+  type Candidate,
+} from '@/services/classifier';
 
 type EmbedPipeline = (
   text: string,
   opts: { pooling: 'mean'; normalize: boolean },
 ) => Promise<{ tolist(): number[][] }>;
 
-interface CatalogEntry {
-  item: string;
-  aisle: string;
+interface EmbeddedCandidate {
+  aisleNumber: string;
   embedding: number[];
 }
 
 let pipelinePromise: Promise<EmbedPipeline> | null = null;
 
-let catalogReadyPromise: Promise<CatalogEntry[]> | null = null;
+let catalogReadyPromise: Promise<EmbeddedCandidate[]> | null = null;
 
-let catalogEmbeddingsCache: CatalogEntry[] | null = null;
+let catalogEmbeddingsCache: EmbeddedCandidate[] | null = null;
+
+let candidatesCache: Candidate[] | null = null;
+
+// The candidate set (catalog phrases + aliases) is pure data and is built lazily
+// without touching the model, so the lexical fast-path works before — or without
+// ever — loading the WASM pipeline.
+function getCandidates(): Candidate[] {
+  if (!candidatesCache) {
+    const { aisles, items } = catalogData as {
+      aisles: { id: string; number: string }[];
+      items: { canonical_name: string; aisle_id: string }[];
+    };
+    const aisleById = new Map(aisles.map((a) => [a.id, a.number]));
+    candidatesCache = buildCandidates(items, aliasData as AliasMap, aisleById);
+  }
+  return candidatesCache;
+}
 
 // Lazily loads the model + catalog embeddings exactly once across the app.
 // Nothing happens until the first caller invokes this (e.g. on input blur),
 // so the heavy WASM model never loads in the empty/initial state.
-function ensureLoaded(): Promise<CatalogEntry[]> {
+function ensureLoaded(): Promise<EmbeddedCandidate[]> {
   if (!pipelinePromise) {
     pipelinePromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
       dtype: 'fp32',
@@ -44,22 +70,13 @@ async function embed(pipe: EmbedPipeline, text: string): Promise<number[]> {
   return output.tolist()[0];
 }
 
-async function buildCatalogEmbeddings(pipe: EmbedPipeline): Promise<CatalogEntry[]> {
+async function buildCatalogEmbeddings(pipe: EmbedPipeline): Promise<EmbeddedCandidate[]> {
   if (catalogEmbeddingsCache) return catalogEmbeddingsCache;
 
-  const { aisles, items } = catalogData as {
-    aisles: { id: string; number: string }[];
-    items: { canonical_name: string; aisle_id: string }[];
-  };
-
-  const aisleById = new Map(aisles.map((a) => [a.id, a]));
-
-  const entries: CatalogEntry[] = [];
-  for (const item of items) {
-    const aisle = aisleById.get(item.aisle_id);
-    if (!aisle || !/^\d+$/.test(aisle.number)) continue;
-    const embedding = await embed(pipe, item.canonical_name);
-    entries.push({ item: item.canonical_name, aisle: aisle.number, embedding });
+  const entries: EmbeddedCandidate[] = [];
+  for (const candidate of getCandidates()) {
+    const embedding = await embed(pipe, candidate.phrase);
+    entries.push({ aisleNumber: candidate.aisleNumber, embedding });
   }
 
   catalogEmbeddingsCache = entries;
@@ -96,26 +113,30 @@ export function useAisleMatcher(): AisleMatcherResult {
 
   const classify = async (itemName: string, aisles: Aisle[]): Promise<string> => {
     if (!itemName.trim()) return '';
+
+    const candidates = getCandidates();
+    const resolve = (aisleNumber: string): string =>
+      aisles.find((a) => a.number === aisleNumber)?.id ?? '';
+
+    // Lexical fast-path: deterministic, offline, no model required.
+    const lexical = lexicalMatch(itemName, candidates);
+    if (lexical?.confident) return resolve(lexical.aisleNumber);
+
+    // Semantic fallback: embed the query and vote across the top-k neighbours.
     if (!pipelinePromise || !catalogEmbeddingsCache) return '';
 
     const pipe = await pipelinePromise;
     const embedding = await embed(pipe, itemName);
 
-    let bestScore = -Infinity;
-    let bestAisleNumber = '';
+    const scored = catalogEmbeddingsCache.map((entry) => ({
+      aisleNumber: entry.aisleNumber,
+      score: dotProduct(embedding, entry.embedding),
+    }));
 
-    for (const entry of catalogEmbeddingsCache) {
-      const score = dotProduct(embedding, entry.embedding);
-      if (score > bestScore) {
-        bestScore = score;
-        bestAisleNumber = entry.aisle;
-      }
-    }
+    const winner = aggregateTopK(scored, TOP_K);
+    if (!winner || winner.score < THRESHOLD) return '';
 
-    if (bestScore < 0.5 || !bestAisleNumber) return '';
-
-    const match = aisles.find((a) => a.number === bestAisleNumber);
-    return match?.id ?? '';
+    return resolve(winner.aisleNumber);
   };
 
   return { prime, classify, isReady };

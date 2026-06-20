@@ -69,46 +69,46 @@ Pure functions (normalization, lexical match, top-k aggregation, threshold) move
 
 ### Phase 0 — Reproduce & baseline
 
-- [ ] 0.1 Add a representative query→expected-aisle **fixture** (`src/services/__tests__/fixtures/aisle-cases.ts`): bananas→Produce, fresh fruit→Produce, fresh mozzarella→Cheese Case, ground beef→Meat, salmon→Deli/Fish, sourdough bread→Bakery, ice cream→Freezer Wall, milk→Aisle 1, ketchup→Aisle 2, etc. (~25 cases covering every department + a sample of numbered aisles).
-- [ ] 0.2 Record current (buggy) outputs in the plan/PR description as the baseline to beat.
+- [x] 0.1 Add a representative query→expected-aisle **fixture** (`src/services/__tests__/fixtures/aisle-cases.ts`): bananas→Produce, fresh fruit→Produce, fresh mozzarella→Cheese Case, ground beef→Meat, salmon→Deli/Fish, sourdough bread→Bakery, ice cream→Freezer Wall, milk→Aisle 1, ketchup→Aisle 2, etc. (~25 cases covering every department + a sample of numbered aisles).
+- [x] 0.2 Record current (buggy) outputs in the plan/PR description as the baseline to beat.
 
 ### Phase 1 — Root-cause fix (minimal, high impact)
 
-- [ ] 1.1 In `buildCatalogEmbeddings`, **remove the `/^\d+$/` numeric filter**; keep only the `!aisle` guard so all 30 aisles become candidates.
-- [ ] 1.2 Update `src/hooks/__tests__/useAisleMatcher.test.ts` — the current mock comment `// non-numeric aisle, should be filtered` encodes the bug. Change the mock + assertion so a `Produce Dept` item is now matchable.
-- [ ] 1.3 `npm run validate`. This alone should move bananas/fresh-fruit and fresh-mozzarella to the correct departments in many cases; Phases 2–3 make it robust.
+- [x] 1.1 In `buildCatalogEmbeddings`, **remove the `/^\d+$/` numeric filter**; keep only the `!aisle` guard so all 30 aisles become candidates.
+- [x] 1.2 Update `src/hooks/__tests__/useAisleMatcher.test.ts` — the current mock comment `// non-numeric aisle, should be filtered` encodes the bug. Change the mock + assertion so a `Produce Dept` item is now matchable.
+- [x] 1.3 `npm run validate`. This alone should move bananas/fresh-fruit and fresh-mozzarella to the correct departments in many cases; Phases 2–3 make it robust.
 
 ### Phase 2 — Extract pure, testable scoring service
 
-- [ ] 2.1 Create `src/services/classifier.ts` with pure functions (no model import):
+- [x] 2.1 Create `src/services/classifier.ts` with pure functions (no model import):
   - `normalize(text: string): string[]` — lowercase, strip punctuation, reverse `category: qualifier`, split on `: - / &`, drop stopwords (`fresh`, `packaged`, `canned` handled as qualifiers not noise — keep them; they disambiguate Produce vs. canned).
   - `buildCandidates(catalogItems, aliases, aisleById): Candidate[]` — one entry per catalog item **and** per alias, each `{ text, aisleNumber }`.
   - `lexicalMatch(query, candidates): { aisleNumber: string; confident: boolean } | null` — exact/alias/token match.
   - `aggregateTopK(scored: {aisleNumber, score}[], k): { aisleNumber, score }` — group top-k by aisle, sum/mean, return the winner (voting).
   - `THRESHOLD` constant (start at the current `0.5`, tune in Phase 5).
-- [ ] 2.2 `useAisleMatcher.ts` consumes the service: builds candidates once (cached at module level), runs `lexicalMatch` first; on miss, embeds + scores via `aggregateTopK`. Embedding/memoization stays in the hook (ADR-0003). Public API (`prime`, `classify`, `isReady`) is unchanged.
-- [ ] 2.3 Unit-test `classifier.ts` against the Phase 0 fixture using the **lexical path only** (deterministic, no WASM). This is the regression net.
+- [x] 2.2 `useAisleMatcher.ts` consumes the service: builds candidates once (cached at module level), runs `lexicalMatch` first; on miss, embeds + scores via `aggregateTopK`. Embedding/memoization stays in the hook (ADR-0003). Public API (`prime`, `classify`, `isReady`) is unchanged.
+- [x] 2.3 Unit-test `classifier.ts` against the Phase 0 fixture using the **lexical path only** (deterministic, no WASM). This is the regression net.
 
 ### Phase 3 — Alias layer + catalog phrasing
 
-- [ ] 3.1 Author `src/assets/aisles/oxford-62-aliases.json` (matcher-only; see Data Strategy). Cover every non-numbered department thoroughly plus common numbered-aisle nouns.
-- [ ] 3.2 Feed aliases into both `buildCandidates` (semantic) and `lexicalMatch` (fast-path).
-- [ ] 3.3 Normalize catalog phrases for embedding (`fruit: fresh` → `fresh fruit`) so the semantic fallback also improves.
+- [x] 3.1 Author `src/assets/aisles/oxford-62-aliases.json` (matcher-only; see Data Strategy). Cover every non-numbered department thoroughly plus common numbered-aisle nouns.
+- [x] 3.2 Feed aliases into both `buildCandidates` (semantic) and `lexicalMatch` (fast-path).
+- [x] 3.3 Normalize catalog phrases for embedding (`fruit: fresh` → `fresh fruit`) so the semantic fallback also improves.
 
 ### Phase 4 — Data quality pass (flag-then-fix)
 
-- [ ] 4.1 Audit `oxford-62.json` for clear mis-filings. **Known:** `cottage cheese` → Personal Care (Aisle 10); almost certainly should be Dairy & Eggs (Aisle 1). Because this is the user's real store layout, **list every proposed correction in the PR and confirm with the user before editing** rather than mass-editing. (Migration note: the file is also the seed — existing installs won't re-seed, so a corrected aisle only affects fresh installs unless we bump `DB_VERSION` with an append-only migration. Decide with user; default = fix data only, no migration.)
+- [~] 4.1 **Skipped per user (2026-06-20).** `oxford-62.json` left untouched; no `DB_VERSION` migration. Audit `oxford-62.json` for clear mis-filings. **Known:** `cottage cheese` → Personal Care (Aisle 10); almost certainly should be Dairy & Eggs (Aisle 1). Because this is the user's real store layout, **list every proposed correction in the PR and confirm with the user before editing** rather than mass-editing. (Migration note: the file is also the seed — existing installs won't re-seed, so a corrected aisle only affects fresh installs unless we bump `DB_VERSION` with an append-only migration. Decide with user; default = fix data only, no migration.)
 
 ### Phase 5 — Tune & validate
 
-- [ ] 5.1 Re-run the fixture through the full layered matcher (lexical + semantic); tune `THRESHOLD` and `k`.
-- [ ] 5.2 `npm run validate` (typecheck + lint + Vitest).
+- [x] 5.1 Re-run the fixture through the full layered matcher (lexical + semantic); tune `THRESHOLD` and `k`.
+- [x] 5.2 `npm run validate` (typecheck + lint + Vitest).
 - [ ] 5.3 `npm run test:e2e` — `smart-aisle-location.spec.ts` seeds deterministic aisle_ids, so it should be unaffected; confirm green (CLAUDE.md: validate is not E2E).
-- [ ] 5.4 Manual smoke in `npm run dev`: bananas → Produce, fresh mozzarella → Cheese Case, ground beef → Meat, salmon → Deli/Fish.
+- [ ] 5.4 Manual smoke in `npm run dev`: bananas → Produce, fresh mozzarella → Cheese Case, ground beef → Meat, salmon → Deli/Fish. (Not run manually — these exact four cases are asserted deterministically by the `classifier.test.ts` lexical fixture instead.)
 
 ### Phase 6 — Document the decision
 
-- [ ] 6.1 Write **ADR-0011: Layered lexical + semantic aisle matching** (supersedes the pure-NN approach noted in ADR-0003; does **not** edit ADR-0003). Record the alias-file location and the seed-vs-matcher data separation.
+- [x] 6.1 Write **ADR-0011: Layered lexical + semantic aisle matching** (supersedes the pure-NN approach noted in ADR-0003; does **not** edit ADR-0003). Record the alias-file location and the seed-vs-matcher data separation.
 
 ## Files
 
