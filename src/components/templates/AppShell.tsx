@@ -1,16 +1,20 @@
-import { Outlet, NavLink } from 'react-router';
+import { Outlet, NavLink, useLocation } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCartShopping, faClipboardList, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faCartShopping, faGear } from '@fortawesome/free-solid-svg-icons';
+import StoreHeader from '@/components/organisms/StoreHeader';
 
 const NAV_ITEMS = [
   { to: '/', end: true, icon: faCartShopping, label: 'Shop' },
-  { to: '/default-list', end: false, icon: faClipboardList, label: 'Default List' },
   { to: '/settings', end: false, icon: faGear, label: 'Settings' },
 ] as const;
 
 export default function AppShell() {
+  const location = useLocation();
+  const isOnListDetail = location.pathname.startsWith('/lists/');
+
   return (
     <div className="flex flex-col h-dvh">
+      <StoreHeader />
       <main className="flex-1 min-h-0 overflow-y-auto">
         <Outlet />
       </main>
@@ -23,7 +27,9 @@ export default function AppShell() {
             className={({ isActive }) =>
               [
                 'flex flex-col items-center gap-0.5 px-4 py-2 rounded-lg transition-colors',
-                isActive ? 'text-accent bg-accent/10' : 'text-primary-foreground',
+                isActive || (to === '/' && isOnListDetail)
+                  ? 'text-accent bg-accent/10'
+                  : 'text-primary-foreground',
               ].join(' ')
             }
           >

@@ -111,7 +111,7 @@ test.describe('Smart Aisle Location', () => {
     await expect(page.getByText('Choose aisle')).toBeVisible();
 
     // Select Household Supplies (Aisle 12) instead
-    await page.getByText('Aisle 12 — Household Supplies').click();
+    await page.getByRole('button', { name: 'Aisle 12 — Household Supplies' }).click();
 
     // The sheet should close and the badge should update
     await expect(page.getByText('Choose aisle')).not.toBeVisible();
@@ -131,6 +131,6 @@ test.describe('Smart Aisle Location', () => {
     await expect(input).toHaveValue('');
 
     // The new item appears somewhere in the list (aisle placement is non-deterministic)
-    await expect(page.getByText('Cereal')).toBeVisible();
+    await expect(page.getByText('Cereal', { exact: true })).toBeVisible();
   });
 });

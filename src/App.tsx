@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import AppShell from '@/components/templates/AppShell';
-import ShoppingListsRoute from '@/routes/ShoppingListsRoute';
+import ShopRoute from '@/routes/ShopRoute';
 import ShoppingListDetailRoute from '@/routes/ShoppingListDetailRoute';
 import DefaultListRoute from '@/routes/DefaultListRoute';
 import SettingsRoute from '@/routes/SettingsRoute';
@@ -10,7 +10,7 @@ const router = createBrowserRouter([
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <ShoppingListsRoute /> },
+      { index: true, element: <ShopRoute /> },
       { path: 'lists/:id', element: <ShoppingListDetailRoute /> },
       { path: 'default-list', element: <DefaultListRoute /> },
       { path: 'settings', element: <SettingsRoute /> },

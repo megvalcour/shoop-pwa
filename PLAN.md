@@ -1,14 +1,12 @@
 ## Current Status
 
-Aisle matcher accuracy — complete (see `tasks/complete--aisle-matcher-accuracy.md`). Layered lexical + semantic matching; Phase 4 data-quality pass skipped per user. E2E not runnable in the dev sandbox (Playwright browser download blocked) — confirm green in CI.
+`feat(nav): shop-as-root redirect, store header, 2-tab bottom nav, settings as list manager`
 
 ## Active Task
 
-None — pick the next item from the backlog below.
+None.
 
 ## Backlog
-
-### Audit
 
 ### Shopping Lists
 

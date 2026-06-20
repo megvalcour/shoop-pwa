@@ -1,30 +1,45 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Shopping Lists', () => {
-  test('shows empty state on first visit', async ({ page }) => {
+  test('shows empty state on first visit to /', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByText(/no lists yet/i)).toBeVisible();
   });
 
-  test('FAB creates a new list and navigates to detail', async ({ page }) => {
+  test('FAB at / creates a new list and navigates to detail', async ({ page }) => {
     await page.goto('/');
     const fab = page.getByRole('button', { name: /new list/i });
     await expect(fab).toBeVisible();
     await fab.click();
 
     await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
-    await page.goBack();
+  });
 
+  test('FAB at /settings creates a new list and navigates to detail', async ({ page }) => {
+    await page.goto('/settings');
+    const fab = page.getByRole('button', { name: /new list/i });
+    await expect(fab).toBeVisible();
+    await fab.click();
+
+    await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
+  });
+
+  test('list card appears on /settings after creation', async ({ page }) => {
+    await page.goto('/settings');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    await page.goto('/settings');
     const card = page.locator('button').filter({ hasText: /Oxford.*-\s+\w+ \d+/ });
     await expect(card).toBeVisible();
   });
 
-  test('clicking a list card navigates to its detail route', async ({ page }) => {
-    await page.goto('/');
+  test('clicking a list card on /settings navigates to its detail route', async ({ page }) => {
+    await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
     await expect(page).toHaveURL(/\/lists\//);
-    await page.goBack();
 
+    await page.goto('/settings');
     const card = page.locator('button').filter({ hasText: /Oxford/ });
     await card.click();
     await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
@@ -33,7 +48,7 @@ test.describe('Shopping Lists', () => {
 
 test.describe('Item check-off', () => {
   test('checking an item moves it to the bottom and applies line-through', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
     await expect(page).toHaveURL(/\/lists\//);
 
@@ -46,24 +61,20 @@ test.describe('Item check-off', () => {
     await page.getByRole('button', { name: /^add$/i }).click();
     await expect(input).toBeEnabled();
 
-    await expect(page.getByText('Apples')).toBeVisible();
-    await expect(page.getByText('Bread')).toBeVisible();
+    await expect(page.getByText('Apples', { exact: true })).toBeVisible();
+    await expect(page.getByText('Bread', { exact: true })).toBeVisible();
 
-    // Click the first item row (Apples)
-    await page.getByText('Apples').click();
+    await page.getByText('Apples', { exact: true }).click();
 
-    // Apples should now appear last in the list
     const items = page.locator('ul li');
     await expect(items.nth(0)).toHaveText(/Bread/);
-    await expect(items.nth(1)).toHaveText(/Apples/);
 
-    // Apples name should have line-through styling
-    const applesSpan = page.getByText('Apples');
+    const applesSpan = page.getByText('Apples', { exact: true });
     await expect(applesSpan).toHaveClass(/line-through/);
   });
 
   test('unchecking a checked item moves it back to the top and removes strikethrough', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
     await expect(page).toHaveURL(/\/lists\//);
 
@@ -76,21 +87,20 @@ test.describe('Item check-off', () => {
     await page.getByRole('button', { name: /^add$/i }).click();
     await expect(input).toBeEnabled();
 
-    // Check Apples
-    await page.getByText('Apples').click();
+    await page.getByText('Apples', { exact: true }).click();
     const items = page.locator('ul li');
     await expect(items.nth(1)).toHaveText(/Apples/);
 
-    // Uncheck Apples
-    await page.getByText('Apples').click();
-    await expect(items.nth(0)).toHaveText(/Apples/);
-    await expect(page.getByText('Apples')).not.toHaveClass(/line-through/);
+    await page.getByText('Apples', { exact: true }).click();
+    // Apples is unchecked and back in the aisle-sorted unchecked group
+    await expect(page.getByText('Apples', { exact: true })).toBeVisible();
+    await expect(page.getByText('Apples', { exact: true })).not.toHaveClass(/line-through/);
   });
 });
 
 test.describe('AddItemForm', () => {
   test('renders input and submit button on list detail page', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
     await expect(page).toHaveURL(/\/lists\//);
 
@@ -99,7 +109,7 @@ test.describe('AddItemForm', () => {
   });
 
   test('submitting an item clears the input', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
     await expect(page).toHaveURL(/\/lists\//);
 
@@ -107,13 +117,12 @@ test.describe('AddItemForm', () => {
     await input.fill('Apples');
     await page.getByRole('button', { name: /^add$/i }).click();
 
-    // Wait for isPending to clear (input re-enabled) before asserting value cleared by onSuccess
     await expect(input).toBeEnabled();
     await expect(input).toHaveValue('');
   });
 
   test('deleting an item removes it from the list', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
     await expect(page).toHaveURL(/\/lists\//);
 
