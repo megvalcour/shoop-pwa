@@ -4,7 +4,7 @@ refactor: harden Atomic structure
 
 ## Active Task
 
-None.
+Aisle matcher accuracy — see `tasks/active--aisle-matcher-accuracy.md` (plan only; not yet implemented).
 
 ## Backlog
 
