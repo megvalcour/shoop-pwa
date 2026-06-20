@@ -91,11 +91,17 @@ export function useAddListItem() {
 
       return { itemCreated, newItemId: itemId };
     },
+    // Return the invalidation promise so mutateAsync stays pending until the
+    // refetch settles. This keeps the list query and the resolved mutation in
+    // lockstep — without it, the post-mutation refetch resolves after the
+    // mutation has already settled, so an observer can miss the trailing update.
     onSuccess: ({ itemCreated }, { listId }) => {
-      queryClient.invalidateQueries({ queryKey: listItemsKey(listId) });
-      if (itemCreated) {
-        queryClient.invalidateQueries({ queryKey: ['items'] });
-      }
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: listItemsKey(listId) }),
+        itemCreated
+          ? queryClient.invalidateQueries({ queryKey: ['items'] })
+          : Promise.resolve(),
+      ]);
     },
   });
 }
