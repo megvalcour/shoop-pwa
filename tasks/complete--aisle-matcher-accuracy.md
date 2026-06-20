@@ -97,7 +97,7 @@ Pure functions (normalization, lexical match, top-k aggregation, threshold) move
 
 ### Phase 4 — Data quality pass (flag-then-fix)
 
-- [ ] 4.1 Audit `oxford-62.json` for clear mis-filings. **Known:** `cottage cheese` → Personal Care (Aisle 10); almost certainly should be Dairy & Eggs (Aisle 1). Because this is the user's real store layout, **list every proposed correction in the PR and confirm with the user before editing** rather than mass-editing. (Migration note: the file is also the seed — existing installs won't re-seed, so a corrected aisle only affects fresh installs unless we bump `DB_VERSION` with an append-only migration. Decide with user; default = fix data only, no migration.)
+- [~] 4.1 **Skipped per user (2026-06-20).** `oxford-62.json` left untouched; no `DB_VERSION` migration. Audit `oxford-62.json` for clear mis-filings. **Known:** `cottage cheese` → Personal Care (Aisle 10); almost certainly should be Dairy & Eggs (Aisle 1). Because this is the user's real store layout, **list every proposed correction in the PR and confirm with the user before editing** rather than mass-editing. (Migration note: the file is also the seed — existing installs won't re-seed, so a corrected aisle only affects fresh installs unless we bump `DB_VERSION` with an append-only migration. Decide with user; default = fix data only, no migration.)
 
 ### Phase 5 — Tune & validate
 
