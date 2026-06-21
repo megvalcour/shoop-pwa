@@ -16,6 +16,7 @@ function renderWithRouter(initialPath = '/') {
         children: [
           { index: true, element: <div>Shop content</div> },
           { path: 'lists/:id', element: <div>List detail</div> },
+          { path: 'stores/:id', element: <div>Store detail</div> },
           { path: 'settings', element: <SettingsRoute /> },
         ],
       },
@@ -61,6 +62,12 @@ describe('AppShell', () => {
     renderWithRouter('/lists/some-uuid');
     expect(screen.getByRole('link', { name: /Shop/ })).toHaveClass('text-accent');
     expect(screen.getByRole('link', { name: /Settings/ })).not.toHaveClass('text-accent');
+  });
+
+  it('Settings tab is active when URL is /stores/:id', () => {
+    renderWithRouter('/stores/some-uuid');
+    expect(screen.getByRole('link', { name: /Settings/ })).toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-accent');
   });
 
   it('StoreHeader renders Oxford store name after DB loads', async () => {

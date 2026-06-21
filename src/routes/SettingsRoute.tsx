@@ -3,9 +3,11 @@ import { useNavigate, NavLink } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import ShoppingListCard from '@/components/molecules/ShoppingListCard';
+import StoreListEntry from '@/components/molecules/StoreListEntry';
 import ConfirmDialog from '@/components/molecules/ConfirmDialog';
 import Button from '@/components/atoms/Button';
 import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingLists';
+import { useStores } from '@/hooks/useStores';
 import { useCreateAndNavigateToList } from '@/hooks/useCreateAndNavigateToList';
 import { useResetData } from '@/hooks/useResetData';
 import type { ShoppingList } from '@/db/schema';
@@ -13,11 +15,29 @@ import type { ShoppingList } from '@/db/schema';
 export default function SettingsRoute() {
   const navigate = useNavigate();
   const { data: lists, isPending, isError } = useShoppingLists();
+  const { data: stores, isPending: storesPending, isError: storesError } = useStores();
   const { createAndNavigate, isPending: isCreating, isError: isCreateError } = useCreateAndNavigateToList();
   const deleteList = useDeleteShoppingList();
   const resetData = useResetData();
   const [pendingDelete, setPendingDelete] = useState<ShoppingList | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
+
+  function renderStoresContent() {
+    if (storesPending) return <p className="text-text-muted text-sm">Loading…</p>;
+    if (storesError) return <p className="text-destructive text-sm">Failed to load stores.</p>;
+    if (!stores || stores.length === 0) return <p className="text-text-muted text-sm">No stores yet.</p>;
+    return (
+      <div className="flex flex-col gap-3">
+        {stores.map((store) => (
+          <StoreListEntry
+            key={store.id}
+            store={store}
+            onClick={() => navigate(`/stores/${store.id}`)}
+          />
+        ))}
+      </div>
+    );
+  }
 
   function renderListsContent() {
     if (isPending) return <p className="text-text-muted text-sm">Loading…</p>;
@@ -42,6 +62,11 @@ export default function SettingsRoute() {
       <section className="px-4 pt-6">
         <h2 className="font-display font-bold text-text text-lg mb-3">Your Lists</h2>
         {renderListsContent()}
+      </section>
+
+      <section className="px-4 pt-6">
+        <h2 className="font-display font-bold text-text text-lg mb-3">Your Stores</h2>
+        {renderStoresContent()}
       </section>
 
       <section className="px-4 pt-6">

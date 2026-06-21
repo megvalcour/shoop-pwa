@@ -1,5 +1,5 @@
 ---
-status: planning
+status: complete
 class: standard
 e2e_required: true
 clarifications: |
@@ -170,17 +170,17 @@ handle pending/error/not-found).
 
 ## Implementation checklist
 
-- [ ] Create `src/components/molecules/StoreListEntry.tsx`.
-- [ ] Create `src/components/molecules/AisleCard.tsx`.
-- [ ] Add optional size prop to `src/components/atoms/StoreLogo.tsx` (default unchanged).
-- [ ] Create `src/routes/StoreDetailRoute.tsx`.
-- [ ] Add "Your Stores" section to `src/routes/SettingsRoute.tsx`.
-- [ ] Register `stores/:id` in `src/App.tsx`.
-- [ ] Extend `src/components/templates/AppShell.tsx` Settings active-state.
-- [ ] Unit tests (see below).
-- [ ] E2E flow (see below).
-- [ ] `npm run validate` clean.
-- [ ] `npm run test:e2e` green.
+- [x] Create `src/components/molecules/StoreListEntry.tsx`.
+- [x] Create `src/components/molecules/AisleCard.tsx`.
+- [x] Add optional size prop to `src/components/atoms/StoreLogo.tsx` (default unchanged).
+- [x] Create `src/routes/StoreDetailRoute.tsx`.
+- [x] Add "Your Stores" section to `src/routes/SettingsRoute.tsx`.
+- [x] Register `stores/:id` in `src/App.tsx`.
+- [x] Extend `src/components/templates/AppShell.tsx` Settings active-state.
+- [x] Unit tests (see below).
+- [x] E2E flow (see below).
+- [x] `npm run validate` clean.
+- [x] `npm run test:e2e` green.
 
 ## Tests
 
