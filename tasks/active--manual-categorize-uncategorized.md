@@ -36,6 +36,40 @@ follow the same override logic ("a set aisle is never auto-overwritten"), the
 is still `aisle_id === ''`), while the **manual pick stays unconditional and
 always wins**.
 
+### Why this also fixes the cross-list revert (primary motivation for Part B)
+
+Reported symptom: an item fixed in one list (e.g. Kefir → Dairy) keeps reverting
+to the wrong aisle when added to a *future* list.
+
+Aisle is a property of the **global `items` record**, not of the list.
+`addListItem` de-dupes by `canonical_name` and **reuses the same item** across
+lists, so a correct fix should persist everywhere for free. Only two code paths
+ever write `item.aisle_id`: new-item creation (`useListItems.ts`, always `''`)
+and `useUpdateItemAisle` (`useItems.ts`, used by both manual and auto). So a
+persistent cross-list revert means the **wrong aisle is written to the shared
+item *after* the fix** — the exact clobber race above:
+
+1. Add Kefir → global item `aisle_id: ''`; classifier starts (worker still
+   loading on first use).
+2. Worker ready → reclassify effect kicks off `classify(Kefir)` async. The effect
+   filters `aisle_id === ''` only at the *start*, never re-checks before writing.
+3. User taps Kefir → sets **Dairy** → global `aisle_id: Dairy`.
+4. `classify` resolves wrong → unconditional `put` → global `aisle_id: <wrong>`.
+   **Every future list that reuses the item now shows the wrong aisle.**
+
+Part B's write-time guard closes the gap (re-read; skip if `aisle_id !== ''`), so
+a late classify can never overwrite a manual choice on the shared item. This
+makes Part B valuable independent of Part A.
+
+**Caveats (out of scope for code, noted for the user):**
+
+- Part B does **not** retroactively heal an item already corrupted in IndexedDB.
+  After the fix ships, re-set the aisle once; with no in-flight classify it then
+  sticks.
+- If duplicate `items` rows exist for the same `canonical_name`, `addListItem`
+  reuses the *first* `find()` returns, which could show a stale aisle. That is a
+  separate de-dupe/data bug Part B does not address — see Out of scope.
+
 ## Relevant ADRs
 
 - **ADR-0009** (on-demand shopping list model) and **ADR-0011** (layered aisle
@@ -118,6 +152,10 @@ auto-classifier so a manual choice is never clobbered.
   - Manual update (`auto` omitted) overwrites an existing `aisle_id`.
   - Auto update (`auto: true`) writes when `aisle_id === ''`.
   - Auto update is a no-op when `aisle_id` is already set (override preserved).
+  - **Cross-list revert regression:** simulate the race — set the aisle manually
+    (unconditional), then fire an `auto: true` update with a *different* aisle;
+    assert the stored `aisle_id` is still the manual choice (the shared item is
+    not clobbered).
 - `src/components/organisms/__tests__/ShoppingListBuilder.test.tsx`
   - From the Uncategorized group, opening the picker and choosing an aisle moves
     the item into the matching aisle group (drives `updateItemAisle`).
@@ -140,3 +178,6 @@ auto-classifier so a manual choice is never clobbered.
 - Adding a persisted `aisle_source`/`aisle_locked` schema field. The implicit
   `aisle_id !== ''` lock plus the Part B guard is sufficient and avoids a
   `DB_VERSION` migration.
+- Healing already-corrupted `items` rows and de-duplicating multiple rows that
+  share a `canonical_name`. If the cross-list revert persists after this change,
+  investigate duplicate `items` rows as a separate data-cleanup task.
