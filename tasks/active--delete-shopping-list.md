@@ -72,6 +72,16 @@ No ADR is contradicted. **No new ADR required** — this introduces no new data
 model, API contract, or reused architectural pattern beyond a conventional
 confirm dialog (the dialog pattern itself mirrors the accepted AislePickerSheet).
 
+## Invariant: manual aisle overrides survive deletion
+
+A manual aisle override lives on the **global `items` record** (`items.aisle_id`),
+not on the list — `list_items` is only a join row (`list_id`, `item_id`,
+`quantity`, `checked`, `added_from_default`). The existing `useDeleteShoppingList`
+transaction touches only `shopping_lists` and `list_items` and never opens the
+`items` store, so overrides are preserved by construction. Because this plan adds
+no data-layer change, the invariant holds — and a regression test (see Tests)
+locks it so a future hook refactor can't silently break it.
+
 ## Approach
 
 Three presentational/wiring pieces; zero data-layer change.
@@ -177,9 +187,17 @@ centered card rather than a bottom sheet.
   - Confirm removes the card (list disappears from "Your Lists") via the real
     `useDeleteShoppingList` against fake-indexeddb.
 - **`useShoppingLists.test.ts`** (extend the existing `useDeleteShoppingList`
-  block): seed a list **with `list_items` rows**, delete it, and assert both the
-  `shopping_lists` record and all matching `list_items` rows are gone (the
-  backlog's explicit "purge list_items" requirement — currently untested).
+  block):
+  - seed a list **with `list_items` rows**, delete it, and assert both the
+    `shopping_lists` record and all matching `list_items` rows are gone (the
+    backlog's explicit "purge list_items" requirement — currently untested).
+  - **Manual-override preservation (invariant):** seed an `items` record with a
+    manual `aisle_id` (e.g. `'dairy'`) plus a `list_items` row referencing it,
+    delete the list, and assert the `items` record **still exists with its
+    `aisle_id` unchanged**. Also assert items referenced only by the deleted list
+    are **not** removed from the `items` store. This locks the invariant that
+    deleting a list never touches the global `items` store where overrides live,
+    so a future refactor of the hook can't silently regress it.
 
 ### E2E (Playwright) — `e2e/shopping-lists.spec.ts` (extend)
 
