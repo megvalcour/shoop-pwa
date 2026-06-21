@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
 // Minimal catalog: two items in numeric aisles, one in a NON-numeric department.
-// The Produce item must now be matchable (the old /^\d+$/ filter is gone).
+// Used by the main-thread lexical fast-path (getCandidates); the semantic path is
+// served by the mocked worker below.
 vi.mock('@/assets/aisles/oxford-62.json', () => ({
   default: {
     store: { id: 'store-1', name: 'Test Store', address: '', slug: 'test' },
@@ -30,29 +31,53 @@ vi.mock('@/assets/aisles/oxford-62-aliases.json', () => ({
   default: { 'Produce Dept': ['banana'] },
 }));
 
-// Embeddings are keyed by input text (not call order) so adding catalog/alias
-// candidates can't desynchronise the fixtures. Unlisted text embeds to a zero
-// vector (dot product 0 against everything → below threshold).
-const VECTORS: Record<string, number[]> = {
-  bread: [1, 0, 0],
-  butter: [0, 1, 0],
-  bananas: [0, 0, 1],
-  banana: [0, 0, 1],
-  plantains: [0, 0, 1],
-  'hot dog rolls': [0.99, 0.01, 0],
+// Semantic results the mocked worker returns, keyed by query phrase. Anything not
+// listed resolves to '' (below threshold / no confident match).
+const SEMANTIC_RESULTS: Record<string, string> = {
+  plantains: 'Produce Dept',
+  'hot dog rolls': '21',
+  xyz: '',
 };
 
-vi.mock('@huggingface/transformers', () => ({
-  pipeline: vi.fn().mockResolvedValue(
-    vi.fn().mockImplementation((text: string) =>
-      Promise.resolve({ tolist: () => [VECTORS[text] ?? [0, 0, 0]] }),
-    ),
-  ),
-}));
+// Manual Worker mock: posts `ready` after `load`, and a correlated `result` after
+// `classify`. Records every instance and every posted message for assertions.
+const workerInstances: MockWorker[] = [];
+const postedMessages: unknown[] = [];
+
+class MockWorker {
+  onmessage: ((event: MessageEvent) => void) | null = null;
+
+  constructor() {
+    workerInstances.push(this);
+  }
+
+  postMessage(message: { type: string; id?: string; phrase?: string }) {
+    postedMessages.push(message);
+    if (message.type === 'load') {
+      queueMicrotask(() => this.onmessage?.({ data: { type: 'ready' } } as MessageEvent));
+    } else if (message.type === 'classify') {
+      const aisleNumber = SEMANTIC_RESULTS[message.phrase ?? ''] ?? '';
+      queueMicrotask(() =>
+        this.onmessage?.({
+          data: { type: 'result', id: message.id, aisleNumber },
+        } as MessageEvent),
+      );
+    }
+  }
+
+  terminate() {}
+}
 
 beforeEach(() => {
+  workerInstances.length = 0;
+  postedMessages.length = 0;
+  vi.stubGlobal('Worker', MockWorker);
   vi.clearAllMocks();
   vi.resetModules();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 const AISLE_21: import('@/db/schema').Aisle = {
@@ -80,7 +105,7 @@ const AISLE_PRODUCE: import('@/db/schema').Aisle = {
 };
 
 describe('useAisleMatcher', () => {
-  it('isReady stays false until primed, then becomes true after model loads', async () => {
+  it('isReady stays false until primed, then becomes true after the worker loads', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     const { result } = renderHook(() => useAisleMatcher());
 
@@ -90,60 +115,70 @@ describe('useAisleMatcher', () => {
     await waitFor(() => expect(result.current.isReady).toBe(true));
   });
 
-  it('does not load the pipeline until prime() is called', async () => {
-    const { pipeline } = await import('@huggingface/transformers');
+  it('does not boot the worker until prime() is called', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     renderHook(() => useAisleMatcher());
 
-    expect(pipeline).not.toHaveBeenCalled();
+    expect(workerInstances).toHaveLength(0);
   });
 
-  it('classify returns empty string for empty/whitespace input without loading', async () => {
-    const { pipeline } = await import('@huggingface/transformers');
+  it('boots the worker exactly once across repeated primes', async () => {
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher());
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    act(() => result.current.prime());
+
+    expect(workerInstances).toHaveLength(1);
+  });
+
+  it('classify returns empty string for empty/whitespace input without booting the worker', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     const { result } = renderHook(() => useAisleMatcher());
 
     expect(await result.current.classify('', [AISLE_21, AISLE_1])).toBe('');
     expect(await result.current.classify('   ', [AISLE_21, AISLE_1])).toBe('');
-    expect(pipeline).not.toHaveBeenCalled();
+    expect(workerInstances).toHaveLength(0);
   });
 
-  it('classify resolves a non-numeric department via the lexical alias fast-path', async () => {
-    const { pipeline } = await import('@huggingface/transformers');
+  it('classify resolves a non-numeric department via the lexical alias fast-path (no worker)', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     const { result } = renderHook(() => useAisleMatcher());
 
-    // No prime() needed — the lexical path is pure and offline.
     const aisleId = await result.current.classify('banana', [AISLE_PRODUCE]);
     expect(aisleId).toBe('aisle-produce');
-    expect(pipeline).not.toHaveBeenCalled();
+    expect(workerInstances).toHaveLength(0);
   });
 
-  it('classify matches a Produce-department item semantically (filter removed)', async () => {
+  it('classify resolves a lexical exact-phrase match without posting to the worker', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     const { result } = renderHook(() => useAisleMatcher());
+
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
 
-    // "plantains" has no alias/catalog phrase, so it falls to the semantic
-    // engine, where it embeds onto the (no-longer-filtered) bananas vector.
+    const aisleId = await result.current.classify('bread', [AISLE_21, AISLE_1]);
+    expect(aisleId).toBe('aisle-21');
+    expect(postedMessages.some((m) => (m as { type: string }).type === 'classify')).toBe(false);
+  });
+
+  it('classify resolves a semantic query via the worker reply', async () => {
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher());
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
     const aisleId = await result.current.classify('plantains', [AISLE_PRODUCE]);
     expect(aisleId).toBe('aisle-produce');
+    expect(postedMessages.some((m) => (m as { type: string }).type === 'classify')).toBe(true);
   });
 
-  it('classify returns the aisle id for a best catalog match above threshold', async () => {
+  it('classify returns empty string when the worker reports no confident match', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     const { result } = renderHook(() => useAisleMatcher());
-    act(() => result.current.prime());
-    await waitFor(() => expect(result.current.isReady).toBe(true));
 
-    const aisleId = await result.current.classify('hot dog rolls', [AISLE_21, AISLE_1]);
-    expect(aisleId).toBe('aisle-21');
-  });
-
-  it('classify returns empty string when best score is below threshold', async () => {
-    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
 
@@ -151,9 +186,20 @@ describe('useAisleMatcher', () => {
     expect(aisleId).toBe('');
   });
 
+  it('classify returns empty string for a semantic query before the worker is ready', async () => {
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher());
+
+    // No prime() — worker never ready, so the semantic fallback short-circuits.
+    const aisleId = await result.current.classify('plantains', [AISLE_PRODUCE]);
+    expect(aisleId).toBe('');
+    expect(workerInstances).toHaveLength(0);
+  });
+
   it('classify returns empty string when the matched aisle has no entry in the aisles array', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
     const { result } = renderHook(() => useAisleMatcher());
+
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
 
