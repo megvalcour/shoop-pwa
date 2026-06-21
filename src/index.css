@@ -25,8 +25,19 @@
   src: url('/fonts/nunito.woff2') format('woff2');
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--color-surface);
   color: var(--color-text);
+  /* Pin the app shell to the viewport: the top/bottom nav bars stay fixed and
+     only the middle <main> scrolls. Prevents the page itself from scrolling,
+     which previously pushed the bottom nav below the fold. */
+  overflow: hidden;
+  overscroll-behavior: none;
 }

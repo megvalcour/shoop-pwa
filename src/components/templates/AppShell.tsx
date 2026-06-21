@@ -13,7 +13,7 @@ export default function AppShell() {
   const isOnListDetail = location.pathname.startsWith('/lists/');
 
   return (
-    <div className="flex flex-col h-dvh">
+    <div className="flex flex-col h-svh">
       <StoreHeader />
       <main className="flex-1 min-h-0 overflow-y-auto">
         <Outlet />
