@@ -57,7 +57,10 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
       { listId, name },
       {
         onSuccess: (result) => {
-          if (isReady && result.newItemId) {
+          // Only classify items we just created. Re-adding an existing item reuses
+          // its shared Item record, which already carries an aisle — possibly a
+          // manual reclassification. Reclassifying it here would clobber that.
+          if (isReady && result.itemCreated && result.newItemId) {
             classify(name, aisles ?? []).then((aisleId) => {
               if (aisleId) updateItemAisle.mutate({ itemId: result.newItemId, aisleId });
             });
