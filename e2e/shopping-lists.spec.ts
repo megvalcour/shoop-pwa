@@ -44,6 +44,41 @@ test.describe('Shopping Lists', () => {
     await card.click();
     await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
   });
+
+  test('deleting a list from /settings removes its card after confirmation', async ({ page }) => {
+    await page.goto('/settings');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    await page.goto('/settings');
+    const card = page.locator('button').filter({ hasText: /Oxford.*-\s+\w+ \d+/ });
+    await expect(card).toBeVisible();
+
+    await page.getByRole('button', { name: /delete list:/i }).click();
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await page.getByRole('button', { name: /^delete$/i }).click();
+
+    await expect(page.getByRole('alertdialog')).not.toBeVisible();
+    await expect(card).not.toBeVisible();
+    await expect(page.getByText(/no lists yet/i)).toBeVisible();
+  });
+
+  test('cancelling the delete confirmation keeps the list', async ({ page }) => {
+    await page.goto('/settings');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    await page.goto('/settings');
+    const card = page.locator('button').filter({ hasText: /Oxford.*-\s+\w+ \d+/ });
+    await expect(card).toBeVisible();
+
+    await page.getByRole('button', { name: /delete list:/i }).click();
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await page.getByRole('button', { name: /^cancel$/i }).click();
+
+    await expect(page.getByRole('alertdialog')).not.toBeVisible();
+    await expect(card).toBeVisible();
+  });
 });
 
 test.describe('Item check-off', () => {

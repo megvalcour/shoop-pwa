@@ -72,4 +72,51 @@ describe('SettingsRoute', () => {
       expect(screen.getByRole('link', { name: /manage default items/i })).toBeInTheDocument();
     });
   });
+
+  it('clicking a card delete affordance opens the confirm dialog without deleting', async () => {
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'sl-del', name: 'Doomed List', created_at: '2026-06-01T00:00:00.000Z' });
+
+    const user = userEvent.setup();
+    renderSettingsRoute();
+
+    await waitFor(() => expect(screen.getByText('Doomed List')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Delete list: Doomed List' }));
+
+    expect(screen.getByRole('alertdialog', { name: 'Delete list?' })).toBeInTheDocument();
+    // Still present in the DB (not deleted yet).
+    expect(await db.get('shopping_lists', 'sl-del')).toBeTruthy();
+  });
+
+  it('cancelling the confirm dialog keeps the list', async () => {
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'sl-keep', name: 'Keep Me', created_at: '2026-06-01T00:00:00.000Z' });
+
+    const user = userEvent.setup();
+    renderSettingsRoute();
+
+    await waitFor(() => expect(screen.getByText('Keep Me')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Delete list: Keep Me' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText('Keep Me')).toBeInTheDocument();
+  });
+
+  it('confirming the dialog removes the card from Your Lists', async () => {
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'sl-gone', name: 'Goodbye List', created_at: '2026-06-01T00:00:00.000Z' });
+
+    const user = userEvent.setup();
+    renderSettingsRoute();
+
+    await waitFor(() => expect(screen.getByText('Goodbye List')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Delete list: Goodbye List' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(screen.queryByText('Goodbye List')).not.toBeInTheDocument());
+    expect(await db.get('shopping_lists', 'sl-gone')).toBeUndefined();
+  });
 });

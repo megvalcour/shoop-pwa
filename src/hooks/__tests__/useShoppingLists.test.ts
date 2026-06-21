@@ -102,4 +102,43 @@ describe('useDeleteShoppingList', () => {
 
     await waitFor(() => expect(listsResult.current.data).toHaveLength(0));
   });
+
+  it('purges all list_items rows belonging to the deleted list', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'del-2', name: 'With Items', created_at: '2026-06-01T00:00:00.000Z' });
+    await db.add('shopping_lists', { id: 'keep-1', name: 'Survivor', created_at: '2026-06-02T00:00:00.000Z' });
+    await db.add('list_items', { id: 'li-1', list_id: 'del-2', item_id: 'it-1', quantity: 1, checked: false, added_from_default: false, created_at: 1 });
+    await db.add('list_items', { id: 'li-2', list_id: 'del-2', item_id: 'it-2', quantity: 2, checked: false, added_from_default: false, created_at: 2 });
+    await db.add('list_items', { id: 'li-3', list_id: 'keep-1', item_id: 'it-3', quantity: 1, checked: false, added_from_default: false, created_at: 3 });
+
+    vi.resetModules();
+    const { useDeleteShoppingList } = await import('@/hooks/useShoppingLists');
+    const { result: deleteMutation } = renderHook(() => useDeleteShoppingList(), { wrapper: makeWrapper() });
+    await act(() => deleteMutation.current.mutateAsync('del-2'));
+
+    expect(await db.get('shopping_lists', 'del-2')).toBeUndefined();
+    expect(await db.getAllFromIndex('list_items', 'list_id', 'del-2')).toHaveLength(0);
+    // The other list and its items are untouched.
+    expect(await db.get('shopping_lists', 'keep-1')).toBeTruthy();
+    expect(await db.getAllFromIndex('list_items', 'list_id', 'keep-1')).toHaveLength(1);
+  });
+
+  it('never touches the global items store, preserving manual aisle overrides', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'del-3', name: 'Override Test', created_at: '2026-06-01T00:00:00.000Z' });
+    // An item with a manual aisle override, referenced only by the deleted list.
+    await db.add('items', { id: 'it-override', name: 'Tofu', canonical_name: 'tofu', aisle_id: 'dairy', store_id: 's1' });
+    await db.add('list_items', { id: 'li-ov', list_id: 'del-3', item_id: 'it-override', quantity: 1, checked: false, added_from_default: false, created_at: 1 });
+
+    vi.resetModules();
+    const { useDeleteShoppingList } = await import('@/hooks/useShoppingLists');
+    const { result: deleteMutation } = renderHook(() => useDeleteShoppingList(), { wrapper: makeWrapper() });
+    await act(() => deleteMutation.current.mutateAsync('del-3'));
+
+    const survivingItem = await db.get('items', 'it-override');
+    expect(survivingItem).toBeTruthy();
+    expect(survivingItem?.aisle_id).toBe('dairy');
+  });
 });

@@ -1,14 +1,19 @@
+import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import ShoppingListCard from '@/components/molecules/ShoppingListCard';
-import { useShoppingLists } from '@/hooks/useShoppingLists';
+import ConfirmDialog from '@/components/molecules/ConfirmDialog';
+import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingLists';
 import { useCreateAndNavigateToList } from '@/hooks/useCreateAndNavigateToList';
+import type { ShoppingList } from '@/db/schema';
 
 export default function SettingsRoute() {
   const navigate = useNavigate();
   const { data: lists, isPending, isError } = useShoppingLists();
   const { createAndNavigate, isPending: isCreating, isError: isCreateError } = useCreateAndNavigateToList();
+  const deleteList = useDeleteShoppingList();
+  const [pendingDelete, setPendingDelete] = useState<ShoppingList | null>(null);
 
   function renderListsContent() {
     if (isPending) return <p className="text-text-muted text-sm">Loading…</p>;
@@ -21,6 +26,7 @@ export default function SettingsRoute() {
             key={list.id}
             list={list}
             onClick={() => navigate(`/lists/${list.id}`)}
+            onDelete={() => setPendingDelete(list)}
           />
         ))}
       </div>
@@ -58,6 +64,24 @@ export default function SettingsRoute() {
       >
         <FontAwesomeIcon icon={faPlus} />
       </button>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete list?"
+          message={`"${pendingDelete.name}" and all its items will be permanently deleted.`}
+          isPending={deleteList.isPending}
+          errorMessage={deleteList.isError ? 'Failed to delete. Please try again.' : undefined}
+          onCancel={() => {
+            deleteList.reset();
+            setPendingDelete(null);
+          }}
+          onConfirm={() =>
+            deleteList.mutate(pendingDelete.id, {
+              onSuccess: () => setPendingDelete(null),
+            })
+          }
+        />
+      )}
     </div>
   );
 }
