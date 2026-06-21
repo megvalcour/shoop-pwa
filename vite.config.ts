@@ -2,13 +2,22 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
+const pkg = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
+) as { version: string };
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -16,8 +25,10 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      registerType: 'prompt',
+      // Registration is owned by usePwaUpdate (PwaUpdateProvider) so there is a
+      // single registration point; don't let the plugin auto-inject a second one.
+      injectRegister: false,
 
       pwaAssets: {
         disabled: false,
@@ -53,5 +64,10 @@ export default defineConfig({
     environment: 'happy-dom',
     include: ['src/**/*.test.ts?(x)'],
     setupFiles: ['./src/test-setup.ts'],
+    alias: {
+      // The virtual module only exists during dev/build; alias it to a stub so
+      // it resolves under Vitest (individual tests vi.mock it for behaviour).
+      'virtual:pwa-register/react': path.resolve(__dirname, './src/test/pwaRegisterStub.ts'),
+    },
   },
 });
