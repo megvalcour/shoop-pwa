@@ -15,7 +15,7 @@ export default function StoreLogo({ slug, name }: Props) {
       src={`/store-logos/${slug}.png`}
       alt={name}
       onError={() => setHidden(true)}
-      className="h-8 w-auto object-contain"
+      className="h-9 w-9 rounded-full bg-white object-contain p-1 shadow-md"
     />
   );
 }
