@@ -1,7 +1,7 @@
 ---
 step: 1
 substep: 0
-status: planning
+status: complete
 class: standard
 e2e_required: true
 clarifications: |

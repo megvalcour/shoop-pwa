@@ -26,6 +26,11 @@ interface AddListItemResult {
   newItemId: string;
 }
 
+// Tracks (listId, canonical_name) adds currently in flight. Now that the input
+// is no longer disabled while pending (see AddItemForm Part A), a same-name
+// double-fire can otherwise race past the read-phase de-dupe and create two rows.
+const inFlightAdds = new Set<string>();
+
 export function useAddListItem() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -34,62 +39,17 @@ export function useAddListItem() {
       if (!trimmed) throw new Error('Item name cannot be empty');
 
       const canonical = trimmed.toLowerCase();
-      const db = await dbPromise;
-
-      // Read phase — outside any transaction. idb does not keep transactions alive
-      // across await boundaries, so reads and writes must be separate operations.
-      // The form's disabled={isPending} prevents concurrent mutations in practice.
-      const [allItems, allListItems, allStores] = await Promise.all([
-        db.getAll('items'),
-        db.getAll('list_items'),
-        db.getAll('stores'),
-      ]);
-
-      const existing = allItems.find((i) => i.canonical_name === canonical);
-      let itemId: string;
-      let itemCreated = false;
-
-      if (existing) {
-        itemId = existing.id;
-      } else {
-        if (!allStores[0]) throw new Error('No store found — add a store before adding items');
-        itemId = crypto.randomUUID();
-        itemCreated = true;
-      }
-
-      if (allListItems.some((li) => li.list_id === listId && li.item_id === itemId)) {
+      const inFlightKey = `${listId}::${canonical}`;
+      // Reject a same-name add to the same list that is already in flight.
+      if (inFlightAdds.has(inFlightKey)) {
         return { itemCreated: false, newItemId: '' };
       }
-
-      const listItem: ListItem = {
-        id: crypto.randomUUID(),
-        list_id: listId,
-        item_id: itemId,
-        quantity: 1,
-        checked: false,
-        added_from_default: false,
-        created_at: Date.now(),
-      };
-
-      // Write phase — queue all writes synchronously within a transaction so
-      // the transaction commits in one shot without auto-commit racing.
-      if (itemCreated) {
-        const tx = db.transaction(['items', 'list_items'], 'readwrite');
-        const newItem: Item = {
-          id: itemId,
-          name: trimmed,
-          canonical_name: canonical,
-          aisle_id: '',
-          store_id: allStores[0].id,
-        };
-        tx.objectStore('items').add(newItem);
-        tx.objectStore('list_items').add(listItem);
-        await tx.done;
-      } else {
-        await db.add('list_items', listItem);
+      inFlightAdds.add(inFlightKey);
+      try {
+        return await addListItem(listId, canonical, trimmed);
+      } finally {
+        inFlightAdds.delete(inFlightKey);
       }
-
-      return { itemCreated, newItemId: itemId };
     },
     // Return the invalidation promise so mutateAsync stays pending until the
     // refetch settles. This keeps the list query and the resolved mutation in
@@ -104,6 +64,69 @@ export function useAddListItem() {
       ]);
     },
   });
+}
+
+async function addListItem(
+  listId: string,
+  canonical: string,
+  trimmed: string,
+): Promise<AddListItemResult> {
+  const db = await dbPromise;
+
+  // Read phase — outside any transaction. idb does not keep transactions alive
+  // across await boundaries, so reads and writes must be separate operations.
+  // The in-flight guard above serialises same-name adds to the same list.
+  const [allItems, allListItems, allStores] = await Promise.all([
+    db.getAll('items'),
+    db.getAll('list_items'),
+    db.getAll('stores'),
+  ]);
+
+  const existing = allItems.find((i) => i.canonical_name === canonical);
+  let itemId: string;
+  let itemCreated = false;
+
+  if (existing) {
+    itemId = existing.id;
+  } else {
+    if (!allStores[0]) throw new Error('No store found — add a store before adding items');
+    itemId = crypto.randomUUID();
+    itemCreated = true;
+  }
+
+  if (allListItems.some((li) => li.list_id === listId && li.item_id === itemId)) {
+    return { itemCreated: false, newItemId: '' };
+  }
+
+  const listItem: ListItem = {
+    id: crypto.randomUUID(),
+    list_id: listId,
+    item_id: itemId,
+    quantity: 1,
+    checked: false,
+    added_from_default: false,
+    created_at: Date.now(),
+  };
+
+  // Write phase — queue all writes synchronously within a transaction so
+  // the transaction commits in one shot without auto-commit racing.
+  if (itemCreated) {
+    const tx = db.transaction(['items', 'list_items'], 'readwrite');
+    const newItem: Item = {
+      id: itemId,
+      name: trimmed,
+      canonical_name: canonical,
+      aisle_id: '',
+      store_id: allStores[0].id,
+    };
+    tx.objectStore('items').add(newItem);
+    tx.objectStore('list_items').add(listItem);
+    await tx.done;
+  } else {
+    await db.add('list_items', listItem);
+  }
+
+  return { itemCreated, newItemId: itemId };
 }
 
 interface ToggleListItemInput {

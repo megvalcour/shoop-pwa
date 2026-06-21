@@ -104,6 +104,54 @@ describe('useAddListItem', () => {
     await waitFor(() => expect(listResult.current.data).toHaveLength(1));
   });
 
+  it('dedupes a same-name concurrent add to the same list (in-flight guard)', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(async () => {
+      await Promise.all([
+        result.current.add.mutateAsync({ listId: 'list-1', name: 'Milk' }),
+        result.current.add.mutateAsync({ listId: 'list-1', name: 'Milk' }),
+      ]);
+    });
+
+    const db = await dbPromise;
+    const items = (await db.getAll('items')).filter((i) => i.canonical_name === 'milk');
+    expect(items).toHaveLength(1);
+    const listItems = (await db.getAll('list_items')).filter((li) => li.list_id === 'list-1');
+    expect(listItems).toHaveLength(1);
+  });
+
+  it('persists distinct concurrent adds to the same list', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(async () => {
+      await Promise.all([
+        result.current.add.mutateAsync({ listId: 'list-1', name: 'Milk' }),
+        result.current.add.mutateAsync({ listId: 'list-1', name: 'Eggs' }),
+      ]);
+    });
+
+    const db = await dbPromise;
+    const listItems = (await db.getAll('list_items')).filter((li) => li.list_id === 'list-1');
+    expect(listItems).toHaveLength(2);
+  });
+
   it('throws and writes nothing when name is empty', async () => {
     const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
     const wrapper = makeWrapper();

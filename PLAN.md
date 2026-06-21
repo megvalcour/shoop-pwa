@@ -1,10 +1,10 @@
 ## Current Status
 
-`feat(nav): shop-as-root redirect, store header, 2-tab bottom nav, settings as list manager`
+`feat(list-builder): maintain add-input focus + non-blocking aisle inference via Web Worker`
 
 ## Active Task
 
-List Builder UX — maintain add-input focus + non-blocking model load. See `tasks/active--list-builder-ux.md`.
+_None — pick the next backlog item to promote._
 
 ## Backlog
 

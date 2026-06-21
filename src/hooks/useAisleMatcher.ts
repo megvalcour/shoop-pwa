@@ -1,39 +1,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { pipeline } from '@huggingface/transformers';
 import type { Aisle } from '@/db/schema';
 import catalogData from '@/assets/aisles/oxford-62.json';
 import aliasData from '@/assets/aisles/oxford-62-aliases.json';
 import {
   buildCandidates,
   lexicalMatch,
-  aggregateTopK,
-  THRESHOLD,
-  TOP_K,
   type AliasMap,
   type Candidate,
 } from '@/services/classifier';
 
-type EmbedPipeline = (
-  text: string,
-  opts: { pooling: 'mean'; normalize: boolean },
-) => Promise<{ tolist(): number[][] }>;
-
-interface EmbeddedCandidate {
-  aisleNumber: string;
-  embedding: number[];
-}
-
-let pipelinePromise: Promise<EmbedPipeline> | null = null;
-
-let catalogReadyPromise: Promise<EmbeddedCandidate[]> | null = null;
-
-let catalogEmbeddingsCache: EmbeddedCandidate[] | null = null;
+// Mirrors the message contract in `src/workers/aisleMatcher.worker.ts`.
+type WorkerResponse =
+  | { type: 'ready' }
+  | { type: 'result'; id: string; aisleNumber: string };
 
 let candidatesCache: Candidate[] | null = null;
 
+// Module-level worker singleton + bookkeeping, shared across every hook instance.
+let worker: Worker | null = null;
+let workerReady = false;
+const readyListeners = new Set<() => void>();
+const pendingClassifications = new Map<string, (aisleNumber: string) => void>();
+
 // The candidate set (catalog phrases + aliases) is pure data and is built lazily
 // without touching the model, so the lexical fast-path works before — or without
-// ever — loading the WASM pipeline.
+// ever — booting the worker.
 function getCandidates(): Candidate[] {
   if (!candidatesCache) {
     const { aisles, items } = catalogData as {
@@ -46,69 +37,77 @@ function getCandidates(): Candidate[] {
   return candidatesCache;
 }
 
-// Lazily loads the model + catalog embeddings exactly once across the app.
-// Nothing happens until the first caller invokes this (e.g. on input blur),
-// so the heavy WASM model never loads in the empty/initial state.
-function ensureLoaded(): Promise<EmbeddedCandidate[]> {
-  if (!pipelinePromise) {
-    pipelinePromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-      dtype: 'fp32',
-    }) as unknown as Promise<EmbedPipeline>;
+// Lazily boots the inference worker exactly once across the app. Nothing happens
+// until the first caller primes it (e.g. on input blur), so the heavy WASM model
+// never loads in the empty/initial state. All embedding work runs off the main
+// thread; the worker posts `ready` once the catalog is embedded.
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(new URL('../workers/aisleMatcher.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      const data = event.data;
+      if (data.type === 'ready') {
+        workerReady = true;
+        for (const listener of readyListeners) listener();
+      } else if (data.type === 'result') {
+        const resolve = pendingClassifications.get(data.id);
+        if (resolve) {
+          pendingClassifications.delete(data.id);
+          resolve(data.aisleNumber);
+        }
+      }
+    };
+    worker.postMessage({ type: 'load' });
   }
-  if (!catalogReadyPromise) {
-    catalogReadyPromise = pipelinePromise.then((pipe) => buildCatalogEmbeddings(pipe));
-  }
-  return catalogReadyPromise;
+  return worker;
 }
 
-function dotProduct(a: number[], b: number[]): number {
-  return a.reduce((s, v, i) => s + v * b[i], 0);
-}
-
-async function embed(pipe: EmbedPipeline, text: string): Promise<number[]> {
-  const output = await pipe(text, { pooling: 'mean', normalize: true });
-  return output.tolist()[0];
-}
-
-async function buildCatalogEmbeddings(pipe: EmbedPipeline): Promise<EmbeddedCandidate[]> {
-  if (catalogEmbeddingsCache) return catalogEmbeddingsCache;
-
-  const entries: EmbeddedCandidate[] = [];
-  for (const candidate of getCandidates()) {
-    const embedding = await embed(pipe, candidate.phrase);
-    entries.push({ aisleNumber: candidate.aisleNumber, embedding });
-  }
-
-  catalogEmbeddingsCache = entries;
-  return entries;
+// Embed + score a query off the main thread, correlating the reply by id.
+function classifyViaWorker(phrase: string): Promise<string> {
+  const w = getWorker();
+  const id = crypto.randomUUID();
+  return new Promise((resolve) => {
+    pendingClassifications.set(id, resolve);
+    w.postMessage({ type: 'classify', id, phrase });
+  });
 }
 
 export interface AisleMatcherResult {
-  /** Begins loading the model + catalog embeddings (idempotent). Call on a real
-   *  user intent signal — e.g. input blur — never on mount or while typing. */
+  /** Boots the inference worker (idempotent). Call on a real user intent signal —
+   *  e.g. input blur — never on mount or while typing. */
   prime: () => void;
   classify: (itemName: string, aisles: Aisle[]) => Promise<string>;
   isReady: boolean;
 }
 
 export function useAisleMatcher(): AisleMatcherResult {
-  const [isReady, setIsReady] = useState(catalogEmbeddingsCache !== null);
+  const [isReady, setIsReady] = useState(workerReady);
   const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
+    if (workerReady) {
+      setIsReady(true);
+      return;
+    }
+    const listener = () => {
+      if (mountedRef.current) setIsReady(true);
+    };
+    readyListeners.add(listener);
     return () => {
       mountedRef.current = false;
+      readyListeners.delete(listener);
     };
   }, []);
 
   const prime = useCallback(() => {
-    if (catalogEmbeddingsCache !== null) {
+    if (workerReady) {
       setIsReady(true);
       return;
     }
-    ensureLoaded().then(() => {
-      if (mountedRef.current) setIsReady(true);
-    });
+    getWorker();
   }, []);
 
   const classify = async (itemName: string, aisles: Aisle[]): Promise<string> => {
@@ -118,25 +117,17 @@ export function useAisleMatcher(): AisleMatcherResult {
     const resolve = (aisleNumber: string): string =>
       aisles.find((a) => a.number === aisleNumber)?.id ?? '';
 
-    // Lexical fast-path: deterministic, offline, no model required.
+    // Lexical fast-path: deterministic, offline, no worker round-trip required.
     const lexical = lexicalMatch(itemName, candidates);
     if (lexical?.confident) return resolve(lexical.aisleNumber);
 
-    // Semantic fallback: embed the query and vote across the top-k neighbours.
-    if (!pipelinePromise || !catalogEmbeddingsCache) return '';
+    // Semantic fallback: defer to the worker once it is ready. Until then return
+    // '' — AddItemForm's deferred-reclassify effect retries when isReady flips.
+    if (!workerReady) return '';
 
-    const pipe = await pipelinePromise;
-    const embedding = await embed(pipe, itemName);
-
-    const scored = catalogEmbeddingsCache.map((entry) => ({
-      aisleNumber: entry.aisleNumber,
-      score: dotProduct(embedding, entry.embedding),
-    }));
-
-    const winner = aggregateTopK(scored, TOP_K);
-    if (!winner || winner.score < THRESHOLD) return '';
-
-    return resolve(winner.aisleNumber);
+    const aisleNumber = await classifyViaWorker(itemName);
+    if (!aisleNumber) return '';
+    return resolve(aisleNumber);
   };
 
   return { prime, classify, isReady };

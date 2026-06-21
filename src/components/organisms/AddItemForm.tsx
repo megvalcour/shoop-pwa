@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAddListItem } from '@/hooks/useListItems';
 import { useItems, useUpdateItemAisle } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
@@ -12,12 +12,13 @@ interface AddItemFormProps {
 
 export default function AddItemForm({ listId }: AddItemFormProps) {
   const [value, setValue] = useState('');
-  const { mutate, isPending } = useAddListItem();
+  const { mutate } = useAddListItem();
   const { data: items } = useItems();
   const { data: aisles } = useAisles();
   const updateItemAisle = useUpdateItemAisle();
   const { prime, classify, isReady } = useAisleMatcher();
   const [hasPrimed, setHasPrimed] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Kick off model loading only on a deliberate user signal (blur or submit) with
   // non-empty text — never on mount, while typing, or in the empty state.
@@ -45,14 +46,17 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!value.trim()) return;
+    const name = value.trim();
+    if (!name) return;
     primeMatcher();
-    const name = value;
+    // Clear and refocus immediately so back-to-back entry is never gated on the
+    // mutation/refetch, and an Add-button tap returns the caret to the input.
+    setValue('');
+    inputRef.current?.focus();
     mutate(
       { listId, name },
       {
         onSuccess: (result) => {
-          setValue('');
           if (isReady && result.newItemId) {
             classify(name, aisles ?? []).then((aisleId) => {
               if (aisleId) updateItemAisle.mutate({ itemId: result.newItemId, aisleId });
@@ -72,6 +76,7 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
           Item name
         </label>
         <Input
+          ref={inputRef}
           id="add-item-input"
           type="text"
           value={value}
@@ -79,13 +84,8 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
           onBlur={primeMatcher}
           placeholder="Add an item…"
           className="flex-1"
-          disabled={isPending}
         />
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={isPending || !value.trim()}
-        >
+        <Button type="submit" variant="primary" disabled={!value.trim()}>
           Add
         </Button>
       </form>
