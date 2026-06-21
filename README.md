@@ -71,3 +71,9 @@ export default defineConfig([
   },
 ])
 ```
+
+## Credits
+
+The app icon (`public/favicon.svg`, source for all generated PWA icons) uses the
+"cart-shopping" glyph from [Font Awesome Free](https://fontawesome.com/) (icons licensed
+under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
