@@ -42,3 +42,38 @@ async function seedDatabase(db: IDBPDatabase<ShoopDB>): Promise<void> {
 export const dbPromise: Promise<IDBPDatabase<ShoopDB>> = openDB<ShoopDB>(DB_NAME, DB_VERSION, {
   upgrade,
 }).then((db) => seedDatabase(db).then(() => db));
+
+/**
+ * Deletes all user-created data (shopping lists, list items, the default list,
+ * user-added items, and aisle overrides) while restoring the seeded store data
+ * to its pristine state.
+ *
+ * The `items` store mixes seeded catalog items with user-added ones and has no
+ * flag distinguishing them; an aisle "override" is a user edit written in place
+ * onto a seeded item. Both are reset the same way: the store-managed stores
+ * (`stores`, `aisles`, `items`) are cleared and re-seeded verbatim from the seed
+ * file, which drops user items, reverts aisle overrides, and restores the
+ * catalog. The purely-user stores are simply cleared.
+ */
+export async function resetUserData(): Promise<void> {
+  const db = await dbPromise;
+  const tx = db.transaction(
+    ['shopping_lists', 'list_items', 'default_list', 'stores', 'aisles', 'items'],
+    'readwrite',
+  );
+  // Queue every op synchronously — idb auto-commits across await boundaries, so
+  // there are no awaits until tx.done. clear() is ordered before the re-seed
+  // adds, so each store is wiped and then repopulated within one atomic commit.
+  tx.objectStore('shopping_lists').clear();
+  tx.objectStore('list_items').clear();
+  tx.objectStore('default_list').clear();
+  tx.objectStore('stores').clear();
+  tx.objectStore('aisles').clear();
+  tx.objectStore('items').clear();
+
+  tx.objectStore('stores').add(seedData.store);
+  for (const aisle of seedData.aisles) tx.objectStore('aisles').add(aisle);
+  for (const item of seedData.items) tx.objectStore('items').add(item);
+
+  await tx.done;
+}

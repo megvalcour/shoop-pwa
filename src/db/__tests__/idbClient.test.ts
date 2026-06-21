@@ -83,4 +83,73 @@ describe('idbClient', () => {
     const itemsByStore = await db.getAllFromIndex('items', 'store_id', store.id);
     expect(itemsByStore).toHaveLength(182);
   });
+
+  describe('resetUserData', () => {
+    it('clears all user data stores', async () => {
+      const { dbPromise, resetUserData } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      await db.add('shopping_lists', { id: 'sl-1', name: 'List', created_at: '2026-06-01T00:00:00.000Z' });
+      await db.add('list_items', {
+        id: 'li-1',
+        list_id: 'sl-1',
+        item_id: 'it-1',
+        quantity: 1,
+        checked: false,
+        added_from_default: false,
+        created_at: 1,
+      });
+      await db.add('default_list', { id: 'dl-1', item_id: 'it-1', quantity: 1, unit: '', notes: '' });
+
+      await resetUserData();
+
+      expect(await db.count('shopping_lists')).toBe(0);
+      expect(await db.count('list_items')).toBe(0);
+      expect(await db.count('default_list')).toBe(0);
+    });
+
+    it('drops user-added items but restores the seeded catalog', async () => {
+      const { dbPromise, resetUserData } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const [store] = await db.getAll('stores');
+      const userItemId = crypto.randomUUID();
+      await db.add('items', {
+        id: userItemId,
+        name: 'Dragonfruit',
+        canonical_name: 'dragonfruit',
+        aisle_id: '',
+        store_id: store.id,
+      });
+      expect(await db.count('items')).toBe(183);
+
+      await resetUserData();
+
+      expect(await db.count('items')).toBe(182);
+      expect(await db.get('items', userItemId)).toBeUndefined();
+    });
+
+    it('reverts an aisle override on a seeded item', async () => {
+      const { dbPromise, resetUserData } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const [seeded] = await db.getAll('items');
+      const originalAisle = seeded.aisle_id;
+      await db.put('items', { ...seeded, aisle_id: 'tampered-aisle' });
+      expect((await db.get('items', seeded.id))?.aisle_id).toBe('tampered-aisle');
+
+      await resetUserData();
+
+      expect((await db.get('items', seeded.id))?.aisle_id).toBe(originalAisle);
+    });
+
+    it('preserves the seeded store and aisles', async () => {
+      const { dbPromise, resetUserData } = await import('@/db/idbClient');
+      const db = await dbPromise;
+
+      await resetUserData();
+
+      expect(await db.count('stores')).toBe(1);
+      expect(await db.count('aisles')).toBe(31);
+      const [store] = await db.getAll('stores');
+      expect(store.name).toBe('Oxford Market Basket #62');
+    });
+  });
 });

@@ -4,8 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import ShoppingListCard from '@/components/molecules/ShoppingListCard';
 import ConfirmDialog from '@/components/molecules/ConfirmDialog';
+import Button from '@/components/atoms/Button';
 import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingLists';
 import { useCreateAndNavigateToList } from '@/hooks/useCreateAndNavigateToList';
+import { useResetData } from '@/hooks/useResetData';
 import type { ShoppingList } from '@/db/schema';
 
 export default function SettingsRoute() {
@@ -13,7 +15,9 @@ export default function SettingsRoute() {
   const { data: lists, isPending, isError } = useShoppingLists();
   const { createAndNavigate, isPending: isCreating, isError: isCreateError } = useCreateAndNavigateToList();
   const deleteList = useDeleteShoppingList();
+  const resetData = useResetData();
   const [pendingDelete, setPendingDelete] = useState<ShoppingList | null>(null);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   function renderListsContent() {
     if (isPending) return <p className="text-text-muted text-sm">Loading…</p>;
@@ -51,6 +55,17 @@ export default function SettingsRoute() {
         </NavLink>
       </section>
 
+      <section className="px-4 pt-6">
+        <h2 className="font-display font-bold text-text text-lg mb-3">Danger Zone</h2>
+        <p className="text-text-muted text-sm mb-3">
+          Permanently delete all your lists, default list, and added items. Your store and aisle
+          layout will be restored to default. This can&rsquo;t be undone.
+        </p>
+        <Button variant="danger" className="w-full" onClick={() => setConfirmingReset(true)}>
+          Reset all data
+        </Button>
+      </section>
+
       {isCreateError && (
         <p className="px-4 text-destructive text-sm mt-2">Failed to create list. Please try again.</p>
       )}
@@ -78,6 +93,25 @@ export default function SettingsRoute() {
           onConfirm={() =>
             deleteList.mutate(pendingDelete.id, {
               onSuccess: () => setPendingDelete(null),
+            })
+          }
+        />
+      )}
+
+      {confirmingReset && (
+        <ConfirmDialog
+          title="Reset all data?"
+          message="All your lists, default list, and added items will be permanently deleted. Your store and aisle layout will be restored to default. This can't be undone."
+          confirmLabel="Reset"
+          isPending={resetData.isPending}
+          errorMessage={resetData.isError ? 'Reset failed. Please try again.' : undefined}
+          onCancel={() => {
+            resetData.reset();
+            setConfirmingReset(false);
+          }}
+          onConfirm={() =>
+            resetData.mutate(undefined, {
+              onSuccess: () => setConfirmingReset(false),
             })
           }
         />
