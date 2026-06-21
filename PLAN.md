@@ -1,6 +1,6 @@
 ## Current Status
 
-`feat(list-builder): maintain add-input focus + non-blocking aisle inference via Web Worker`
+`feat(settings): destructive "Reset all data" action — wipes user lists/items/overrides, restores seeded store catalog`
 
 ## Active Task
 

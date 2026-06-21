@@ -30,6 +30,7 @@ describe('SettingsRoute', () => {
   beforeEach(async () => {
     const db = await dbPromise;
     await db.clear('shopping_lists');
+    await db.clear('list_items');
   });
 
   it('renders empty state within Your Lists section when no lists', async () => {
@@ -118,5 +119,58 @@ describe('SettingsRoute', () => {
 
     await waitFor(() => expect(screen.queryByText('Goodbye List')).not.toBeInTheDocument());
     expect(await db.get('shopping_lists', 'sl-gone')).toBeUndefined();
+  });
+
+  it('renders the Reset all data button', async () => {
+    renderSettingsRoute();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Reset all data' })).toBeInTheDocument(),
+    );
+  });
+
+  it('clicking Reset all data opens the confirm dialog without resetting', async () => {
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'sl-r', name: 'Survivor', created_at: '2026-06-01T00:00:00.000Z' });
+
+    const user = userEvent.setup();
+    renderSettingsRoute();
+
+    await waitFor(() => expect(screen.getByText('Survivor')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Reset all data' }));
+
+    expect(screen.getByRole('alertdialog', { name: 'Reset all data?' })).toBeInTheDocument();
+    expect(await db.get('shopping_lists', 'sl-r')).toBeTruthy();
+  });
+
+  it('cancelling the reset dialog keeps data', async () => {
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'sl-rk', name: 'Keep Through Reset', created_at: '2026-06-01T00:00:00.000Z' });
+
+    const user = userEvent.setup();
+    renderSettingsRoute();
+
+    await waitFor(() => expect(screen.getByText('Keep Through Reset')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Reset all data' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(screen.getByText('Keep Through Reset')).toBeInTheDocument();
+  });
+
+  it('confirming the reset clears lists and preserves seeded store data', async () => {
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'sl-wiped', name: 'Wiped List', created_at: '2026-06-01T00:00:00.000Z' });
+
+    const user = userEvent.setup();
+    renderSettingsRoute();
+
+    await waitFor(() => expect(screen.getByText('Wiped List')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Reset all data' }));
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+
+    await waitFor(() => expect(screen.queryByText('Wiped List')).not.toBeInTheDocument());
+    expect(await db.count('shopping_lists')).toBe(0);
+    expect(await db.count('stores')).toBe(1);
+    expect(await db.count('items')).toBe(182);
   });
 });
