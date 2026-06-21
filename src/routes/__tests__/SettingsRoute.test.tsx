@@ -13,6 +13,7 @@ function renderSettingsRoute() {
       { path: '/settings', element: <SettingsRoute /> },
       { path: '/lists/:id', element: <div>List detail</div> },
       { path: '/default-list', element: <div>Default list</div> },
+      { path: '/stores/:id', element: <div>Store detail</div> },
     ],
     { initialEntries: ['/settings'] },
   );
@@ -64,6 +65,30 @@ describe('SettingsRoute', () => {
     await user.click(screen.getByText('Test List'));
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/lists/sl-nav');
+    });
+  });
+
+  it('renders the seeded store in the Your Stores section', async () => {
+    renderSettingsRoute();
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Your Stores' })).toBeInTheDocument();
+    });
+    expect(
+      await screen.findByRole('button', { name: 'Oxford Market Basket #62' }),
+    ).toBeInTheDocument();
+  });
+
+  it('clicking a store entry navigates to /stores/:id', async () => {
+    const db = await dbPromise;
+    const [store] = await db.getAll('stores');
+
+    const user = userEvent.setup();
+    const { router } = renderSettingsRoute();
+
+    const entry = await screen.findByRole('button', { name: 'Oxford Market Basket #62' });
+    await user.click(entry);
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(`/stores/${store.id}`);
     });
   });
 

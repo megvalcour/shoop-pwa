@@ -40,7 +40,7 @@ test.describe('Shopping Lists', () => {
     await expect(page).toHaveURL(/\/lists\//);
 
     await page.goto('/settings');
-    const card = page.locator('button').filter({ hasText: /Oxford/ });
+    const card = page.locator('button').filter({ hasText: /Oxford.*-\s+\w+ \d+/ });
     await card.click();
     await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
   });

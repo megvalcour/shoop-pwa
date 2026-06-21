@@ -11,6 +11,7 @@ const NAV_ITEMS = [
 export default function AppShell() {
   const location = useLocation();
   const isOnListDetail = location.pathname.startsWith('/lists/');
+  const isOnStoreDetail = location.pathname.startsWith('/stores/');
 
   return (
     <div className="flex flex-col h-svh">
@@ -27,7 +28,9 @@ export default function AppShell() {
             className={({ isActive }) =>
               [
                 'flex flex-col items-center gap-0.5 px-4 py-2 rounded-lg transition-colors',
-                isActive || (to === '/' && isOnListDetail)
+                isActive ||
+                (to === '/' && isOnListDetail) ||
+                (to === '/settings' && isOnStoreDetail)
                   ? 'text-accent bg-accent/10'
                   : 'text-primary-foreground',
               ].join(' ')
