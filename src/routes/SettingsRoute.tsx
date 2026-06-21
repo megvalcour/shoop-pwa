@@ -5,6 +5,7 @@ import { faPlus, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import ShoppingListCard from '@/components/molecules/ShoppingListCard';
 import StoreListEntry from '@/components/molecules/StoreListEntry';
 import ConfirmDialog from '@/components/molecules/ConfirmDialog';
+import AppVersionPanel from '@/components/molecules/AppVersionPanel';
 import Button from '@/components/atoms/Button';
 import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingLists';
 import { useStores } from '@/hooks/useStores';
@@ -78,6 +79,11 @@ export default function SettingsRoute() {
           <span>Manage default items</span>
           <FontAwesomeIcon icon={faChevronRight} className="text-text-muted text-sm" />
         </NavLink>
+      </section>
+
+      <section className="px-4 pt-6">
+        <h2 className="font-display font-bold text-text text-lg mb-3">About</h2>
+        <AppVersionPanel />
       </section>
 
       <section className="px-4 pt-6">

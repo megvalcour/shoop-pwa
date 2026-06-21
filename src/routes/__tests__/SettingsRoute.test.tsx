@@ -2,9 +2,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import SettingsRoute from '@/routes/SettingsRoute';
 import { dbPromise } from '@/db/idbClient';
+
+// SettingsRoute renders AppVersionPanel, which reads the PWA update context.
+// Mock the hook so the route can render without a PwaUpdateProvider.
+vi.mock('@/hooks/usePwaUpdate', () => ({
+  usePwaUpdate: () => ({
+    needRefresh: false,
+    offlineReady: false,
+    updateState: 'idle',
+    checkForUpdate: vi.fn(),
+    applyUpdate: vi.fn(),
+  }),
+}));
 
 function renderSettingsRoute() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -144,6 +156,15 @@ describe('SettingsRoute', () => {
 
     await waitFor(() => expect(screen.queryByText('Goodbye List')).not.toBeInTheDocument());
     expect(await db.get('shopping_lists', 'sl-gone')).toBeUndefined();
+  });
+
+  it('renders the About section with the app version', async () => {
+    renderSettingsRoute();
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'About' })).toBeInTheDocument(),
+    );
+    expect(screen.getByText(`Shoop v${__APP_VERSION__}`)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check for updates' })).toBeInTheDocument();
   });
 
   it('renders the Reset all data button', async () => {

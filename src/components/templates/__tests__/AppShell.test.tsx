@@ -2,9 +2,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import AppShell from '@/components/templates/AppShell';
 import SettingsRoute from '@/routes/SettingsRoute';
+
+// SettingsRoute renders AppVersionPanel, which reads the PWA update context.
+// Mock the hook so the route renders without a PwaUpdateContext provider.
+vi.mock('@/hooks/usePwaUpdate', () => ({
+  usePwaUpdate: () => ({
+    needRefresh: false,
+    offlineReady: false,
+    updateState: 'idle',
+    checkForUpdate: vi.fn(),
+    applyUpdate: vi.fn(),
+  }),
+}));
 
 function renderWithRouter(initialPath = '/') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

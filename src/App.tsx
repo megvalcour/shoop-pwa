@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { PwaUpdateContext, usePwaUpdateController } from '@/hooks/usePwaUpdate';
 import AppShell from '@/components/templates/AppShell';
 import ShopRoute from '@/routes/ShopRoute';
 import ShoppingListDetailRoute from '@/routes/ShoppingListDetailRoute';
@@ -21,5 +22,10 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  const pwaUpdate = usePwaUpdateController();
+  return (
+    <PwaUpdateContext.Provider value={pwaUpdate}>
+      <RouterProvider router={router} />
+    </PwaUpdateContext.Provider>
+  );
 }

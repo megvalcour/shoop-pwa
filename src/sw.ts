@@ -22,5 +22,11 @@ registerRoute(new NavigationRoute(
   { allowlist },
 ))
 
-self.skipWaiting()
+// Prompt-based update: the freshly installed worker waits until the app asks it
+// to take over. `updateServiceWorker()` (via workbox-window) posts this message
+// when the user taps "Update now" on the Settings → About panel.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
+})
+
 clientsClaim()

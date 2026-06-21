@@ -1,6 +1,6 @@
 ## Current Status
 
-`feat(settings): destructive "Reset all data" action — wipes user lists/items/overrides, restores seeded store catalog`
+`feat(pwa): app versioning + manual "Check for updates" — prompt-based, non-destructive service-worker updates surfaced in Settings → About`
 
 ## Active Task
 
