@@ -4,7 +4,7 @@
 
 ## Active Task
 
-None.
+List Builder UX — maintain add-input focus + non-blocking model load. See `tasks/active--list-builder-ux.md`.
 
 ## Backlog
 
