@@ -4,13 +4,9 @@
 
 ## Active Task
 
-_None — pick the next backlog item to promote._
+- Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows) — plan: `tasks/active--delete-shopping-list.md`
 
 ## Backlog
-
-### Shopping Lists
-
-- Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows)
 
 ### Default List
 
