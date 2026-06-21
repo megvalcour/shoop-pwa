@@ -79,6 +79,42 @@ describe('useCreateShoppingList', () => {
   });
 });
 
+describe('useRenameShoppingList', () => {
+  beforeEach(() => {
+    globalThis.indexedDB = new IDBFactory() as unknown as IDBFactory;
+    vi.resetModules();
+  });
+
+  it('updates the name (trimmed) without touching id or created_at', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('shopping_lists', { id: 'ren-1', name: 'Old Name', created_at: '2026-06-01T00:00:00.000Z' });
+
+    vi.resetModules();
+    const { useShoppingLists, useRenameShoppingList } = await import('@/hooks/useShoppingLists');
+    const wrapper = makeWrapper();
+
+    const { result: listsResult } = renderHook(() => useShoppingLists(), { wrapper });
+    await waitFor(() => expect(listsResult.current.data).toHaveLength(1));
+
+    const { result: renameMutation } = renderHook(() => useRenameShoppingList(), { wrapper });
+    await act(() => renameMutation.current.mutateAsync({ id: 'ren-1', name: '  New Name  ' }));
+
+    const record = await db.get('shopping_lists', 'ren-1');
+    expect(record?.name).toBe('New Name');
+    expect(record?.id).toBe('ren-1');
+    expect(record?.created_at).toBe('2026-06-01T00:00:00.000Z');
+  });
+
+  it('rejects when renaming a non-existent list', async () => {
+    const { useRenameShoppingList } = await import('@/hooks/useShoppingLists');
+    const { result } = renderHook(() => useRenameShoppingList(), { wrapper: makeWrapper() });
+    await expect(
+      act(() => result.current.mutateAsync({ id: 'missing', name: 'Whatever' })),
+    ).rejects.toThrow(/not found/i);
+  });
+});
+
 describe('useDeleteShoppingList', () => {
   beforeEach(() => {
     globalThis.indexedDB = new IDBFactory() as unknown as IDBFactory;

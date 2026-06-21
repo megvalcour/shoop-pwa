@@ -1,11 +1,13 @@
 import { useParams } from 'react-router';
-import { useShoppingLists } from '@/hooks/useShoppingLists';
+import { useShoppingLists, useRenameShoppingList } from '@/hooks/useShoppingLists';
+import EditableTitle from '@/components/molecules/EditableTitle';
 import AddItemForm from '@/components/organisms/AddItemForm';
 import ShoppingListBuilder from '@/components/organisms/ShoppingListBuilder';
 
 export default function ShoppingListDetailRoute() {
   const { id } = useParams<{ id: string }>();
   const { data: lists, isPending, isError } = useShoppingLists();
+  const renameList = useRenameShoppingList();
   const list = lists?.find((l) => l.id === id);
 
   if (!id) {
@@ -34,7 +36,11 @@ export default function ShoppingListDetailRoute() {
 
   return (
     <div className="flex flex-col px-4 py-4">
-      <h1 className="font-display text-2xl font-bold text-text mb-4">{list.name}</h1>
+      <EditableTitle
+        value={list.name}
+        onSave={(name) => renameList.mutate({ id, name })}
+        className="font-body text-base font-medium text-text-muted mb-4 text-left"
+      />
       <AddItemForm listId={id} />
       <ShoppingListBuilder listId={id} />
     </div>

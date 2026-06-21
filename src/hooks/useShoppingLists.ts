@@ -36,6 +36,30 @@ export function useCreateShoppingList() {
   });
 }
 
+export function useRenameShoppingList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const db = await dbPromise;
+      const existing = await db.get('shopping_lists', id);
+      if (!existing) throw new Error(`Shopping list not found: ${id}`);
+      await db.put('shopping_lists', { ...existing, name: name.trim() });
+    },
+    onMutate: async ({ id, name }) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = queryClient.getQueryData<ShoppingList[]>(QUERY_KEY);
+      queryClient.setQueryData<ShoppingList[]>(QUERY_KEY, (lists) =>
+        lists?.map((l) => (l.id === id ? { ...l, name: name.trim() } : l)),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(QUERY_KEY, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
 export function useDeleteShoppingList() {
   const queryClient = useQueryClient();
   return useMutation({

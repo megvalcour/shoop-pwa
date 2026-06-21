@@ -63,6 +63,22 @@ test.describe('Shopping Lists', () => {
     await expect(page.getByText(/no lists yet/i)).toBeVisible();
   });
 
+  test('renaming the title on the detail screen persists across reload', async ({ page }) => {
+    await page.goto('/settings');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
+
+    await page.getByRole('button', { name: /^rename:/i }).click();
+    const titleInput = page.getByRole('textbox', { name: /list name/i });
+    await titleInput.fill('My Renamed List');
+    await titleInput.press('Enter');
+
+    await expect(page.getByRole('button', { name: 'Rename: My Renamed List' })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Rename: My Renamed List' })).toBeVisible();
+  });
+
   test('cancelling the delete confirmation keeps the list', async ({ page }) => {
     await page.goto('/settings');
     await page.getByRole('button', { name: /new list/i }).click();
