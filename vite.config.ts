@@ -28,7 +28,7 @@ export default defineConfig({
         name: 'Shoop',
         short_name: 'Shoop',
         description: 'Grocery store shopping application',
-        theme_color: '#1B3A2D',
+        theme_color: '#084887',
       },
 
       injectManifest: {
