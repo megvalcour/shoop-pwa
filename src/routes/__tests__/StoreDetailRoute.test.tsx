@@ -61,6 +61,14 @@ describe('StoreDetailRoute', () => {
     expect(screen.getByText('Section')).toBeInTheDocument();
   });
 
+  it('exposes a reorder handle for each aisle', async () => {
+    renderAt('/stores/st-detail');
+    await waitFor(() => expect(screen.getByText('Dairy')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Reorder Dairy' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder Produce' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder Bakery' })).toBeInTheDocument();
+  });
+
   it('renders "Store not found." for an unknown id', async () => {
     renderAt('/stores/does-not-exist');
     await waitFor(() => expect(screen.getByText('Store not found.')).toBeInTheDocument());

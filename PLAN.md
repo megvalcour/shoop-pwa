@@ -1,6 +1,6 @@
 ## Current Status
 
-`feat(pwa): app versioning + manual "Check for updates" — prompt-based, non-destructive service-worker updates surfaced in Settings → About`
+`feat(stores): manually sort aisles via drag-and-drop on the store detail view — persists new order by rewriting Aisle.sort_order, so every aisle-consuming surface follows`
 
 ## Active Task
 
