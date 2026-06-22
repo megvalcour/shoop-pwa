@@ -31,4 +31,19 @@ describe('AisleCard', () => {
     expect(screen.getByText('Section')).toBeInTheDocument();
     expect(screen.queryByText(/Aisle/)).not.toBeInTheDocument();
   });
+
+  it('renders no handle by default', () => {
+    render(<AisleCard aisle={makeAisle()} />);
+    expect(screen.queryByTestId('aisle-handle')).not.toBeInTheDocument();
+  });
+
+  it('renders the handle node when provided', () => {
+    render(
+      <AisleCard
+        aisle={makeAisle()}
+        handle={<span data-testid="aisle-handle">grip</span>}
+      />,
+    );
+    expect(screen.getByTestId('aisle-handle')).toBeInTheDocument();
+  });
 });
