@@ -1,5 +1,5 @@
 ---
-status: active
+status: complete
 class: complex
 e2e_required: false
 adr: docs/adrs/0016-holistic-versioning-system.md

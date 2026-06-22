@@ -1,7 +1,7 @@
 {
   "name": "shoop-pwa",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "validate": "npm run typecheck && npm run lint && npm run test",
+    "verify:version": "node scripts/check-version-db-alignment.mjs",
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run verify:version",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
@@ -33,6 +34,11 @@
   "devDependencies": {
     "@eslint/js": "^9.37.0",
     "@playwright/test": "^1.61.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.8",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -49,6 +55,7 @@
     "globals": "^16.4.0",
     "happy-dom": "^20.10.5",
     "prettier": "^3.8.4",
+    "semantic-release": "^25.0.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
     "vite": "^7.1.9",

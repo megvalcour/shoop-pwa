@@ -1,10 +1,10 @@
 ## Current Status
 
-`feat(stores): manually sort aisles via drag-and-drop on the store detail view — persists new order by rewriting Aisle.sort_order, so every aisle-consuming surface follows`
+`feat(db): align initial semver minor with DB_VERSION 4 — adopt semantic-release for automated semver from conventional commits and enforce minor(appVersion) === DB_VERSION in CI (ADR-0016)`
 
 ## Active Task
 
-Implement ADR-0016 (holistic versioning) — see `tasks/active--holistic-versioning-system.md`. Adopt semantic-release for automated semver from conventional commits and enforce `minor(appVersion) === DB_VERSION` in CI.
+_None. Promote a backlog item to active to begin the next task._
 
 ## Backlog
 
