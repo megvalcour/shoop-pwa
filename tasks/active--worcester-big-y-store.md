@@ -59,6 +59,18 @@ For one list to re-aisle across stores we normalize that coupling:
   `store_id`. A manual recategorization writes/updates only the
   `(item_id, active_store_id)` location, so fixing "Milk" at Market Basket never
   clobbers its Big Y aisle.
+- **The override invariant moves with the aisle.** Today a manual aisle is
+  protected by the implicit lock `Item.aisle_id !== ''` (the classifier only
+  ever touches `aisle_id === ''` items — see `AddItemForm`). With `aisle_id`
+  gone from `Item`, that lock signal becomes **"a location row exists for
+  `(item_id, active_store_id)`."** The override must hold *per store, within a
+  store*: an auto-classify resolving late must never overwrite a manual pick the
+  user made for that store while it was in flight. This is the same clobber race
+  `complete--manual-categorize-uncategorized.md` (Part B) closed; Model B
+  re-opens it per store unless we carry the guard into the location upsert
+  (below). Note: the planned `auto?` write-time guard from that task was never
+  actually landed in `useUpdateItemAisle` — today's protection is purely the
+  read-side filters in `AddItemForm` — so this must be built fresh, not ported.
 - **`list_items` unchanged** (`item_id` now points at a store-agnostic item), so
   lists are inherently store-agnostic. ✅ "List follows you."
 - **Shopping view** resolves each list item's aisle via its `item_location` for
@@ -161,10 +173,29 @@ Authored assets:
 5. `src/hooks/useItems.ts` — `useItems()` stays catalog-wide (store-agnostic);
    add `useItemLocations(storeId)` and `useUpsertItemLocation()` (replaces
    `useUpdateItemAisle`'s per-store-write semantics: upsert
-   `(item_id, store_id) → aisle_id`).
+   `(item_id, store_id) → aisle_id`). **The upsert must preserve the override
+   invariant** by taking an `auto?: boolean` (default `false` = manual), exactly
+   like the completed task's plan but at the location grain:
+   - **Manual (`auto` falsy):** unconditional upsert of the
+     `(item_id, store_id)` location — a manual pick always wins.
+   - **Auto (`auto: true`):** re-read inside the mutation and **skip the write
+     if a location row already exists for `(item_id, store_id)`** (a manual
+     choice for that store is already set — do not clobber). This is the
+     per-store generalization of the old `aisle_id !== ''` lock.
 6. `src/hooks/useListItems.ts` — add flow creates a store-agnostic item
    (no `store_id`/`aisle_id`); classification result is written as an
    `item_location` for the **active** store, not onto the item.
+   - **Re-key the classify trigger.** Today `AddItemForm` only classifies
+     newly-created items (`result.itemCreated`) and items with `aisle_id === ''`.
+     In Model B neither signal is correct: a re-added *existing* catalog item
+     that has **no location for the active store** must still classify (that is
+     the whole re-aisle premise — `itemCreated` would be `false` and wrongly
+     skip it, stranding it in Uncategorized at the new store). The trigger
+     becomes **"the item has no `item_location` for the active store yet,"** and
+     the write goes through the `auto: true` path in step 5 so an existing
+     manual location for that store is still never overwritten. `itemCreated`
+     stays only as the signal for whether the shared `items` query needs
+     invalidating, not for whether to classify.
 7. `src/hooks/useAisleMatcher.ts` + `src/workers/aisleMatcher.worker.ts` +
    `src/services/classifier.ts`
    - Remove module-scope `oxford-62.*` imports from the hook/worker.
@@ -186,7 +217,14 @@ Authored assets:
     store's `item_locations` (not `item.aisle_id`); `useAisles(activeStoreId)`;
     aisle changes call `useUpsertItemLocation()`.
 11. `src/components/organisms/AddItemForm.tsx` — classify against the active
-    store's aisles; write the result as an `item_location`.
+    store's aisles; write the result as an `item_location` via the `auto: true`
+    path. Both classify sites change their guard from `aisle_id === ''` /
+    `result.itemCreated` to **"no `item_location` for the active store":**
+    - the on-add `onSuccess` classify, and
+    - the `isReady` deferred-reclassify loop, whose filter becomes "list/catalog
+      items lacking a location for the active store." Because store switching
+      re-embeds the matcher (step 7), this loop must also re-run on active-store
+      change so items unlocated at the newly-active store get classified there.
 12. Reconcile the manual-categorize-uncategorized flow (completed task) to the
     per-store upsert.
 
@@ -218,6 +256,9 @@ Authored assets:
 - [ ] Big Y seed assets authored from the real layout (aisles + shared-catalog item_locations + aliases).
 - [ ] Active-store preference persistence (`usePreferences`, `useActiveStore`).
 - [ ] Store-aware items/aisles/matcher.
+- [ ] Override invariant preserved per store: `useUpsertItemLocation` auto-writes
+      skip when a location already exists for the active store; manual picks are
+      unconditional; classify trigger re-keyed to "no location for active store."
 - [ ] Switcher selects + persists; header reflects it; "Coming soon" removed.
 - [ ] Shopping view re-buckets on store switch; uncategorized re-classifies per store.
 - [ ] `npm run validate` clean.
@@ -233,6 +274,13 @@ Authored assets:
   and is read back.
 - **useItemLocations / useUpsertItemLocation**: per-store upsert does not affect
   the other store's location for the same item.
+- **Override invariant (per-store clobber regression)**: manual upsert (`auto`
+  omitted) overwrites an existing location; auto upsert (`auto: true`) writes
+  only when no location exists for `(item_id, store_id)` and is a **no-op when a
+  location for that store already exists**. Simulate the race: manual-pick aisle
+  X at store B, then fire an `auto: true` classify with a *different* aisle for
+  store B; assert the stored location is still X (the manual choice survives).
+  This is the Model B counterpart of the completed task's cross-list revert test.
 - **classifier.ts**: unchanged pure-function tests still pass; add a case proving
   the same phrase resolves to different aisle numbers under two stores' inputs.
 - **ShoppingListBuilder**: a list with one item buckets into store A's aisle, and
