@@ -1,18 +1,19 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import type { Store } from '@/db/schema';
-import Badge from '@/components/atoms/Badge';
 import Button from '@/components/atoms/Button';
 
 export interface StoreSwitcherSheetProps {
   stores: Store[];
   currentStoreId: string;
+  onSelect: (storeId: string) => void;
   onClose: () => void;
 }
 
 export default function StoreSwitcherSheet({
   stores,
   currentStoreId,
+  onSelect,
   onClose,
 }: StoreSwitcherSheetProps) {
   return (
@@ -38,7 +39,10 @@ export default function StoreSwitcherSheet({
                   className={`w-full flex items-center justify-between px-4 py-3 text-left ${
                     isSelected ? 'text-primary font-semibold' : 'text-text'
                   }`}
-                  onClick={onClose}
+                  onClick={() => {
+                    if (!isSelected) onSelect(store.id);
+                    onClose();
+                  }}
                 >
                   <span className="flex flex-col">
                     <span>{store.name}</span>
@@ -51,12 +55,6 @@ export default function StoreSwitcherSheet({
               </li>
             );
           })}
-          <li>
-            <div className="w-full flex items-center justify-between px-4 py-3 text-left text-text-muted opacity-60">
-              <span>Big Y</span>
-              <Badge variant="muted">Coming soon</Badge>
-            </div>
-          </li>
         </ul>
       </div>
     </div>

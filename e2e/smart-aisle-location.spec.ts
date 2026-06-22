@@ -27,7 +27,7 @@ async function seedList(page: Parameters<Parameters<typeof test>[1]>[0]['page'])
 
   const listId = await page.evaluate(async (seedItems) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('shoop', 2);
+      const req = indexedDB.open('shoop', 3);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });

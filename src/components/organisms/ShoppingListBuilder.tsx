@@ -1,6 +1,7 @@
 import { useListItems, useDeleteListItem, useToggleListItem } from '@/hooks/useListItems';
-import { useItems, useUpdateItemAisle } from '@/hooks/useItems';
+import { useItems, useItemLocations, useUpsertItemLocation } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
+import { useActiveStore } from '@/hooks/useStores';
 import GroceryListItem from '@/components/molecules/GroceryListItem';
 import AisleGroup from '@/components/molecules/AisleGroup';
 import type { Aisle, Item, ListItem } from '@/db/schema';
@@ -17,13 +18,18 @@ interface AisleBucket {
 export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps) {
   const { data: listItems, isPending, isError } = useListItems(listId);
   const { data: items } = useItems();
-  const { data: aisles } = useAisles();
+  const { data: activeStore } = useActiveStore();
+  const { data: aisles } = useAisles(activeStore?.id);
+  const { data: locations } = useItemLocations(activeStore?.id);
   const deleteItem = useDeleteListItem();
   const toggleItem = useToggleListItem();
-  const updateItemAisle = useUpdateItemAisle();
+  const upsertLocation = useUpsertItemLocation();
 
   const itemById = new Map<string, Item>((items ?? []).map((item) => [item.id, item]));
   const aisleById = new Map<string, Aisle>((aisles ?? []).map((a) => [a.id, a]));
+  // item_id → aisle_id for the active store (ADR-0015). Lists are store-agnostic;
+  // the aisle each list item buckets into is resolved per-store here.
+  const aisleByItem = new Map<string, string>((locations ?? []).map((l) => [l.item_id, l.aisle_id]));
 
   if (isPending || !items) {
     return <span className="text-text-muted">Loading…</span>;
@@ -40,13 +46,14 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   const unchecked = listItems.filter((li) => !li.checked);
   const checked = listItems.filter((li) => li.checked);
 
+  const aisleIdFor = (li: ListItem): string => aisleByItem.get(li.item_id) ?? '';
+
   // Group unchecked by aisle
   const bucketMap = new Map<string, ListItem[]>();
   const uncategorized: ListItem[] = [];
 
   for (const li of unchecked) {
-    const item = itemById.get(li.item_id);
-    const aisleId = item?.aisle_id ?? '';
+    const aisleId = aisleIdFor(li);
     if (!aisleId || !aisleById.has(aisleId)) {
       uncategorized.push(li);
     } else {
@@ -66,7 +73,7 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
 
   function renderListItem(li: ListItem) {
     const item = itemById.get(li.item_id);
-    const aisleId = item?.aisle_id ?? '';
+    const aisleId = aisleIdFor(li);
     const aisle = aisleById.get(aisleId);
     const isAnalyzing = !li.checked && (!aisleId || !aisleById.has(aisleId));
 
@@ -82,9 +89,14 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
         isAnalyzing={isAnalyzing}
         aisles={aisles}
         currentAisleId={aisleId}
-        onAisleChange={(newAisleId) =>
-          updateItemAisle.mutate({ itemId: li.item_id, aisleId: newAisleId })
-        }
+        onAisleChange={(newAisleId) => {
+          if (activeStore)
+            upsertLocation.mutate({
+              itemId: li.item_id,
+              storeId: activeStore.id,
+              aisleId: newAisleId,
+            });
+        }}
       />
     );
   }

@@ -52,6 +52,23 @@ describe('buildCandidates', () => {
     );
     expect(result).toEqual([]);
   });
+
+  it('resolves the same phrase to different aisle numbers under two stores inputs', () => {
+    // The scoring functions are store-neutral (ADR-0015): the same item maps to
+    // whatever aisle the store's item→aisle inputs say.
+    const storeA = buildCandidates(
+      [{ canonical_name: 'milk', aisle_id: 'a-dairy' }],
+      {},
+      new Map([['a-dairy', '1']]),
+    );
+    const storeB = buildCandidates(
+      [{ canonical_name: 'milk', aisle_id: 'b-dairy' }],
+      {},
+      new Map([['b-dairy', 'Dairy Dept']]),
+    );
+    expect(lexicalMatch('milk', storeA)?.aisleNumber).toBe('1');
+    expect(lexicalMatch('milk', storeB)?.aisleNumber).toBe('Dairy Dept');
+  });
 });
 
 describe('lexicalMatch', () => {

@@ -15,12 +15,17 @@ vi.mock('@/hooks/useStores', () => ({
   useStores: () => ({ data: [STORE] }),
 }));
 
+vi.mock('@/hooks/usePreferences', () => ({
+  useSetActiveStoreId: () => ({ mutate: vi.fn() }),
+}));
+
 describe('StoreHeader', () => {
   it('opens the store switcher sheet when the logo button is clicked', () => {
     render(<StoreHeader />);
     expect(screen.queryByText('Switch store')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /switch store/i }));
     expect(screen.getByText('Switch store')).toBeInTheDocument();
-    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    // No "Coming soon" placeholder — every store is a real switch target now.
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
   });
 });

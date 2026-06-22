@@ -1,35 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { buildCandidates, type Candidate } from '@/services/classifier';
 
-// Minimal catalog: two items in numeric aisles, one in a NON-numeric department.
-// Used by the main-thread lexical fast-path (getCandidates); the semantic path is
-// served by the mocked worker below.
-vi.mock('@/assets/aisles/oxford-62.json', () => ({
-  default: {
-    store: { id: 'store-1', name: 'Test Store', address: '', slug: 'test' },
-    aisles: [
-      { id: 'aisle-21', store_id: 'store-1', number: '21', label: 'Bread & Bakery', sort_order: 21 },
-      { id: 'aisle-1', store_id: 'store-1', number: '1', label: 'Dairy & Eggs', sort_order: 1 },
-      {
-        id: 'aisle-produce',
-        store_id: 'store-1',
-        number: 'Produce Dept',
-        label: 'Produce',
-        sort_order: 0,
-      },
-    ],
-    items: [
-      { canonical_name: 'bread', aisle_id: 'aisle-21' },
-      { canonical_name: 'butter', aisle_id: 'aisle-1' },
-      { canonical_name: 'bananas', aisle_id: 'aisle-produce' },
-    ],
-  },
-}));
+// The candidate set is now supplied by the caller (ADR-0015): the active store's
+// item→aisle map plus that store's aliases. Two items in numeric aisles, one in
+// a NON-numeric department, plus a concrete-noun alias pointing at Produce.
+const aisleById = new Map([
+  ['aisle-21', '21'],
+  ['aisle-1', '1'],
+  ['aisle-produce', 'Produce Dept'],
+]);
+const CANDIDATES: Candidate[] = buildCandidates(
+  [
+    { canonical_name: 'bread', aisle_id: 'aisle-21' },
+    { canonical_name: 'butter', aisle_id: 'aisle-1' },
+    { canonical_name: 'bananas', aisle_id: 'aisle-produce' },
+  ],
+  { 'Produce Dept': ['banana'] },
+  aisleById,
+);
 
-// A small matcher-only alias map pointing a concrete noun at the Produce dept.
-vi.mock('@/assets/aisles/oxford-62-aliases.json', () => ({
-  default: { 'Produce Dept': ['banana'] },
-}));
+const STORE = 'store-1';
 
 // Semantic results the mocked worker returns, keyed by query phrase. Anything not
 // listed resolves to '' (below threshold / no confident match).
@@ -107,7 +98,7 @@ const AISLE_PRODUCE: import('@/db/schema').Aisle = {
 describe('useAisleMatcher', () => {
   it('isReady stays false until primed, then becomes true after the worker loads', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     expect(result.current.isReady).toBe(false);
 
@@ -117,14 +108,14 @@ describe('useAisleMatcher', () => {
 
   it('does not boot the worker until prime() is called', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    renderHook(() => useAisleMatcher());
+    renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     expect(workerInstances).toHaveLength(0);
   });
 
   it('boots the worker exactly once across repeated primes', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
@@ -135,7 +126,7 @@ describe('useAisleMatcher', () => {
 
   it('classify returns empty string for empty/whitespace input without booting the worker', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     expect(await result.current.classify('', [AISLE_21, AISLE_1])).toBe('');
     expect(await result.current.classify('   ', [AISLE_21, AISLE_1])).toBe('');
@@ -144,7 +135,7 @@ describe('useAisleMatcher', () => {
 
   it('classify resolves a non-numeric department via the lexical alias fast-path (no worker)', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     const aisleId = await result.current.classify('banana', [AISLE_PRODUCE]);
     expect(aisleId).toBe('aisle-produce');
@@ -153,7 +144,7 @@ describe('useAisleMatcher', () => {
 
   it('classify resolves a lexical exact-phrase match without posting to the worker', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
@@ -165,7 +156,7 @@ describe('useAisleMatcher', () => {
 
   it('classify resolves a semantic query via the worker reply', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
@@ -177,7 +168,7 @@ describe('useAisleMatcher', () => {
 
   it('classify returns empty string when the worker reports no confident match', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
@@ -188,7 +179,7 @@ describe('useAisleMatcher', () => {
 
   it('classify returns empty string for a semantic query before the worker is ready', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     // No prime() — worker never ready, so the semantic fallback short-circuits.
     const aisleId = await result.current.classify('plantains', [AISLE_PRODUCE]);
@@ -198,7 +189,7 @@ describe('useAisleMatcher', () => {
 
   it('classify returns empty string when the matched aisle has no entry in the aisles array', async () => {
     const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
-    const { result } = renderHook(() => useAisleMatcher());
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
 
     act(() => result.current.prime());
     await waitFor(() => expect(result.current.isReady).toBe(true));
@@ -207,5 +198,26 @@ describe('useAisleMatcher', () => {
     // passes an empty aisles array, so it cannot be resolved to an id.
     const aisleId = await result.current.classify('bread', []);
     expect(aisleId).toBe('');
+  });
+
+  it('re-embeds when the active store changes (a new load is posted)', async () => {
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result, rerender } = renderHook(
+      ({ store }: { store: string }) => useAisleMatcher(store, CANDIDATES),
+      { initialProps: { store: 'store-1' } },
+    );
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    const loadsBefore = postedMessages.filter((m) => (m as { type: string }).type === 'load').length;
+
+    // Switch the active store: isReady drops until the worker re-embeds.
+    rerender({ store: 'store-2' });
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    const loadsAfter = postedMessages.filter((m) => (m as { type: string }).type === 'load').length;
+    expect(loadsAfter).toBe(loadsBefore + 1);
+    expect(workerInstances).toHaveLength(1);
   });
 });

@@ -1,26 +1,28 @@
 // Aisle-matching inference worker (see ADR-0013).
 //
-// Runs the heavy work off the main thread: model init, catalog embedding, and
+// Runs the heavy work off the main thread: model init, candidate embedding, and
 // per-query embedding. All scoring decisions still come from the pure functions
 // in `@/services/classifier` (ADR-0011); the worker is data-only and never
 // touches IndexedDB — it returns an aisle `number`, which the main thread
 // resolves to an aisle id against the live `aisles` array.
+//
+// Per ADR-0015 the candidate set is supplied by the main thread (the active
+// store's item→aisle map + that store's aliases) on each `load`, rather than
+// imported at module scope, so switching the active store re-embeds.
 
 import { pipeline } from '@huggingface/transformers';
-import catalogData from '@/assets/aisles/oxford-62.json';
-import aliasData from '@/assets/aisles/oxford-62-aliases.json';
-import {
-  buildCandidates,
-  aggregateTopK,
-  THRESHOLD,
-  TOP_K,
-  type AliasMap,
-} from '@/services/classifier';
+import { aggregateTopK, THRESHOLD, TOP_K } from '@/services/classifier';
 
 type EmbedPipeline = (
   text: string,
   opts: { pooling: 'mean'; normalize: boolean },
 ) => Promise<{ tolist(): number[][] }>;
+
+/** A matchable phrase + the aisle `number` it resolves to (serializable). */
+interface SerializedCandidate {
+  phrase: string;
+  aisleNumber: string;
+}
 
 interface EmbeddedCandidate {
   aisleNumber: string;
@@ -29,7 +31,7 @@ interface EmbeddedCandidate {
 
 // Inbound messages the main thread posts to this worker.
 type WorkerRequest =
-  | { type: 'load' }
+  | { type: 'load'; candidates: SerializedCandidate[] }
   | { type: 'classify'; id: string; phrase: string };
 
 // Outbound messages this worker posts back. Mirrored in `useAisleMatcher.ts`.
@@ -47,6 +49,9 @@ const ctx = self as unknown as WorkerScope;
 
 let pipe: EmbedPipeline | null = null;
 let catalogEmbeddings: EmbeddedCandidate[] = [];
+// Monotonic token so that a re-embed (store switch) supersedes any in-flight
+// earlier load: only the latest load installs its embeddings and posts `ready`.
+let loadToken = 0;
 
 function dotProduct(a: number[], b: number[]): number {
   return a.reduce((s, v, i) => s + v * b[i], 0);
@@ -57,24 +62,23 @@ async function embed(text: string): Promise<number[]> {
   return output.tolist()[0];
 }
 
-async function load(): Promise<void> {
-  pipe = (await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-    dtype: 'fp32',
-  })) as unknown as EmbedPipeline;
-
-  const { aisles, items } = catalogData as {
-    aisles: { id: string; number: string }[];
-    items: { canonical_name: string; aisle_id: string }[];
-  };
-  const aisleById = new Map(aisles.map((a) => [a.id, a.number]));
-  const candidates = buildCandidates(items, aliasData as AliasMap, aisleById);
+async function load(candidates: SerializedCandidate[]): Promise<void> {
+  const myToken = ++loadToken;
+  if (!pipe) {
+    pipe = (await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      dtype: 'fp32',
+    })) as unknown as EmbedPipeline;
+  }
 
   const entries: EmbeddedCandidate[] = [];
   for (const candidate of candidates) {
-    entries.push({ aisleNumber: candidate.aisleNumber, embedding: await embed(candidate.phrase) });
+    const embedding = await embed(candidate.phrase);
+    if (myToken !== loadToken) return; // a newer load started — abandon this one.
+    entries.push({ aisleNumber: candidate.aisleNumber, embedding });
   }
-  catalogEmbeddings = entries;
+  if (myToken !== loadToken) return;
 
+  catalogEmbeddings = entries;
   ctx.postMessage({ type: 'ready' });
 }
 
@@ -93,7 +97,7 @@ async function classify(id: string, phrase: string): Promise<void> {
 ctx.onmessage = (event) => {
   const data = event.data;
   if (data.type === 'load') {
-    void load();
+    void load(data.candidates);
   } else if (data.type === 'classify') {
     void classify(data.id, data.phrase);
   }

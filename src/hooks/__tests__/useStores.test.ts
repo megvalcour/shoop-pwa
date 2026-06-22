@@ -13,18 +13,18 @@ function makeWrapper() {
 }
 
 describe('useStores', () => {
-  it('returns the seeded Oxford Market Basket store', async () => {
+  it('returns both seeded stores', async () => {
     const { result } = renderHook(() => useStores(), { wrapper: makeWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toHaveLength(1);
-    expect(result.current.data![0].name).toBe('Oxford Market Basket #62');
+    expect(result.current.data).toHaveLength(2);
+    const names = result.current.data!.map((s) => s.name).sort();
+    expect(names).toEqual(['Big Y World Class Market', 'Oxford Market Basket #62']);
   });
 });
 
 describe('useActiveStore', () => {
-  it('returns the first store record', async () => {
+  it('returns the default active store (Oxford Market Basket)', async () => {
     const { result } = renderHook(() => useActiveStore(), { wrapper: makeWrapper() });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.name).toBe('Oxford Market Basket #62');
+    await waitFor(() => expect(result.current.data?.name).toBe('Oxford Market Basket #62'));
   });
 });

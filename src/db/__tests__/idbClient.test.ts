@@ -14,21 +14,44 @@ describe('idbClient', () => {
     expect([...db.objectStoreNames].sort()).toEqual([
       'aisles',
       'default_list',
+      'item_locations',
       'items',
       'list_items',
+      'preferences',
       'shopping_lists',
       'stores',
     ]);
   });
 
-  it('seeds correct record counts', async () => {
+  it('seeds both stores, the shared catalog, and per-store locations', async () => {
     const { dbPromise } = await import('@/db/idbClient');
     const db = await dbPromise;
-    expect(await db.count('stores')).toBe(1);
-    expect(await db.count('aisles')).toBe(31);
+    expect(await db.count('stores')).toBe(2);
+    // 31 oxford aisles + 28 big-y aisles.
+    expect(await db.count('aisles')).toBe(59);
+    // The catalog is shared and store-agnostic.
     expect(await db.count('items')).toBe(182);
-    const [store] = await db.getAll('stores');
-    expect(store.name).toBe('Oxford Market Basket #62');
+    // Per-store placements: 182 oxford + 182 big-y.
+    expect(await db.count('item_locations')).toBe(364);
+    const names = (await db.getAll('stores')).map((s) => s.name).sort();
+    expect(names).toEqual(['Big Y World Class Market', 'Oxford Market Basket #62']);
+  });
+
+  it('seeds the default active store preference', async () => {
+    const { dbPromise, ACTIVE_STORE_ID_KEY } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    const pref = await db.get('preferences', ACTIVE_STORE_ID_KEY);
+    const oxford = (await db.getAll('stores')).find((s) => s.slug === 'oxford-62');
+    expect(pref?.value).toBe(oxford!.id);
+  });
+
+  it('stores items without per-store fields (store-agnostic catalog)', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    const [item] = await db.getAll('items');
+    expect(item).toHaveProperty('canonical_name');
+    expect(item).not.toHaveProperty('aisle_id');
+    expect(item).not.toHaveProperty('store_id');
   });
 
   it('is idempotent when the module is re-imported against an already-seeded DB', async () => {
@@ -39,12 +62,12 @@ describe('idbClient', () => {
 
     const { dbPromise: second } = await import('@/db/idbClient');
     const db = await second;
-    expect(await db.count('stores')).toBe(1);
-    expect(await db.count('aisles')).toBe(31);
+    expect(await db.count('stores')).toBe(2);
     expect(await db.count('items')).toBe(182);
+    expect(await db.count('item_locations')).toBe(364);
   });
 
-  it('upgrades from v1 to v2: removes weekly_list, creates shopping_lists and list_items', async () => {
+  it('upgrades from v1 to v3: creates the new stores and migrates as expected', async () => {
     const { openDB } = await import('idb');
     const v1 = await openDB('shoop', 1, {
       upgrade(db) {
@@ -67,21 +90,62 @@ describe('idbClient', () => {
     expect([...db.objectStoreNames].sort()).toEqual([
       'aisles',
       'default_list',
+      'item_locations',
       'items',
       'list_items',
+      'preferences',
       'shopping_lists',
       'stores',
     ]);
   });
 
-  it('returns correct index query results', async () => {
+  it('upgrades a populated v2 DB: moves each item store_id/aisle_id into an item_location', async () => {
+    const { openDB } = await import('idb');
+    const v2 = await openDB('shoop', 2, {
+      upgrade(db) {
+        db.createObjectStore('stores', { keyPath: 'id' });
+        const aisles = db.createObjectStore('aisles', { keyPath: 'id' });
+        aisles.createIndex('store_id', 'store_id');
+        const items = db.createObjectStore('items', { keyPath: 'id' });
+        items.createIndex('aisle_id', 'aisle_id');
+        items.createIndex('store_id', 'store_id');
+        db.createObjectStore('default_list', { keyPath: 'id' });
+        db.createObjectStore('shopping_lists', { keyPath: 'id' });
+        const li = db.createObjectStore('list_items', { keyPath: 'id' });
+        li.createIndex('list_id', 'list_id');
+      },
+    });
+    // A located item and an uncategorized one (empty aisle_id → no location).
+    await v2.add('stores', { id: 'st-1', name: 'Old Store', address: '', slug: 'old' });
+    await v2.add('items', {
+      id: 'it-1',
+      name: 'Milk',
+      canonical_name: 'milk',
+      aisle_id: 'ai-1',
+      store_id: 'st-1',
+    });
+    await v2.add('items', {
+      id: 'it-2',
+      name: 'Mystery',
+      canonical_name: 'mystery',
+      aisle_id: '',
+      store_id: 'st-1',
+    });
+    v2.close();
+
+    vi.resetModules();
     const { dbPromise } = await import('@/db/idbClient');
     const db = await dbPromise;
-    const [store] = await db.getAll('stores');
-    const aislesByStore = await db.getAllFromIndex('aisles', 'store_id', store.id);
-    expect(aislesByStore).toHaveLength(31);
-    const itemsByStore = await db.getAllFromIndex('items', 'store_id', store.id);
-    expect(itemsByStore).toHaveLength(182);
+
+    // Items are rewritten store-agnostic.
+    const it1 = await db.get('items', 'it-1');
+    expect(it1).toEqual({ id: 'it-1', name: 'Milk', canonical_name: 'milk' });
+
+    // The located item gains an item_location; the uncategorized one does not.
+    const locs = await db.getAllFromIndex('item_locations', 'item_id', 'it-1');
+    expect(locs).toHaveLength(1);
+    expect(locs[0]).toMatchObject({ item_id: 'it-1', store_id: 'st-1', aisle_id: 'ai-1' });
+    expect(await db.getAllFromIndex('item_locations', 'item_id', 'it-2')).toHaveLength(0);
   });
 
   describe('resetUserData', () => {
@@ -110,14 +174,11 @@ describe('idbClient', () => {
     it('drops user-added items but restores the seeded catalog', async () => {
       const { dbPromise, resetUserData } = await import('@/db/idbClient');
       const db = await dbPromise;
-      const [store] = await db.getAll('stores');
       const userItemId = crypto.randomUUID();
       await db.add('items', {
         id: userItemId,
         name: 'Dragonfruit',
         canonical_name: 'dragonfruit',
-        aisle_id: '',
-        store_id: store.id,
       });
       expect(await db.count('items')).toBe(183);
 
@@ -127,29 +188,37 @@ describe('idbClient', () => {
       expect(await db.get('items', userItemId)).toBeUndefined();
     });
 
-    it('reverts an aisle override on a seeded item', async () => {
+    it('reverts a per-store aisle override (item_location) on a seeded item', async () => {
       const { dbPromise, resetUserData } = await import('@/db/idbClient');
       const db = await dbPromise;
-      const [seeded] = await db.getAll('items');
-      const originalAisle = seeded.aisle_id;
-      await db.put('items', { ...seeded, aisle_id: 'tampered-aisle' });
-      expect((await db.get('items', seeded.id))?.aisle_id).toBe('tampered-aisle');
+      const [loc] = await db.getAll('item_locations');
+      const originalAisle = loc.aisle_id;
+      await db.put('item_locations', { ...loc, aisle_id: 'tampered-aisle' });
+      expect((await db.get('item_locations', loc.id))?.aisle_id).toBe('tampered-aisle');
 
       await resetUserData();
 
-      expect((await db.get('items', seeded.id))?.aisle_id).toBe(originalAisle);
+      // The tampered row id is gone; locations are re-seeded fresh.
+      expect(await db.get('item_locations', loc.id)).toBeUndefined();
+      expect(await db.count('item_locations')).toBe(364);
+      const restored = (await db.getAllFromIndex('item_locations', 'item_id', loc.item_id)).find(
+        (l) => l.store_id === loc.store_id,
+      );
+      expect(restored?.aisle_id).toBe(originalAisle);
     });
 
-    it('preserves the seeded store and aisles', async () => {
-      const { dbPromise, resetUserData } = await import('@/db/idbClient');
+    it('preserves the seeded stores and aisles and resets the active store', async () => {
+      const { dbPromise, resetUserData, ACTIVE_STORE_ID_KEY } = await import('@/db/idbClient');
       const db = await dbPromise;
+      const bigY = (await db.getAll('stores')).find((s) => s.slug === 'big-y-worcester')!;
+      await db.put('preferences', { key: ACTIVE_STORE_ID_KEY, value: bigY.id });
 
       await resetUserData();
 
-      expect(await db.count('stores')).toBe(1);
-      expect(await db.count('aisles')).toBe(31);
-      const [store] = await db.getAll('stores');
-      expect(store.name).toBe('Oxford Market Basket #62');
+      expect(await db.count('stores')).toBe(2);
+      expect(await db.count('aisles')).toBe(59);
+      const oxford = (await db.getAll('stores')).find((s) => s.slug === 'oxford-62')!;
+      expect((await db.get('preferences', ACTIVE_STORE_ID_KEY))?.value).toBe(oxford.id);
     });
   });
 });
