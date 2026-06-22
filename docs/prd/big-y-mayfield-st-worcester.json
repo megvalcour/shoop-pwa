@@ -1,0 +1,24 @@
+{
+    "store": {
+        "name": "Big Y World Class Market",
+        "address": "100 Mayfield Street, Worcester, MA 01602"
+    },
+    "aisle_legend": {
+        "A": "Produce — Front Right",
+        "B": "Floral Department — Front Entrance",
+        "C": "Bakery — Front Right Corner",
+        "D": "Deli & Prepared Foods — Right Perimeter",
+        "E": "Seafood — Back Right Corner",
+        "F": "Meat Department — Back Perimeter",
+        "G": "Dairy — Back Left & Left Perimeter",
+        "H": "Pharmacy — Front Left",
+        "I": "Customer Service — Front Center",
+        "J": "Frozen Foods — Aisles 14 & 15",
+        "Checkout": "Candy, Magazines, Gift Cards",
+        "Deli Dept": "Cold Cuts, Specialty Cheeses, Fresh Sliced Meat",
+        "Freezer Wall": "Ice Cream, Novelties",
+        "Meat Dept": "Fresh Beef, Poultry, Pork",
+        "Produce Dept": "Fresh Vegetables, Fresh Fruit, Organics, Salad Blends",
+        "Registers": "Reusable Bags, Batteries"
+    }
+}
