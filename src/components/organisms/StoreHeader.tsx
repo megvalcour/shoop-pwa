@@ -2,10 +2,12 @@ import { useState } from 'react';
 import StoreLogo from '@/components/atoms/StoreLogo';
 import StoreSwitcherSheet from '@/components/molecules/StoreSwitcherSheet';
 import { useStores, useActiveStore } from '@/hooks/useStores';
+import { useSetActiveStoreId } from '@/hooks/usePreferences';
 
 export default function StoreHeader() {
   const { data: store } = useActiveStore();
   const { data: stores } = useStores();
+  const setActiveStoreId = useSetActiveStoreId();
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,6 +30,7 @@ export default function StoreHeader() {
             <StoreSwitcherSheet
               stores={stores ?? []}
               currentStoreId={store.id}
+              onSelect={(storeId) => setActiveStoreId.mutate(storeId)}
               onClose={() => setOpen(false)}
             />
           )}

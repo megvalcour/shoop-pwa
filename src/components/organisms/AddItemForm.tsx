@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAddListItem } from '@/hooks/useListItems';
-import { useItems, useUpdateItemAisle } from '@/hooks/useItems';
+import { useItems, useItemLocations, useUpsertItemLocation } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
+import { useActiveStore } from '@/hooks/useStores';
 import { useAisleMatcher } from '@/hooks/useAisleMatcher';
+import { buildCandidates } from '@/services/classifier';
+import { aliasesForSlug } from '@/services/aisleAliases';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 
@@ -14,11 +17,35 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
   const [value, setValue] = useState('');
   const { mutate } = useAddListItem();
   const { data: items } = useItems();
-  const { data: aisles } = useAisles();
-  const updateItemAisle = useUpdateItemAisle();
-  const { prime, classify, isReady } = useAisleMatcher();
+  const { data: activeStore } = useActiveStore();
+  const { data: aisles } = useAisles(activeStore?.id);
+  const { data: locations, isSuccess: locationsReady } = useItemLocations(activeStore?.id);
+  const upsertLocation = useUpsertItemLocation();
   const [hasPrimed, setHasPrimed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // The matcher's candidate set is the active store's item→aisle map (joined
+  // from item_locations) plus that store's aliases (ADR-0015).
+  const candidates = useMemo(() => {
+    if (!items || !aisles || !locations) return [];
+    const canonicalById = new Map(items.map((i) => [i.id, i.canonical_name]));
+    const catalogInput = locations
+      .map((loc) => ({
+        canonical_name: canonicalById.get(loc.item_id) ?? '',
+        aisle_id: loc.aisle_id,
+      }))
+      .filter((c) => c.canonical_name);
+    const aisleById = new Map(aisles.map((a) => [a.id, a.number]));
+    return buildCandidates(catalogInput, aliasesForSlug(activeStore?.slug), aisleById);
+  }, [items, aisles, locations, activeStore?.slug]);
+
+  const { prime, classify, isReady } = useAisleMatcher(activeStore?.id, candidates);
+
+  // Items located at the active store; an item missing here triggers classification.
+  const locatedItemIds = useMemo(
+    () => new Set((locations ?? []).map((l) => l.item_id)),
+    [locations],
+  );
 
   // Kick off model loading only on a deliberate user signal (blur or submit) with
   // non-empty text — never on mount, while typing, or in the empty state.
@@ -28,21 +55,34 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
     prime();
   }
 
-  // When the model becomes ready, classify any items that were added while it was loading.
+  // Once primed, keep the worker embedded for the active store. prime() re-embeds
+  // only when the store actually changed, so this is a no-op on most renders but
+  // remaps the candidate set on a store switch.
   useEffect(() => {
-    if (!isReady) return;
-    const unclassified = (items ?? []).filter((item) => item.aisle_id === '');
-    if (unclassified.length === 0) return;
-    for (const item of unclassified) {
+    if (hasPrimed) prime();
+  }, [hasPrimed, prime]);
+
+  // When the model becomes ready (or the active store changes), classify any
+  // catalog item lacking a location for the active store — the re-aisle premise:
+  // a re-added existing item with no location at the new store must classify
+  // there too. The write goes through the auto path, so an existing manual
+  // location for that store is never overwritten.
+  const itemsReady = !!items;
+  useEffect(() => {
+    if (!isReady || !activeStore || !itemsReady || !locationsReady) return;
+    const located = new Set((locations ?? []).map((l) => l.item_id));
+    const unlocated = (items ?? []).filter((item) => !located.has(item.id));
+    if (unlocated.length === 0) return;
+    for (const item of unlocated) {
       classify(item.name, aisles ?? []).then((aisleId) => {
-        if (aisleId) updateItemAisle.mutate({ itemId: item.id, aisleId });
+        if (aisleId)
+          upsertLocation.mutate({ itemId: item.id, storeId: activeStore.id, aisleId, auto: true });
       });
     }
-    // Intentionally omit classify/items/aisles/updateItemAisle — this effect must only
-    // fire once when isReady transitions to true; running it on every items change
-    // would create classify → invalidate → re-classify loops.
+    // Fire only when readiness or the active store flips — not on every items /
+    // locations change — to avoid classify → invalidate → re-classify loops.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady]);
+  }, [isReady, activeStore?.id, itemsReady, locationsReady]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,12 +97,20 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
       { listId, name },
       {
         onSuccess: (result) => {
-          // Only classify items we just created. Re-adding an existing item reuses
-          // its shared Item record, which already carries an aisle — possibly a
-          // manual reclassification. Reclassifying it here would clobber that.
-          if (isReady && result.itemCreated && result.newItemId) {
+          // Classify when the item has no location for the active store — true for
+          // a freshly-created item and for an existing catalog item re-added at a
+          // store where it isn't placed yet. The auto path never clobbers a manual
+          // location already set for this store.
+          if (isReady && result.newItemId && activeStore && !locatedItemIds.has(result.newItemId)) {
+            const newItemId = result.newItemId;
             classify(name, aisles ?? []).then((aisleId) => {
-              if (aisleId) updateItemAisle.mutate({ itemId: result.newItemId, aisleId });
+              if (aisleId)
+                upsertLocation.mutate({
+                  itemId: newItemId,
+                  storeId: activeStore.id,
+                  aisleId,
+                  auto: true,
+                });
             });
           }
         },
@@ -70,7 +118,8 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
     );
   }
 
-  const showClassifying = hasPrimed && !isReady && (items ?? []).some((i) => i.aisle_id === '');
+  const showClassifying =
+    hasPrimed && !isReady && (items ?? []).some((i) => !locatedItemIds.has(i.id));
 
   return (
     <div>

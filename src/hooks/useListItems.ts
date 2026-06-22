@@ -76,10 +76,9 @@ async function addListItem(
   // Read phase — outside any transaction. idb does not keep transactions alive
   // across await boundaries, so reads and writes must be separate operations.
   // The in-flight guard above serialises same-name adds to the same list.
-  const [allItems, allListItems, allStores] = await Promise.all([
+  const [allItems, allListItems] = await Promise.all([
     db.getAll('items'),
     db.getAll('list_items'),
-    db.getAll('stores'),
   ]);
 
   const existing = allItems.find((i) => i.canonical_name === canonical);
@@ -89,7 +88,6 @@ async function addListItem(
   if (existing) {
     itemId = existing.id;
   } else {
-    if (!allStores[0]) throw new Error('No store found — add a store before adding items');
     itemId = crypto.randomUUID();
     itemCreated = true;
   }
@@ -112,12 +110,12 @@ async function addListItem(
   // the transaction commits in one shot without auto-commit racing.
   if (itemCreated) {
     const tx = db.transaction(['items', 'list_items'], 'readwrite');
+    // Items are store-agnostic (ADR-0015); per-store aisle placement is written
+    // separately as an item_location once the active store classifies it.
     const newItem: Item = {
       id: itemId,
       name: trimmed,
       canonical_name: canonical,
-      aisle_id: '',
-      store_id: allStores[0].id,
     };
     tx.objectStore('items').add(newItem);
     tx.objectStore('list_items').add(listItem);

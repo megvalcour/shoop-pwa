@@ -1,46 +1,29 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Aisle } from '@/db/schema';
-import catalogData from '@/assets/aisles/oxford-62.json';
-import aliasData from '@/assets/aisles/oxford-62-aliases.json';
-import {
-  buildCandidates,
-  lexicalMatch,
-  type AliasMap,
-  type Candidate,
-} from '@/services/classifier';
+import { lexicalMatch, type Candidate } from '@/services/classifier';
 
 // Mirrors the message contract in `src/workers/aisleMatcher.worker.ts`.
 type WorkerResponse =
   | { type: 'ready' }
   | { type: 'result'; id: string; aisleNumber: string };
 
-let candidatesCache: Candidate[] | null = null;
+interface SerializedCandidate {
+  phrase: string;
+  aisleNumber: string;
+}
 
 // Module-level worker singleton + bookkeeping, shared across every hook instance.
 let worker: Worker | null = null;
-let workerReady = false;
+// The store key the worker is currently embedding/embedded for, and the key it
+// has finished embedding (`ready`). They differ while a re-embed is in flight.
+let loadedStoreKey: string | null = null;
+let readyStoreKey: string | null = null;
 const readyListeners = new Set<() => void>();
 const pendingClassifications = new Map<string, (aisleNumber: string) => void>();
 
-// The candidate set (catalog phrases + aliases) is pure data and is built lazily
-// without touching the model, so the lexical fast-path works before — or without
-// ever — booting the worker.
-function getCandidates(): Candidate[] {
-  if (!candidatesCache) {
-    const { aisles, items } = catalogData as {
-      aisles: { id: string; number: string }[];
-      items: { canonical_name: string; aisle_id: string }[];
-    };
-    const aisleById = new Map(aisles.map((a) => [a.id, a.number]));
-    candidatesCache = buildCandidates(items, aliasData as AliasMap, aisleById);
-  }
-  return candidatesCache;
-}
-
-// Lazily boots the inference worker exactly once across the app. Nothing happens
-// until the first caller primes it (e.g. on input blur), so the heavy WASM model
-// never loads in the empty/initial state. All embedding work runs off the main
-// thread; the worker posts `ready` once the catalog is embedded.
+// Lazily boots the inference worker exactly once across the app. The heavy WASM
+// model loads inside the worker on the first `load`; nothing happens until a
+// caller primes it with an active store's candidate set.
 function getWorker(): Worker {
   if (!worker) {
     worker = new Worker(new URL('../workers/aisleMatcher.worker.ts', import.meta.url), {
@@ -49,7 +32,7 @@ function getWorker(): Worker {
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const data = event.data;
       if (data.type === 'ready') {
-        workerReady = true;
+        readyStoreKey = loadedStoreKey;
         for (const listener of readyListeners) listener();
       } else if (data.type === 'result') {
         const resolve = pendingClassifications.get(data.id);
@@ -59,9 +42,18 @@ function getWorker(): Worker {
         }
       }
     };
-    worker.postMessage({ type: 'load' });
   }
   return worker;
+}
+
+// Boot (or re-embed) the worker for `storeKey`. Re-embeds only when the active
+// store changed, so a store switch remaps the candidate set off the main thread.
+function ensureLoaded(storeKey: string, candidates: SerializedCandidate[]): void {
+  const w = getWorker();
+  if (loadedStoreKey !== storeKey) {
+    loadedStoreKey = storeKey;
+    w.postMessage({ type: 'load', candidates });
+  }
 }
 
 // Embed + score a query off the main thread, correlating the reply by id.
@@ -75,25 +67,31 @@ function classifyViaWorker(phrase: string): Promise<string> {
 }
 
 export interface AisleMatcherResult {
-  /** Boots the inference worker (idempotent). Call on a real user intent signal —
-   *  e.g. input blur — never on mount or while typing. */
+  /** Boots/re-embeds the inference worker for the active store (idempotent per
+   *  store). Call on a real user intent signal — e.g. input blur — never on
+   *  mount or while typing. No-op until the store + candidates are known. */
   prime: () => void;
   classify: (itemName: string, aisles: Aisle[]) => Promise<string>;
   isReady: boolean;
 }
 
-export function useAisleMatcher(): AisleMatcherResult {
-  const [isReady, setIsReady] = useState(workerReady);
+/**
+ * Store-parametrized aisle matcher (ADR-0015). `storeKey` identifies the active
+ * store (its id); `candidates` is that store's candidate set (item→aisle map +
+ * aliases). The lexical fast-path runs against `candidates` on the main thread;
+ * the semantic fallback defers to the worker once it is `ready` for this store.
+ */
+export function useAisleMatcher(
+  storeKey: string | undefined,
+  candidates: Candidate[],
+): AisleMatcherResult {
+  const [, forceTick] = useState(0);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
-    if (workerReady) {
-      setIsReady(true);
-      return;
-    }
     const listener = () => {
-      if (mountedRef.current) setIsReady(true);
+      if (mountedRef.current) forceTick((t) => t + 1);
     };
     readyListeners.add(listener);
     return () => {
@@ -102,18 +100,21 @@ export function useAisleMatcher(): AisleMatcherResult {
     };
   }, []);
 
+  const isReady = storeKey != null && readyStoreKey === storeKey;
+
   const prime = useCallback(() => {
-    if (workerReady) {
-      setIsReady(true);
-      return;
-    }
-    getWorker();
-  }, []);
+    if (!storeKey || candidates.length === 0) return;
+    ensureLoaded(
+      storeKey,
+      candidates.map((c) => ({ phrase: c.phrase, aisleNumber: c.aisleNumber })),
+    );
+    // Re-render so isReady reflects an immediate same-store ready state.
+    forceTick((t) => t + 1);
+  }, [storeKey, candidates]);
 
   const classify = async (itemName: string, aisles: Aisle[]): Promise<string> => {
     if (!itemName.trim()) return '';
 
-    const candidates = getCandidates();
     const resolve = (aisleNumber: string): string =>
       aisles.find((a) => a.number === aisleNumber)?.id ?? '';
 
@@ -121,9 +122,10 @@ export function useAisleMatcher(): AisleMatcherResult {
     const lexical = lexicalMatch(itemName, candidates);
     if (lexical?.confident) return resolve(lexical.aisleNumber);
 
-    // Semantic fallback: defer to the worker once it is ready. Until then return
-    // '' — AddItemForm's deferred-reclassify effect retries when isReady flips.
-    if (!workerReady) return '';
+    // Semantic fallback: defer to the worker once it is ready for this store.
+    // Until then return '' — the deferred-reclassify effect retries when the
+    // worker becomes ready (or the active store changes).
+    if (!isReady) return '';
 
     const aisleNumber = await classifyViaWorker(itemName);
     if (!aisleNumber) return '';

@@ -11,11 +11,16 @@ vi.mock('@/hooks/useListItems', () => ({
 
 vi.mock('@/hooks/useItems', () => ({
   useItems: vi.fn(),
-  useUpdateItemAisle: vi.fn(),
+  useItemLocations: vi.fn(),
+  useUpsertItemLocation: vi.fn(),
 }));
 
 vi.mock('@/hooks/useAisles', () => ({
   useAisles: vi.fn(),
+}));
+
+vi.mock('@/hooks/useStores', () => ({
+  useActiveStore: vi.fn(),
 }));
 
 function makeWrapper() {
@@ -30,8 +35,9 @@ async function setup() {
   const { useListItems, useDeleteListItem, useToggleListItem } = await import(
     '@/hooks/useListItems'
   );
-  const { useItems, useUpdateItemAisle } = await import('@/hooks/useItems');
+  const { useItems, useItemLocations, useUpsertItemLocation } = await import('@/hooks/useItems');
   const { useAisles } = await import('@/hooks/useAisles');
+  const { useActiveStore } = await import('@/hooks/useStores');
   const ShoppingListBuilder = (await import('@/components/organisms/ShoppingListBuilder'))
     .default;
 
@@ -40,15 +46,17 @@ async function setup() {
     useDeleteListItem: vi.mocked(useDeleteListItem),
     useToggleListItem: vi.mocked(useToggleListItem),
     useItems: vi.mocked(useItems),
-    useUpdateItemAisle: vi.mocked(useUpdateItemAisle),
+    useItemLocations: vi.mocked(useItemLocations),
+    useUpsertItemLocation: vi.mocked(useUpsertItemLocation),
     useAisles: vi.mocked(useAisles),
+    useActiveStore: vi.mocked(useActiveStore),
     ShoppingListBuilder,
   };
 }
 
 const mockMutate = vi.fn();
 const mockToggleMutate = vi.fn();
-const mockUpdateAisleMutate = vi.fn();
+const mockUpsertMutate = vi.fn();
 
 const AISLE_DAIRY = {
   id: 'aisle-1',
@@ -66,19 +74,29 @@ const AISLE_BREAD = {
   sort_order: 21,
 };
 
+type Mocks = Awaited<ReturnType<typeof setup>>;
+
+function loc(itemId: string, aisleId: string) {
+  return { id: `loc-${itemId}`, item_id: itemId, store_id: 'store-1', aisle_id: aisleId };
+}
+
 describe('ShoppingListBuilder', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMutate.mockReset();
     mockToggleMutate.mockReset();
-    mockUpdateAisleMutate.mockReset();
+    mockUpsertMutate.mockReset();
   });
 
-  function defaultMocks(mocks: Awaited<ReturnType<typeof setup>>) {
+  function defaultMocks(mocks: Mocks) {
     mocks.useDeleteListItem.mockReturnValue({ mutate: mockMutate } as unknown as ReturnType<typeof mocks.useDeleteListItem>);
     mocks.useToggleListItem.mockReturnValue({ mutate: mockToggleMutate } as unknown as ReturnType<typeof mocks.useToggleListItem>);
-    mocks.useUpdateItemAisle.mockReturnValue({ mutate: mockUpdateAisleMutate } as unknown as ReturnType<typeof mocks.useUpdateItemAisle>);
+    mocks.useUpsertItemLocation.mockReturnValue({ mutate: mockUpsertMutate } as unknown as ReturnType<typeof mocks.useUpsertItemLocation>);
     mocks.useAisles.mockReturnValue({ data: [] } as unknown as ReturnType<typeof mocks.useAisles>);
+    mocks.useItemLocations.mockReturnValue({ data: [] } as unknown as ReturnType<typeof mocks.useItemLocations>);
+    mocks.useActiveStore.mockReturnValue({
+      data: { id: 'store-1', name: 'Test', address: '', slug: 'oxford-62' },
+    } as unknown as ReturnType<typeof mocks.useActiveStore>);
   }
 
   it('renders item names from the resolved items map', async () => {
@@ -92,7 +110,7 @@ describe('ShoppingListBuilder', () => {
     } as unknown as ReturnType<typeof mocks.useListItems>);
 
     mocks.useItems.mockReturnValue({
-      data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk', aisle_id: '', store_id: 'store-1' }],
+      data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk' }],
     } as unknown as ReturnType<typeof mocks.useItems>);
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
@@ -145,7 +163,7 @@ describe('ShoppingListBuilder', () => {
     } as unknown as ReturnType<typeof mocks.useListItems>);
 
     mocks.useItems.mockReturnValue({
-      data: [{ id: 'item-1', name: 'Bread', canonical_name: 'bread', aisle_id: '', store_id: 'store-1' }],
+      data: [{ id: 'item-1', name: 'Bread', canonical_name: 'bread' }],
     } as unknown as ReturnType<typeof mocks.useItems>);
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
@@ -166,7 +184,7 @@ describe('ShoppingListBuilder', () => {
     } as unknown as ReturnType<typeof mocks.useListItems>);
 
     mocks.useItems.mockReturnValue({
-      data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk', aisle_id: '', store_id: 'store-1' }],
+      data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk' }],
     } as unknown as ReturnType<typeof mocks.useItems>);
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
@@ -176,13 +194,17 @@ describe('ShoppingListBuilder', () => {
     expect(mockToggleMutate).toHaveBeenCalledWith({ id: 'li-1', listId: 'list-1' });
   });
 
-  it('unchecked items with known aisle_id are grouped under the correct AisleGroup header', async () => {
+  it('buckets items under the active store aisle resolved from item_locations', async () => {
     const mocks = await setup();
     defaultMocks(mocks);
 
     mocks.useAisles.mockReturnValue({
       data: [AISLE_DAIRY, AISLE_BREAD],
     } as unknown as ReturnType<typeof mocks.useAisles>);
+
+    mocks.useItemLocations.mockReturnValue({
+      data: [loc('item-1', 'aisle-1'), loc('item-2', 'aisle-21')],
+    } as unknown as ReturnType<typeof mocks.useItemLocations>);
 
     mocks.useListItems.mockReturnValue({
       data: [
@@ -195,8 +217,8 @@ describe('ShoppingListBuilder', () => {
 
     mocks.useItems.mockReturnValue({
       data: [
-        { id: 'item-1', name: 'Milk', canonical_name: 'milk', aisle_id: 'aisle-1', store_id: 'store-1' },
-        { id: 'item-2', name: 'Bread', canonical_name: 'bread', aisle_id: 'aisle-21', store_id: 'store-1' },
+        { id: 'item-1', name: 'Milk', canonical_name: 'milk' },
+        { id: 'item-2', name: 'Bread', canonical_name: 'bread' },
       ],
     } as unknown as ReturnType<typeof mocks.useItems>);
 
@@ -208,7 +230,7 @@ describe('ShoppingListBuilder', () => {
     expect(screen.getByText('Bread')).toBeInTheDocument();
   });
 
-  it('items with aisle_id empty string appear in Uncategorized group', async () => {
+  it('items with no location for the active store appear in Uncategorized', async () => {
     const mocks = await setup();
     defaultMocks(mocks);
 
@@ -221,13 +243,48 @@ describe('ShoppingListBuilder', () => {
     } as unknown as ReturnType<typeof mocks.useListItems>);
 
     mocks.useItems.mockReturnValue({
-      data: [{ id: 'item-1', name: 'Mystery Item', canonical_name: 'mystery item', aisle_id: '', store_id: 'store-1' }],
+      data: [{ id: 'item-1', name: 'Mystery Item', canonical_name: 'mystery item' }],
     } as unknown as ReturnType<typeof mocks.useItems>);
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
 
     expect(screen.getByText('Uncategorized')).toBeInTheDocument();
     expect(screen.getByText('Mystery Item')).toBeInTheDocument();
+  });
+
+  it('changing an aisle upserts an item_location for the active store', async () => {
+    const mocks = await setup();
+    defaultMocks(mocks);
+
+    mocks.useAisles.mockReturnValue({
+      data: [AISLE_DAIRY, AISLE_BREAD],
+    } as unknown as ReturnType<typeof mocks.useAisles>);
+
+    mocks.useItemLocations.mockReturnValue({
+      data: [loc('item-1', 'aisle-1')],
+    } as unknown as ReturnType<typeof mocks.useItemLocations>);
+
+    mocks.useListItems.mockReturnValue({
+      data: [{ id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false }],
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof mocks.useListItems>);
+
+    mocks.useItems.mockReturnValue({
+      data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk' }],
+    } as unknown as ReturnType<typeof mocks.useItems>);
+
+    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+
+    // Open the aisle picker for the row and choose a different aisle.
+    fireEvent.click(screen.getByRole('button', { name: /change aisle/i }));
+    fireEvent.click(screen.getByText('Aisle 21 — Bread & Bakery'));
+
+    expect(mockUpsertMutate).toHaveBeenCalledWith({
+      itemId: 'item-1',
+      storeId: 'store-1',
+      aisleId: 'aisle-21',
+    });
   });
 
   it('checked items appear in Done group below aisle groups', async () => {
@@ -237,6 +294,10 @@ describe('ShoppingListBuilder', () => {
     mocks.useAisles.mockReturnValue({
       data: [AISLE_DAIRY],
     } as unknown as ReturnType<typeof mocks.useAisles>);
+
+    mocks.useItemLocations.mockReturnValue({
+      data: [loc('item-1', 'aisle-1'), loc('item-2', 'aisle-1')],
+    } as unknown as ReturnType<typeof mocks.useItemLocations>);
 
     mocks.useListItems.mockReturnValue({
       data: [
@@ -249,8 +310,8 @@ describe('ShoppingListBuilder', () => {
 
     mocks.useItems.mockReturnValue({
       data: [
-        { id: 'item-1', name: 'Milk', canonical_name: 'milk', aisle_id: 'aisle-1', store_id: 'store-1' },
-        { id: 'item-2', name: 'Eggs', canonical_name: 'eggs', aisle_id: 'aisle-1', store_id: 'store-1' },
+        { id: 'item-1', name: 'Milk', canonical_name: 'milk' },
+        { id: 'item-2', name: 'Eggs', canonical_name: 'eggs' },
       ],
     } as unknown as ReturnType<typeof mocks.useItems>);
 

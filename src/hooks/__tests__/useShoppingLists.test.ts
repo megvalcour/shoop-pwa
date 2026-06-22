@@ -160,12 +160,14 @@ describe('useDeleteShoppingList', () => {
     expect(await db.getAllFromIndex('list_items', 'list_id', 'keep-1')).toHaveLength(1);
   });
 
-  it('never touches the global items store, preserving manual aisle overrides', async () => {
+  it('never touches the global items store or its per-store locations', async () => {
     const { dbPromise } = await import('@/db/idbClient');
     const db = await dbPromise;
     await db.add('shopping_lists', { id: 'del-3', name: 'Override Test', created_at: '2026-06-01T00:00:00.000Z' });
-    // An item with a manual aisle override, referenced only by the deleted list.
-    await db.add('items', { id: 'it-override', name: 'Tofu', canonical_name: 'tofu', aisle_id: 'dairy', store_id: 's1' });
+    // A store-agnostic item with a manual per-store aisle override (ADR-0015),
+    // referenced only by the deleted list.
+    await db.add('items', { id: 'it-override', name: 'Tofu', canonical_name: 'tofu' });
+    await db.add('item_locations', { id: 'loc-ov', item_id: 'it-override', store_id: 's1', aisle_id: 'dairy' });
     await db.add('list_items', { id: 'li-ov', list_id: 'del-3', item_id: 'it-override', quantity: 1, checked: false, added_from_default: false, created_at: 1 });
 
     vi.resetModules();
@@ -175,6 +177,6 @@ describe('useDeleteShoppingList', () => {
 
     const survivingItem = await db.get('items', 'it-override');
     expect(survivingItem).toBeTruthy();
-    expect(survivingItem?.aisle_id).toBe('dairy');
+    expect((await db.get('item_locations', 'loc-ov'))?.aisle_id).toBe('dairy');
   });
 });
