@@ -4,7 +4,7 @@
 
 ## Active Task
 
-None
+Implement ADR-0016 (holistic versioning) — see `tasks/active--holistic-versioning-system.md`. Adopt semantic-release for automated semver from conventional commits and enforce `minor(appVersion) === DB_VERSION` in CI.
 
 ## Backlog
 
