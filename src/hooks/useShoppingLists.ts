@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dbPromise } from '@/db/idbClient';
-import type { ShoppingList } from '@/db/schema';
+import type { ListItem, ShoppingList } from '@/db/schema';
 
 const QUERY_KEY = ['shopping_lists'] as const;
 
@@ -15,10 +15,20 @@ export function useShoppingLists() {
   });
 }
 
+interface CreateShoppingListInput {
+  /**
+   * When true, seed the new list with `list_items` copied from the default list
+   * (ADR-0009 `added_from_default`). Items remain store-agnostic (ADR-0015);
+   * their aisle placement classifies per-store on the list detail screen.
+   */
+  seedFromDefault?: boolean;
+}
+
 export function useCreateShoppingList() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (): Promise<ShoppingList> => {
+  return useMutation<ShoppingList, Error, CreateShoppingListInput | void>({
+    mutationFn: async (input): Promise<ShoppingList> => {
+      const seedFromDefault = input?.seedFromDefault ?? false;
       const db = await dbPromise;
       const stores = await db.getAll('stores');
       const storeName = stores[0]?.name ?? 'Store';
@@ -29,10 +39,38 @@ export function useCreateShoppingList() {
         name: `${storeName} - ${datePart}`,
         created_at: now.toISOString(),
       };
-      await db.add('shopping_lists', record);
+
+      // Read the default entries before opening the write transaction — idb does
+      // not keep a transaction alive across an await.
+      const defaultEntries = seedFromDefault ? await db.getAll('default_list') : [];
+
+      const seededItems: ListItem[] = defaultEntries.map((entry) => ({
+        id: crypto.randomUUID(),
+        list_id: record.id,
+        item_id: entry.item_id,
+        quantity: entry.quantity,
+        checked: false,
+        added_from_default: true,
+        created_at: Date.now(),
+      }));
+
+      if (seededItems.length > 0) {
+        // List row + every seeded item commit in one transaction.
+        const tx = db.transaction(['shopping_lists', 'list_items'], 'readwrite');
+        tx.objectStore('shopping_lists').add(record);
+        for (const li of seededItems) tx.objectStore('list_items').add(li);
+        await tx.done;
+      } else {
+        await db.add('shopping_lists', record);
+      }
+
       return record;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (record) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: ['list_items', record.id] }),
+      ]),
   });
 }
 

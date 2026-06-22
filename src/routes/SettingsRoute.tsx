@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import ShoppingListCard from '@/components/molecules/ShoppingListCard';
 import StoreListEntry from '@/components/molecules/StoreListEntry';
 import ConfirmDialog from '@/components/molecules/ConfirmDialog';
 import AppVersionPanel from '@/components/molecules/AppVersionPanel';
+import NewListFab from '@/components/organisms/NewListFab';
 import Button from '@/components/atoms/Button';
 import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingLists';
 import { useStores } from '@/hooks/useStores';
-import { useCreateAndNavigateToList } from '@/hooks/useCreateAndNavigateToList';
 import { useResetData } from '@/hooks/useResetData';
 import type { ShoppingList } from '@/db/schema';
 
@@ -17,7 +17,6 @@ export default function SettingsRoute() {
   const navigate = useNavigate();
   const { data: lists, isPending, isError } = useShoppingLists();
   const { data: stores, isPending: storesPending, isError: storesError } = useStores();
-  const { createAndNavigate, isPending: isCreating, isError: isCreateError } = useCreateAndNavigateToList();
   const deleteList = useDeleteShoppingList();
   const resetData = useResetData();
   const [pendingDelete, setPendingDelete] = useState<ShoppingList | null>(null);
@@ -97,19 +96,7 @@ export default function SettingsRoute() {
         </Button>
       </section>
 
-      {isCreateError && (
-        <p className="px-4 text-destructive text-sm mt-2">Failed to create list. Please try again.</p>
-      )}
-
-      <button
-        type="button"
-        aria-label="New list"
-        disabled={isCreating || isPending}
-        onClick={createAndNavigate}
-        className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-accent text-white shadow-lg flex items-center justify-center disabled:opacity-50"
-      >
-        <FontAwesomeIcon icon={faPlus} />
-      </button>
+      <NewListFab disabled={isPending} />
 
       {pendingDelete && (
         <ConfirmDialog

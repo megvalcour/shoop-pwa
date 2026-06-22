@@ -5,9 +5,9 @@ export function useCreateAndNavigateToList() {
   const navigate = useNavigate();
   const mutation = useCreateShoppingList();
 
-  async function createAndNavigate() {
+  async function createAndNavigate(opts?: { seedFromDefault?: boolean }) {
     try {
-      const newList = await mutation.mutateAsync();
+      const newList = await mutation.mutateAsync({ seedFromDefault: opts?.seedFromDefault });
       navigate(`/lists/${newList.id}`);
     } catch {
       // error surfaced via mutation.isError
