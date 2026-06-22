@@ -1,24 +1,178 @@
 {
-    "store": {
-        "name": "Big Y World Class Market",
-        "address": "100 Mayfield Street, Worcester, MA 01602"
+  "store": {
+    "name": "Big Y World Class Market",
+    "address": "100 Mayfield Street, Worcester, MA 01602",
+    "slug": "big-y-worcester"
+  },
+  "_note": "Source layout for the Worcester Big Y store. Perimeter departments + 18 numbered center aisles, captured from the user. The seed asset (with UUIDs + item_locations) is generated from this during implementation — see tasks/active--worcester-big-y-store.md. `number` mirrors the oxford-62 convention: digit strings for numbered aisles, '<X> Dept' for perimeter departments. `sort_order` is a sensible default shopping path the user can reorder later via drag-and-drop.",
+  "aisles": [
+    {
+      "number": "Produce Dept",
+      "label": "Produce",
+      "categories": "Fresh fruits, vegetables, and organic selections",
+      "sort_order": 0
     },
-    "aisle_legend": {
-        "A": "Produce — Front Right",
-        "B": "Floral Department — Front Entrance",
-        "C": "Bakery — Front Right Corner",
-        "D": "Deli & Prepared Foods — Right Perimeter",
-        "E": "Seafood — Back Right Corner",
-        "F": "Meat Department — Back Perimeter",
-        "G": "Dairy — Back Left & Left Perimeter",
-        "H": "Pharmacy — Front Left",
-        "I": "Customer Service — Front Center",
-        "J": "Frozen Foods — Aisles 14 & 15",
-        "Checkout": "Candy, Magazines, Gift Cards",
-        "Deli Dept": "Cold Cuts, Specialty Cheeses, Fresh Sliced Meat",
-        "Freezer Wall": "Ice Cream, Novelties",
-        "Meat Dept": "Fresh Beef, Poultry, Pork",
-        "Produce Dept": "Fresh Vegetables, Fresh Fruit, Organics, Salad Blends",
-        "Registers": "Reusable Bags, Batteries"
+    {
+      "number": "Floral Dept",
+      "label": "Floral",
+      "categories": "Cut flowers, bouquets, plants (front entrance)",
+      "sort_order": 1
+    },
+    {
+      "number": "Bakery Dept",
+      "label": "Bakery",
+      "categories": "Fresh baked breads, pastries, and custom cakes",
+      "sort_order": 2
+    },
+    {
+      "number": "Natural Dept",
+      "label": "Natural & Living Well",
+      "categories": "Gluten-free items, organic snacks, and plant-based alternatives",
+      "sort_order": 3
+    },
+    {
+      "number": "Deli Dept",
+      "label": "Deli & Kitchen",
+      "categories": "Sliced meats, cheeses, prepared hot foods, sub shop, and the pizza shop",
+      "sort_order": 4
+    },
+    {
+      "number": "Seafood Dept",
+      "label": "Seafood",
+      "categories": "Fresh catch, shellfish, and the hot fish & chips counter",
+      "sort_order": 5
+    },
+    {
+      "number": "Meat Dept",
+      "label": "Meat & Butcher Shop",
+      "categories": "Fresh cuts, poultry, and Big Y Angus beef",
+      "sort_order": 6
+    },
+    {
+      "number": "1",
+      "label": "Health & Beauty",
+      "categories": "Shampoos, body washes, first aid, vitamins, pain relief",
+      "sort_order": 7
+    },
+    {
+      "number": "2",
+      "label": "Breakfast & Cereal",
+      "categories": "Cold cereals, oatmeal, granola bars, pancake mixes, syrup",
+      "sort_order": 8
+    },
+    {
+      "number": "3",
+      "label": "Coffee, Tea & Baking",
+      "categories": "Coffee pods, coffee beans, tea, flour, sugar, spices, baking oil",
+      "sort_order": 9
+    },
+    {
+      "number": "4",
+      "label": "Canned Goods & Soups",
+      "categories": "Canned vegetables, beans, broths, Progresso/Campbell soups",
+      "sort_order": 10
+    },
+    {
+      "number": "5",
+      "label": "Pasta & Grains",
+      "categories": "Dry pasta, pasta sauces, rice, quinoa, mac & cheese",
+      "sort_order": 11
+    },
+    {
+      "number": "6",
+      "label": "International Foods",
+      "categories": "Hispanic/Latino, Asian, and European import sections",
+      "sort_order": 12
+    },
+    {
+      "number": "7",
+      "label": "Condiments & Dressings",
+      "categories": "Ketchup, mustard, mayo, pickles, olives, salad dressings",
+      "sort_order": 13
+    },
+    {
+      "number": "8",
+      "label": "Bread & Spreads",
+      "categories": "Sandwich breads, wraps, peanut butter, jelly, honey",
+      "sort_order": 14
+    },
+    {
+      "number": "9",
+      "label": "Snacks & Crackers",
+      "categories": "Boxed crackers, Cheez-Its, popcorn, nuts, pretzels",
+      "sort_order": 15
+    },
+    {
+      "number": "10",
+      "label": "Chips & Cookies",
+      "categories": "Potato chips, tortilla chips, salsas, cookies, sweet snacks",
+      "sort_order": 16
+    },
+    {
+      "number": "11",
+      "label": "Soda & Sparkling Water",
+      "categories": "Coca-Cola/Pepsi products, seltzers, ginger ale, tonic",
+      "sort_order": 17
+    },
+    {
+      "number": "12",
+      "label": "Juice & Sports Drinks",
+      "categories": "Juice boxes, Gatorade, energy drinks, multipack iced teas",
+      "sort_order": 18
+    },
+    {
+      "number": "13",
+      "label": "Water & Bulk Beverages",
+      "categories": "Gallon jugs, 24-packs of spring water, enhanced waters",
+      "sort_order": 19
+    },
+    {
+      "number": "14",
+      "label": "Frozen Foods (Aisle A)",
+      "categories": "Frozen pizzas, ice cream, frozen novelties, waffles",
+      "sort_order": 20
+    },
+    {
+      "number": "15",
+      "label": "Frozen Foods (Aisle B)",
+      "categories": "Frozen TV dinners, frozen vegetables, frozen meats",
+      "sort_order": 21
+    },
+    {
+      "number": "16",
+      "label": "Paper Goods & Plastic",
+      "categories": "Toilet paper, paper towels, napkins, trash bags, foil",
+      "sort_order": 22
+    },
+    {
+      "number": "17",
+      "label": "Laundry & Cleaning",
+      "categories": "Detergents, fabric softeners, dish soap, surface sprays",
+      "sort_order": 23
+    },
+    {
+      "number": "18",
+      "label": "Baby & Pet Care",
+      "categories": "Diapers, baby food, wipes, dog/cat food, pet treats",
+      "sort_order": 24
+    },
+    {
+      "number": "Dairy Dept",
+      "label": "Dairy",
+      "categories": "Milk, eggs, butter, yogurt, packaged cheese (back left & left perimeter)",
+      "sort_order": 25
+    },
+    {
+      "number": "Pharmacy Dept",
+      "label": "Pharmacy",
+      "categories": "Prescriptions and pharmacist consults (front left)",
+      "sort_order": 26
+    },
+    {
+      "number": "Registers",
+      "label": "Checkout",
+      "categories": "Candy, magazines, gift cards, reusable bags, batteries",
+      "sort_order": 27
     }
+  ]
 }
