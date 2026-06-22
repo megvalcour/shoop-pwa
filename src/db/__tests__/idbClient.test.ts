@@ -67,7 +67,7 @@ describe('idbClient', () => {
     expect(await db.count('item_locations')).toBe(364);
   });
 
-  it('upgrades from v1 to v3: creates the new stores and migrates as expected', async () => {
+  it('upgrades from v1 to v4: creates the new stores and migrates as expected', async () => {
     const { openDB } = await import('idb');
     const v1 = await openDB('shoop', 1, {
       upgrade(db) {
@@ -146,6 +146,50 @@ describe('idbClient', () => {
     expect(locs).toHaveLength(1);
     expect(locs[0]).toMatchObject({ item_id: 'it-1', store_id: 'st-1', aisle_id: 'ai-1' });
     expect(await db.getAllFromIndex('item_locations', 'item_id', 'it-2')).toHaveLength(0);
+  });
+
+  it('grafts Big Y into a populated v3 DB that was seeded before it existed', async () => {
+    const { openDB } = await import('idb');
+    // Simulate the buggy v3 state: an existing install that upgraded to v3
+    // before Big Y was added, so seedDatabase() early-returned and only the
+    // Market Basket store was ever seeded.
+    const v3 = await openDB('shoop', 3, {
+      upgrade(db) {
+        db.createObjectStore('stores', { keyPath: 'id' });
+        const aisles = db.createObjectStore('aisles', { keyPath: 'id' });
+        aisles.createIndex('store_id', 'store_id');
+        db.createObjectStore('items', { keyPath: 'id' });
+        const il = db.createObjectStore('item_locations', { keyPath: 'id' });
+        il.createIndex('item_id', 'item_id');
+        il.createIndex('store_id', 'store_id');
+        db.createObjectStore('preferences', { keyPath: 'key' });
+        db.createObjectStore('default_list', { keyPath: 'id' });
+        db.createObjectStore('shopping_lists', { keyPath: 'id' });
+        const li = db.createObjectStore('list_items', { keyPath: 'id' });
+        li.createIndex('list_id', 'list_id');
+      },
+    });
+    await v3.add('stores', {
+      id: 'st-mb',
+      name: 'Oxford Market Basket #62',
+      address: '',
+      slug: 'oxford-62',
+    });
+    await v3.add('preferences', { key: 'active_store_id', value: 'st-mb' });
+    v3.close();
+
+    vi.resetModules();
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+
+    const stores = await db.getAll('stores');
+    const bigY = stores.find((s) => s.slug === 'big-y-worcester');
+    expect(bigY).toBeDefined();
+    // Big Y's full aisle layout and per-store locations come along.
+    expect(await db.getAllFromIndex('aisles', 'store_id', bigY!.id)).toHaveLength(28);
+    expect(await db.getAllFromIndex('item_locations', 'store_id', bigY!.id)).toHaveLength(182);
+    // The user's existing active-store choice is left untouched.
+    expect((await db.get('preferences', 'active_store_id'))?.value).toBe('st-mb');
   });
 
   describe('resetUserData', () => {

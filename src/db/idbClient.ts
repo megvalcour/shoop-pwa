@@ -131,6 +131,31 @@ async function upgrade(
       } as Item);
     }
   }
+
+  if (oldVersion < 4) {
+    // Graft in the Big Y store (ADR-0015) for existing installs. The v3 path
+    // only seeded Big Y on a *fresh* install: seedDatabase() early-returns once
+    // any store exists, so every device already seeded with Market Basket (at
+    // v1/v2) — and every device that already ran the v3 upgrade — reached v3
+    // without Big Y ever appearing in the store switcher. Backfill it against
+    // the shared catalog for any populated DB that is still missing it. A fresh
+    // install reaches this case with an empty `stores` store and is fully
+    // populated by seedDatabase() afterward, so it is intentionally skipped here
+    // (grafting Big Y now would make seedDatabase early-return before seeding
+    // the Market Basket catalog).
+    const storesStore = tx.objectStore('stores');
+    const populated = (await storesStore.count()) > 0;
+    const hasBigY = (await storesStore.get(bigYSeed.store.id)) != null;
+    if (populated && !hasBigY) {
+      storesStore.add(bigYSeed.store);
+      for (const aisle of bigYSeed.aisles) tx.objectStore('aisles').add(aisle);
+      for (const loc of bigYSeed.item_locations) tx.objectStore('item_locations').add(loc);
+      const prefs = tx.objectStore('preferences');
+      if ((await prefs.get(ACTIVE_STORE_ID_KEY)) == null) {
+        prefs.put({ key: ACTIVE_STORE_ID_KEY, value: DEFAULT_ACTIVE_STORE_ID });
+      }
+    }
+  }
 }
 
 async function seedDatabase(db: IDBPDatabase<ShoopDB>): Promise<void> {
