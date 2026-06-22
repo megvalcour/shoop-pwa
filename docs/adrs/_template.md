@@ -25,6 +25,10 @@ For example, "Use Qwen2.5 1.5B Instruct for on-device translation".
 
 One sentence stating what we are trying to solve.
 
+## The Solution
+
+One sentence stating the selected option.
+
 ## Options Considered
 
 The alternatives that were on the table, with the selected option in **bold**.
