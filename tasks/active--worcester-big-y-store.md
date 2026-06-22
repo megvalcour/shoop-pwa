@@ -13,12 +13,15 @@ clarifications: |
     store switching (none exists today — `useActiveStore()` just returns
     `stores[0]` and the switcher sheet is cosmetic), makes items/aisles/matcher
     store-aware, AND seeds the Worcester Big Y store.
-  - Big Y data source = `docs/prd/big-y-mayfield-st-worcester.json`. That file is
-    sparse (perimeter departments A–J + special sections + "frozen = aisles
-    14 & 15" only; NO numbered center-aisle categories, NO items). See
-    "Big Y data gap & recommendation" below — recommendation is to seed Big Y
-    with the SHARED canonical item catalog mapped onto a drafted Big Y aisle
-    layout, which is also what makes Model B's re-aisling observable.
+  - Big Y data source = `docs/prd/big-y-mayfield-st-worcester.json`. The user
+    has since supplied the REAL Big Y layout: 18 numbered center aisles (with
+    category descriptions) + perimeter departments (Produce, Floral, Bakery,
+    Natural & Living Well, Deli & Kitchen, Seafood, Meat & Butcher, Dairy,
+    Pharmacy) + Checkout. That file now holds the full structured aisle layout
+    (`store` + `aisles[]`). The only authored part remaining is mapping the
+    SHARED canonical item catalog onto these real Big Y aisles (item_locations),
+    which is what makes Model B's re-aisling observable. (Center aisles are no
+    longer invented — open item #1 is resolved.)
 ---
 
 # Task: Add Worcester Big Y as a switchable store (store-agnostic lists that re-aisle)
@@ -94,42 +97,35 @@ the `preferences`-backed active store, and the store-parametrized matcher.
 Per CLAUDE.md, ADRs are immutable once accepted — this is a new record, not an
 edit of 0011/0002.
 
-## Big Y data gap & recommendation (surfaced per kickoff note)
+## Big Y data (real layout now supplied)
 
-`docs/prd/big-y-mayfield-st-worcester.json` provides only:
-- store name + address (no `id`, no `slug`);
-- a perimeter/department **legend** (A–J + `Deli Dept`, `Freezer Wall`,
-  `Meat Dept`, `Produce Dept`, `Registers`, `Checkout`);
-- the hint that frozen lives in "Aisles 14 & 15."
+`docs/prd/big-y-mayfield-st-worcester.json` now holds the **real, full layout**
+the user supplied:
+- `store`: name, address, `slug: "big-y-worcester"`.
+- `aisles[]`: **18 numbered center aisles** (1–18, each with a `label` and a
+  `categories` description) + **perimeter departments** (Produce, Floral, Bakery,
+  Natural & Living Well, Deli & Kitchen, Seafood, Meat & Butcher Shop, Dairy,
+  Pharmacy) + Checkout. `number` mirrors the oxford-62 convention (digit strings
+  for numbered aisles, `"<X> Dept"` for perimeter departments). `sort_order` is a
+  sensible default shopping path (front → center aisles → dairy → pharmacy →
+  checkout) that the user can reorder later via the existing drag-and-drop.
 
-It has **no numbered center-aisle (1–13) category labels and no item catalog**,
-so the matcher would have almost nothing to classify against at Big Y, and
-Model B's re-aisling would be invisible (the same items must exist at both
-stores to bucket differently).
-
-**Recommendation (chosen for the plan):** seed Big Y with the **same shared
-canonical item catalog** as Market Basket, mapped onto a **drafted Big Y aisle
-layout**:
-- Aisle layout = the real perimeter departments from the legend + an invented
-  numbered center-aisle breakdown (aisles 1–15, frozen pinned to 14–15 per the
-  file) with category labels consistent with the legend.
-- Because `items` are now store-agnostic, the catalog is shared automatically;
-  we only author a Big Y **`item_locations`** set (each shared item → a Big Y
-  aisle) + a Big Y alias file.
-- This is a *draft* layout the user can correct later — same caveat ADR-0011
-  records for the oxford-62 mis-filings (the file doubles as real store data).
+The only thing still authored by us is the **item→aisle mapping**: Big Y has a
+real aisle layout but no item catalog, and Model B's re-aisling is only visible
+if the same items exist at both stores. Because `items` are now store-agnostic,
+the catalog is shared automatically; we author a Big Y **`item_locations`** set
+(each shared catalog item → a Big Y aisle, guided by the per-aisle `categories`
+text) + a Big Y alias file. The mapping is a best-effort draft the user can
+correct later — same caveat ADR-0011 records for the oxford-62 mis-filings.
 
 Authored assets:
 - `src/assets/aisles/big-y-worcester.json` — seed shape
-  (`{ store, aisles, item_locations }`; `slug: "big-y-worcester"`, fresh UUIDs).
-- `src/assets/aisles/big-y-worcester-aliases.json` — matcher-only aliases.
+  (`{ store, aisles, item_locations }`; `slug: "big-y-worcester"`, fresh UUIDs),
+  generated from `docs/prd/big-y-mayfield-st-worcester.json`.
+- `src/assets/aisles/big-y-worcester-aliases.json` — matcher-only aliases,
+  keyed by Big Y aisle `number` (mirrors `oxford-62-aliases.json`).
 - `public/store-logos/big-y-worcester.png` — optional; `StoreLogo` hides
   gracefully on a missing logo, so this is non-blocking (flag to user).
-
-> If the user would rather NOT invent a center-aisle layout/items, the fallback
-> is "perimeter departments only + classify on the fly" — but center-aisle
-> grocery items would then all land in Uncategorized at Big Y until manually
-> placed. The recommendation above avoids that.
 
 ## Approach (phased)
 
@@ -219,7 +215,7 @@ Authored assets:
 - [ ] ADR-0015 written and Accepted.
 - [ ] Schema + `DB_VERSION` 3; `item_locations` + `preferences` stores.
 - [ ] v3 migration data-migrates existing items → item_locations (idempotent, append-only).
-- [ ] Big Y seed assets authored (aisles + shared-catalog item_locations + aliases).
+- [ ] Big Y seed assets authored from the real layout (aisles + shared-catalog item_locations + aliases).
 - [ ] Active-store preference persistence (`usePreferences`, `useActiveStore`).
 - [ ] Store-aware items/aisles/matcher.
 - [ ] Switcher selects + persists; header reflects it; "Coming soon" removed.
@@ -267,8 +263,8 @@ Authored assets:
 - Per-store default lists.
 
 ## Open items to confirm before/while building
-1. **Big Y layout/items**: OK to invent the center-aisle breakdown + reuse the
-   shared catalog as recommended? (Alternative: perimeter-only + classify on the
-   fly, leaving center items Uncategorized until placed.)
+1. ~~Big Y layout/items~~ — **RESOLVED.** User supplied the real aisle layout
+   (now in `docs/prd/big-y-mayfield-st-worcester.json`). We reuse the shared
+   catalog and map each item onto Big Y's real aisles (best-effort draft).
 2. **Big Y logo**: provide a `big-y-worcester.png`, or ship without (graceful
    fallback) for now?
