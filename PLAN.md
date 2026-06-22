@@ -10,11 +10,7 @@
 
 ### Default List
 
-- Create default list screen with empty state
-- Implement `useDefaultList` hook (add, remove, reorder items)
-- Build `DefaultListEditor` organism — editable list of default items with drag-to-reorder
-- "Copy to list" button — creates a new shopping list and bulk-inserts all default items into it as `list_items`
-- Skip items already present in the target list when pre-populating (de-dupe by `canonical_name`)
+- Users can create a store-agnostic default list in Settings; new list action includes option to start from scratch or from default list as base.
 
 ### Store Switcher
 
