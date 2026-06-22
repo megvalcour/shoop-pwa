@@ -4,7 +4,9 @@
 
 ## Active Task
 
-_None. Promote a backlog item to active to begin the next task._
+**Inline Categorization Indicator** — distinguish an item that is *actively being
+categorized* (spinner) from one that is *settled-uncategorized* (tappable
+Categorize badge). Plan: `tasks/active--inline-categorization-indicator.md`.
 
 ## Backlog
 
@@ -34,6 +36,3 @@ _None. Promote a backlog item to active to begin the next task._
 
 - Need way to populate stores without public aisle/inventories available.
 
-### Inline Categorization Indicator
-
-- Add an inline indicator (e.g., spinner, skeleton, pulse) that shows when an item is in the process of being categorized by the aisle matcher.
