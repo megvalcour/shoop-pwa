@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dbPromise } from '@/db/idbClient';
-import type { Item, ListItem } from '@/db/schema';
+import { resolveItem } from '@/db/items';
+import type { ListItem } from '@/db/schema';
 
 function listItemsKey(listId: string) {
   return ['list_items', listId] as const;
@@ -46,7 +47,7 @@ export function useAddListItem() {
       }
       inFlightAdds.add(inFlightKey);
       try {
-        return await addListItem(listId, canonical, trimmed);
+        return await addListItem(listId, trimmed);
       } finally {
         inFlightAdds.delete(inFlightKey);
       }
@@ -66,11 +67,7 @@ export function useAddListItem() {
   });
 }
 
-async function addListItem(
-  listId: string,
-  canonical: string,
-  trimmed: string,
-): Promise<AddListItemResult> {
+async function addListItem(listId: string, trimmed: string): Promise<AddListItemResult> {
   const db = await dbPromise;
 
   // Read phase — outside any transaction. idb does not keep transactions alive
@@ -81,16 +78,7 @@ async function addListItem(
     db.getAll('list_items'),
   ]);
 
-  const existing = allItems.find((i) => i.canonical_name === canonical);
-  let itemId: string;
-  let itemCreated = false;
-
-  if (existing) {
-    itemId = existing.id;
-  } else {
-    itemId = crypto.randomUUID();
-    itemCreated = true;
-  }
+  const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
   if (allListItems.some((li) => li.list_id === listId && li.item_id === itemId)) {
     return { itemCreated: false, newItemId: '' };
@@ -108,15 +96,10 @@ async function addListItem(
 
   // Write phase — queue all writes synchronously within a transaction so
   // the transaction commits in one shot without auto-commit racing.
-  if (itemCreated) {
+  if (itemCreated && newItem) {
     const tx = db.transaction(['items', 'list_items'], 'readwrite');
     // Items are store-agnostic (ADR-0015); per-store aisle placement is written
     // separately as an item_location once the active store classifies it.
-    const newItem: Item = {
-      id: itemId,
-      name: trimmed,
-      canonical_name: canonical,
-    };
     tx.objectStore('items').add(newItem);
     tx.objectStore('list_items').add(listItem);
     await tx.done;

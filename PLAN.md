@@ -4,15 +4,15 @@
 
 ## Active Task
 
-**Inline Categorization Indicator** — distinguish an item that is *actively being
-categorized* (spinner) from one that is *settled-uncategorized* (tappable
-Categorize badge). Plan: `tasks/active--inline-categorization-indicator.md`.
+**Default List** — a store-agnostic default list managed in Settings; the new-list
+action offers starting from scratch or seeding from the default list. Plan:
+`tasks/active--default-list.md`.
 
 ## Backlog
 
-### Default List
+### Inline Categorization Indicator
 
-- Users can create a store-agnostic default list in Settings; new list action includes option to start from scratch or from default list as base.
+- Distinguish an item that is actively being categorized (spinner) from one that is settled-uncategorized (tappable Categorize badge). Detailed plan preserved in `tasks/backlog--inline-categorization-indicator.md`.
 
 ### Documentation Audit
 

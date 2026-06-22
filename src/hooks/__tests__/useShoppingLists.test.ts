@@ -77,6 +77,61 @@ describe('useCreateShoppingList', () => {
 
     expect(listsResult.current.data![0].name).toMatch(/Oxford Market Basket #62 - \w+ \d+/);
   });
+
+  it('creates an empty list when seedFromDefault is omitted, even with a populated default', async () => {
+    const { useCreateShoppingList } = await import('@/hooks/useShoppingLists');
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    // A populated default list must NOT bleed into a scratch create.
+    await db.add('items', { id: 'seed-it', name: 'Bananas', canonical_name: 'bananas' });
+    await db.add('default_list', { id: 'de-1', item_id: 'seed-it', quantity: 2, unit: '', notes: '' });
+
+    const { result } = renderHook(() => useCreateShoppingList(), { wrapper: makeWrapper() });
+    let created: { id: string } | undefined;
+    await act(async () => {
+      created = await result.current.mutateAsync();
+    });
+
+    expect(await db.getAllFromIndex('list_items', 'list_id', created!.id)).toHaveLength(0);
+  });
+
+  it('seeds list_items from the default list when seedFromDefault is true', async () => {
+    const { useCreateShoppingList } = await import('@/hooks/useShoppingLists');
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('items', { id: 'it-a', name: 'Bananas', canonical_name: 'bananas' });
+    await db.add('items', { id: 'it-b', name: 'Coffee', canonical_name: 'coffee' });
+    await db.add('default_list', { id: 'de-a', item_id: 'it-a', quantity: 3, unit: '', notes: '' });
+    await db.add('default_list', { id: 'de-b', item_id: 'it-b', quantity: 1, unit: '', notes: '' });
+
+    const { result } = renderHook(() => useCreateShoppingList(), { wrapper: makeWrapper() });
+    let created: { id: string } | undefined;
+    await act(async () => {
+      created = await result.current.mutateAsync({ seedFromDefault: true });
+    });
+
+    const seeded = await db.getAllFromIndex('list_items', 'list_id', created!.id);
+    expect(seeded).toHaveLength(2);
+    expect(seeded.every((li) => li.added_from_default === true)).toBe(true);
+    expect(seeded.every((li) => li.checked === false)).toBe(true);
+    const byItem = new Map(seeded.map((li) => [li.item_id, li.quantity]));
+    expect(byItem.get('it-a')).toBe(3);
+    expect(byItem.get('it-b')).toBe(1);
+  });
+
+  it('creates an empty list when seedFromDefault is true but the default list is empty', async () => {
+    const { useCreateShoppingList } = await import('@/hooks/useShoppingLists');
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+
+    const { result } = renderHook(() => useCreateShoppingList(), { wrapper: makeWrapper() });
+    let created: { id: string } | undefined;
+    await act(async () => {
+      created = await result.current.mutateAsync({ seedFromDefault: true });
+    });
+
+    expect(await db.getAllFromIndex('list_items', 'list_id', created!.id)).toHaveLength(0);
+  });
 });
 
 describe('useRenameShoppingList', () => {
