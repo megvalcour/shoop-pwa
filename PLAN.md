@@ -33,3 +33,7 @@ _None. Promote a backlog item to active to begin the next task._
 ### Research Mode
 
 - Need way to populate stores without public aisle/inventories available.
+
+### Inline Categorization Indicator
+
+- Add an inline indicator (e.g., spinner, skeleton, pulse) that shows when an item is in the process of being categorized by the aisle matcher.
