@@ -4,7 +4,7 @@
 
 ## Active Task
 
-- Delete shopping list (confirmation prompt, purges the list record and all its `list_items` rows) — plan: `tasks/active--delete-shopping-list.md`
+None
 
 ## Backlog
 
