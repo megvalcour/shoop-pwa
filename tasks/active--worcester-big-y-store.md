@@ -124,8 +124,8 @@ Authored assets:
   generated from `docs/prd/big-y-mayfield-st-worcester.json`.
 - `src/assets/aisles/big-y-worcester-aliases.json` — matcher-only aliases,
   keyed by Big Y aisle `number` (mirrors `oxford-62-aliases.json`).
-- `public/store-logos/big-y-worcester.png` — optional; `StoreLogo` hides
-  gracefully on a missing logo, so this is non-blocking (flag to user).
+- `public/store-logos/big-y-worcester.png` — **provided** (added to the repo by
+  the user); rendered by `StoreLogo` for the `big-y-worcester` slug.
 
 ## Approach (phased)
 
@@ -266,5 +266,5 @@ Authored assets:
 1. ~~Big Y layout/items~~ — **RESOLVED.** User supplied the real aisle layout
    (now in `docs/prd/big-y-mayfield-st-worcester.json`). We reuse the shared
    catalog and map each item onto Big Y's real aisles (best-effort draft).
-2. **Big Y logo**: provide a `big-y-worcester.png`, or ship without (graceful
-   fallback) for now?
+2. ~~Big Y logo~~ — **RESOLVED.** Added at
+   `public/store-logos/big-y-worcester.png`.
