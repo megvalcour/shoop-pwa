@@ -130,14 +130,22 @@ export function groupListItemsByAisle(
 
 ## Implementation checklist
 
-- [ ] Create `src/lib/formatAisleLabel.ts`.
-- [ ] Create `src/lib/groupListItemsByAisle.ts` (move logic, do not change semantics).
-- [ ] Rewire `ShoppingListBuilder` to consume both helpers.
-- [ ] Rewire `AislePickerSheet` (and `AisleGroup` header source) to `formatAisleLabel`.
-- [ ] New zero-mock unit tests for both helpers (see below).
-- [ ] Trim `ShoppingListBuilder.test.tsx` to the rendering/wiring it still owns;
+- [x] Create `src/lib/formatAisleLabel.ts`.
+- [x] Create `src/lib/groupListItemsByAisle.ts` (move logic, do not change semantics).
+- [x] Rewire `ShoppingListBuilder` to consume both helpers.
+- [x] Rewire `AislePickerSheet` (and `AisleGroup` header source) to `formatAisleLabel`.
+- [x] New zero-mock unit tests for both helpers (see below).
+- [x] Trim `ShoppingListBuilder.test.tsx` to the rendering/wiring it still owns;
       delete assertions now covered by the pure-function tests.
-- [ ] `npm run validate` clean. E2E unaffected but run the shopping flow once.
+- [x] `npm run validate` clean (245 tests passing).
+
+## Implementation notes
+
+- `AisleGroup` now takes a single pre-formatted `header: string` prop (was
+  `label` + `number`). The organism owns the `formatAisleLabel` call, keeping
+  `AisleGroup` a dumb presentational molecule.
+- `AisleCard`'s compact badge text (`Aisle N` / `Section`) was left unchanged,
+  as called out under Out of scope.
 
 ## Tests
 

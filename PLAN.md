@@ -30,7 +30,7 @@ functionality; reduce mock-heavy tests). Ordered by leverage; each is an
 independent task file. 1–3 deliver most of the testability/separation gains;
 4–6 are reusability/readability cleanup.
 
-1. Extract pure grouping + aisle-label formatting out of components — `tasks/backlog--extract-pure-grouping-and-aisle-format.md`.
+1. ✅ Extract pure grouping + aisle-label formatting out of components — `tasks/complete--extract-pure-grouping-and-aisle-format.md`.
 2. Make `AppVersionPanel` a presentational molecule (move `usePwaUpdate` up) — `tasks/backlog--appversionpanel-presentational.md`.
 3. Extract item-classification orchestration out of `AddItemForm` into a hook — `tasks/backlog--extract-useitemclassification.md`.
 4. Shared `Modal` + `BottomSheet` primitives (dedup 4 overlays, centralize a11y) — `tasks/backlog--shared-modal-bottomsheet-primitives.md`.

@@ -4,15 +4,12 @@ import { useAisles } from '@/hooks/useAisles';
 import { useActiveStore } from '@/hooks/useStores';
 import GroceryListItem from '@/components/molecules/GroceryListItem';
 import AisleGroup from '@/components/molecules/AisleGroup';
+import { groupListItemsByAisle } from '@/lib/groupListItemsByAisle';
+import { formatAisleLabel } from '@/lib/formatAisleLabel';
 import type { Aisle, Item, ListItem } from '@/db/schema';
 
 interface ShoppingListBuilderProps {
   listId: string;
-}
-
-interface AisleBucket {
-  aisle: Aisle;
-  listItems: ListItem[];
 }
 
 export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps) {
@@ -43,37 +40,14 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
     return <p className="text-text-muted mt-4">No items yet.</p>;
   }
 
-  const unchecked = listItems.filter((li) => !li.checked);
-  const checked = listItems.filter((li) => li.checked);
-
-  const aisleIdFor = (li: ListItem): string => aisleByItem.get(li.item_id) ?? '';
-
-  // Group unchecked by aisle
-  const bucketMap = new Map<string, ListItem[]>();
-  const uncategorized: ListItem[] = [];
-
-  for (const li of unchecked) {
-    const aisleId = aisleIdFor(li);
-    if (!aisleId || !aisleById.has(aisleId)) {
-      uncategorized.push(li);
-    } else {
-      const bucket = bucketMap.get(aisleId);
-      if (bucket) {
-        bucket.push(li);
-      } else {
-        bucketMap.set(aisleId, [li]);
-      }
-    }
-  }
-
-  // Sort aisle buckets by sort_order
-  const sortedBuckets: AisleBucket[] = [...bucketMap.entries()]
-    .map(([aisleId, lis]) => ({ aisle: aisleById.get(aisleId)!, listItems: lis }))
-    .sort((a, b) => a.aisle.sort_order - b.aisle.sort_order);
+  const { buckets, uncategorized, checked } = groupListItemsByAisle(listItems, {
+    aisleById,
+    aisleByItem,
+  });
 
   function renderListItem(li: ListItem) {
     const item = itemById.get(li.item_id);
-    const aisleId = aisleIdFor(li);
+    const aisleId = aisleByItem.get(li.item_id) ?? '';
     const aisle = aisleById.get(aisleId);
     const isAnalyzing = !li.checked && (!aisleId || !aisleById.has(aisleId));
 
@@ -103,20 +77,20 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      {sortedBuckets.map(({ aisle, listItems: lis }) => (
-        <AisleGroup key={aisle.id} label={aisle.label} number={aisle.number}>
+      {buckets.map(({ aisle, listItems: lis }) => (
+        <AisleGroup key={aisle.id} header={formatAisleLabel(aisle)}>
           {lis.map(renderListItem)}
         </AisleGroup>
       ))}
 
       {uncategorized.length > 0 && (
-        <AisleGroup label="Uncategorized" isSpecial>
+        <AisleGroup header="Uncategorized" isSpecial>
           {uncategorized.map(renderListItem)}
         </AisleGroup>
       )}
 
       {checked.length > 0 && (
-        <AisleGroup label="Done" isSpecial>
+        <AisleGroup header="Done" isSpecial>
           {checked.map(renderListItem)}
         </AisleGroup>
       )}

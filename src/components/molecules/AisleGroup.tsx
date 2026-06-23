@@ -1,13 +1,11 @@
 interface AisleGroupProps {
-  label: string;
-  number?: string;
+  /** Pre-formatted header text. The caller owns label formatting. */
+  header: string;
   children: React.ReactNode;
   isSpecial?: boolean;
 }
 
-export default function AisleGroup({ label, number, children, isSpecial = false }: AisleGroupProps) {
-  const headerText = number ? `Aisle ${number} — ${label}` : label;
-
+export default function AisleGroup({ header, children, isSpecial = false }: AisleGroupProps) {
   return (
     <section>
       <div
@@ -15,7 +13,7 @@ export default function AisleGroup({ label, number, children, isSpecial = false 
           isSpecial ? 'text-text-muted italic' : 'text-primary'
         }`}
       >
-        {headerText}
+        {header}
       </div>
       <ul className="flex flex-col gap-2 mt-1">
         {children}
