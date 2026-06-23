@@ -2,6 +2,10 @@
 
 `refactor(atoms,molecules): Button shape axis, Icon atom, ListItemRow split, DefaultListEditor cleanup`
 
+## Active Task
+
+(None)
+
 ## Backlog
 
 ### Atomic Component Refactor
