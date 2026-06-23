@@ -11,6 +11,8 @@ import Button from '@/components/atoms/Button';
 import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingLists';
 import { useStores } from '@/hooks/useStores';
 import { useResetData } from '@/hooks/useResetData';
+import { usePwaUpdate } from '@/hooks/usePwaUpdate';
+import { APP_VERSION } from '@/lib/appVersion';
 import type { ShoppingList } from '@/db/schema';
 
 export default function SettingsRoute() {
@@ -19,6 +21,7 @@ export default function SettingsRoute() {
   const { data: stores, isPending: storesPending, isError: storesError } = useStores();
   const deleteList = useDeleteShoppingList();
   const resetData = useResetData();
+  const { needRefresh, updateState, checkForUpdate, applyUpdate } = usePwaUpdate();
   const [pendingDelete, setPendingDelete] = useState<ShoppingList | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
@@ -82,7 +85,13 @@ export default function SettingsRoute() {
 
       <section className="px-4 pt-6">
         <h2 className="font-display font-bold text-text text-lg mb-3">About</h2>
-        <AppVersionPanel />
+        <AppVersionPanel
+          version={APP_VERSION}
+          state={updateState}
+          updateAvailable={needRefresh || updateState === 'update-available'}
+          onCheck={() => void checkForUpdate()}
+          onApply={() => void applyUpdate()}
+        />
       </section>
 
       <section className="px-4 pt-6">
