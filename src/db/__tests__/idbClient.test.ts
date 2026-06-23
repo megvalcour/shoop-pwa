@@ -242,8 +242,15 @@ describe('idbClient', () => {
 
       await resetUserData();
 
-      // The tampered row id is gone; locations are re-seeded fresh.
-      expect(await db.get('item_locations', loc.id)).toBeUndefined();
+      // The override is reverted: no location anywhere still carries the
+      // tampered aisle, and the catalog is re-seeded to its full size. (We
+      // assert the override is gone rather than that loc.id disappeared: the
+      // re-seed reuses the big-y assets' fixed location ids, so a row id may
+      // legitimately survive a clear-and-re-add.)
+      const stillTampered = (await db.getAll('item_locations')).some(
+        (l) => l.aisle_id === 'tampered-aisle',
+      );
+      expect(stillTampered).toBe(false);
       expect(await db.count('item_locations')).toBe(364);
       const restored = (await db.getAllFromIndex('item_locations', 'item_id', loc.item_id)).find(
         (l) => l.store_id === loc.store_id,
