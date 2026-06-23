@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { createElement } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useCategorizationStore } from '@/stores/useCategorizationStore';
 
 vi.mock('@/hooks/useListItems', () => ({
   useListItems: vi.fn(),
@@ -86,6 +87,8 @@ describe('ShoppingListBuilder', () => {
     mockMutate.mockReset();
     mockToggleMutate.mockReset();
     mockUpsertMutate.mockReset();
+    // Reset the ephemeral categorization store (a singleton) between tests.
+    useCategorizationStore.setState({ status: 'idle', categorizingIds: new Set() });
   });
 
   function defaultMocks(mocks: Mocks) {
@@ -226,6 +229,83 @@ describe('ShoppingListBuilder', () => {
       itemId: 'item-1',
       storeId: 'store-1',
       aisleId: 'aisle-21',
+    });
+  });
+
+  it('status "loading": an unlocated unchecked item renders under Categorizing…, not Uncategorized', async () => {
+    const mocks = await setup();
+    defaultMocks(mocks);
+    useCategorizationStore.setState({ status: 'loading' });
+
+    mocks.useListItems.mockReturnValue({
+      data: [{ id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false }],
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof mocks.useListItems>);
+
+    mocks.useItems.mockReturnValue({
+      data: [{ id: 'item-1', name: 'Bananas', canonical_name: 'bananas' }],
+    } as unknown as ReturnType<typeof mocks.useItems>);
+
+    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+
+    expect(screen.getByText('Categorizing…')).toBeInTheDocument();
+    expect(screen.queryByText('Uncategorized')).toBeNull();
+    expect(screen.getByLabelText('Categorizing item')).toBeInTheDocument();
+  });
+
+  it('item id in categorizingIds (status ready): renders a spinner under Categorizing…', async () => {
+    const mocks = await setup();
+    defaultMocks(mocks);
+    useCategorizationStore.setState({ status: 'ready', categorizingIds: new Set(['item-1']) });
+
+    mocks.useListItems.mockReturnValue({
+      data: [{ id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false }],
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof mocks.useListItems>);
+
+    mocks.useItems.mockReturnValue({
+      data: [{ id: 'item-1', name: 'Bananas', canonical_name: 'bananas' }],
+    } as unknown as ReturnType<typeof mocks.useItems>);
+
+    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+
+    expect(screen.getByText('Categorizing…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Categorizing item')).toBeInTheDocument();
+  });
+
+  it('status "ready", unlocated item not in the set: renders under Uncategorized with a tappable Categorize badge', async () => {
+    const mocks = await setup();
+    defaultMocks(mocks);
+    useCategorizationStore.setState({ status: 'ready' });
+    mocks.useAisles.mockReturnValue({
+      data: [AISLE_DAIRY],
+    } as unknown as ReturnType<typeof mocks.useAisles>);
+
+    mocks.useListItems.mockReturnValue({
+      data: [{ id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false }],
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof mocks.useListItems>);
+
+    mocks.useItems.mockReturnValue({
+      data: [{ id: 'item-1', name: 'Kefir', canonical_name: 'kefir' }],
+    } as unknown as ReturnType<typeof mocks.useItems>);
+
+    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+
+    expect(screen.getByText('Uncategorized')).toBeInTheDocument();
+    expect(screen.queryByText('Categorizing…')).toBeNull();
+    expect(screen.queryByLabelText('Categorizing item')).toBeNull();
+
+    // The Categorize affordance is tappable and writes the chosen aisle.
+    fireEvent.click(screen.getByRole('button', { name: /categorize item/i }));
+    fireEvent.click(screen.getByText('Aisle 1 — Dairy & Eggs'));
+    expect(mockUpsertMutate).toHaveBeenCalledWith({
+      itemId: 'item-1',
+      storeId: 'store-1',
+      aisleId: 'aisle-1',
     });
   });
 

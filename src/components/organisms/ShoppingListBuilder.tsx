@@ -6,6 +6,7 @@ import GroceryListItem from '@/components/molecules/GroceryListItem';
 import AisleGroup from '@/components/molecules/AisleGroup';
 import { groupListItemsByAisle } from '@/lib/groupListItemsByAisle';
 import { formatAisleLabel } from '@/lib/formatAisleLabel';
+import { useCategorizationStore } from '@/stores/useCategorizationStore';
 import type { Aisle, Item, ListItem } from '@/db/schema';
 
 interface ShoppingListBuilderProps {
@@ -21,6 +22,8 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   const deleteItem = useDeleteListItem();
   const toggleItem = useToggleListItem();
   const upsertLocation = useUpsertItemLocation();
+  const categorizingIds = useCategorizationStore((s) => s.categorizingIds);
+  const status = useCategorizationStore((s) => s.status);
 
   const itemById = new Map<string, Item>((items ?? []).map((item) => [item.id, item]));
   const aisleById = new Map<string, Aisle>((aisles ?? []).map((a) => [a.id, a]));
@@ -40,16 +43,17 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
     return <p className="text-text-muted mt-4">No items yet.</p>;
   }
 
-  const { buckets, uncategorized, checked } = groupListItemsByAisle(listItems, {
+  const { buckets, categorizing, uncategorized, checked } = groupListItemsByAisle(listItems, {
     aisleById,
     aisleByItem,
+    categorizingIds,
+    status,
   });
 
-  function renderListItem(li: ListItem) {
+  function renderListItem(li: ListItem, isCategorizing = false) {
     const item = itemById.get(li.item_id);
     const aisleId = aisleByItem.get(li.item_id) ?? '';
     const aisle = aisleById.get(aisleId);
-    const isAnalyzing = !li.checked && (!aisleId || !aisleById.has(aisleId));
 
     return (
       <GroceryListItem
@@ -60,7 +64,7 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
         onToggle={() => toggleItem.mutate({ id: li.id, listId })}
         onDelete={() => deleteItem.mutate({ id: li.id, listId })}
         aisleLabel={aisle?.label}
-        isAnalyzing={isAnalyzing}
+        isCategorizing={isCategorizing}
         aisles={aisles}
         currentAisleId={aisleId}
         onAisleChange={(newAisleId) => {
@@ -79,19 +83,25 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
     <div className="mt-4 flex flex-col gap-4">
       {buckets.map(({ aisle, listItems: lis }) => (
         <AisleGroup key={aisle.id} header={formatAisleLabel(aisle)}>
-          {lis.map(renderListItem)}
+          {lis.map((li) => renderListItem(li))}
         </AisleGroup>
       ))}
 
+      {categorizing.length > 0 && (
+        <AisleGroup header="Categorizing…" isSpecial>
+          {categorizing.map((li) => renderListItem(li, true))}
+        </AisleGroup>
+      )}
+
       {uncategorized.length > 0 && (
         <AisleGroup header="Uncategorized" isSpecial>
-          {uncategorized.map(renderListItem)}
+          {uncategorized.map((li) => renderListItem(li))}
         </AisleGroup>
       )}
 
       {checked.length > 0 && (
         <AisleGroup header="Done" isSpecial>
-          {checked.map(renderListItem)}
+          {checked.map((li) => renderListItem(li))}
         </AisleGroup>
       )}
     </div>

@@ -11,7 +11,7 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate } = useAddListItem();
-  const { prime, classifyAndPlace, isClassifying } = useItemClassification();
+  const { prime, classifyAndPlace } = useItemClassification();
 
   function handleSubmit() {
     const name = value.trim();
@@ -42,9 +42,6 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
         inputId="add-item-input"
         inputRef={inputRef}
       />
-      {isClassifying && (
-        <p className="mt-1 text-xs text-text-muted animate-pulse">Classifying…</p>
-      )}
     </div>
   );
 }

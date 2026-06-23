@@ -13,6 +13,7 @@ import { useSetActiveStoreId } from '@/hooks/usePreferences';
 // "re-embed on store switch" effect re-fires when the active store changes.
 const matcher = vi.hoisted(() => ({
   isReady: false,
+  status: 'idle' as 'idle' | 'loading' | 'ready' | 'failed',
   prime: vi.fn<(storeKey?: string) => void>(),
   classify: vi.fn<() => Promise<string>>(async () => ''),
 }));
@@ -22,8 +23,32 @@ vi.mock('@/hooks/useAisleMatcher', async () => {
   return {
     useAisleMatcher: (storeKey: string | undefined) => {
       const prime = React.useMemo(() => () => matcher.prime(storeKey), [storeKey]);
-      return { prime, classify: matcher.classify, isReady: matcher.isReady };
+      return {
+        prime,
+        classify: matcher.classify,
+        isReady: matcher.isReady,
+        status: matcher.status,
+      };
     },
+  };
+});
+
+// Mock the Zustand store so we can spy on the lifecycle actions the hook drives.
+const storeActions = vi.hoisted(() => ({
+  begin: vi.fn<(id: string) => void>(),
+  end: vi.fn<(id: string) => void>(),
+  setStatus: vi.fn<(status: string) => void>(),
+  reset: vi.fn<() => void>(),
+}));
+
+vi.mock('@/stores/useCategorizationStore', () => {
+  const state = {
+    status: 'idle' as const,
+    categorizingIds: new Set<string>(),
+    ...storeActions,
+  };
+  return {
+    useCategorizationStore: <T,>(selector: (s: typeof state) => T) => selector(state),
   };
 });
 
@@ -94,9 +119,14 @@ async function waitForLoaded(queryClient: QueryClient) {
 describe('useItemClassification', () => {
   beforeEach(async () => {
     matcher.isReady = false;
+    matcher.status = 'idle';
     matcher.prime.mockReset();
     matcher.classify.mockReset();
     matcher.classify.mockResolvedValue('');
+    storeActions.begin.mockReset();
+    storeActions.end.mockReset();
+    storeActions.setStatus.mockReset();
+    storeActions.reset.mockReset();
     await clearAll();
   });
 
@@ -108,6 +138,7 @@ describe('useItemClassification', () => {
       locations: [loc('i-kefir', 'a-dairy')],
     });
     matcher.isReady = true;
+    matcher.status = 'ready';
 
     const { queryClient, result } = makeRender();
     await waitForLoaded(queryClient);
@@ -131,6 +162,7 @@ describe('useItemClassification', () => {
       locations: [loc('i-bread', 'a-bread')],
     });
     matcher.isReady = true;
+    matcher.status = 'ready';
     matcher.classify.mockResolvedValue('a-produce');
 
     const { queryClient, result } = makeRender();
@@ -169,26 +201,90 @@ describe('useItemClassification', () => {
     await waitFor(() => expect(matcher.prime).toHaveBeenCalledWith('store-2'));
   });
 
-  it('isClassifying reflects "matcher not ready AND unlocated items remain"', async () => {
+  it('classifyAndPlace (matcher ready) marks the item begin then end after classify settles', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-bread', '21'), aisle('a-produce', '7')],
+      items: [item('i-bread', 'bread')],
+      locations: [loc('i-bread', 'a-bread')], // catalog item located → no backfill
+    });
+    matcher.isReady = true;
+    matcher.status = 'ready';
+    matcher.classify.mockResolvedValue('a-produce');
+
+    const { queryClient, result } = makeRender();
+    await waitForLoaded(queryClient);
+
+    act(() => result.current.c.classifyAndPlace('i-new', 'bananas'));
+
+    expect(storeActions.begin).toHaveBeenCalledWith('i-new');
+    await waitFor(() => expect(storeActions.end).toHaveBeenCalledWith('i-new'));
+  });
+
+  it('deferred reclassify loop marks begin/end per unlocated item, even with no aisle match', async () => {
     await seed({
       stores: [store(STORE_ID, 'oxford-62')],
       aisles: [aisle('a-dairy', '1')],
       items: [item('i-bread', 'bread')], // unlocated at the active store
       locations: [],
     });
+    matcher.isReady = true;
+    matcher.status = 'ready';
+    matcher.classify.mockResolvedValue(''); // no confident aisle → settles
 
-    const { queryClient, result, rerender } = makeRender();
+    const { queryClient } = makeRender();
     await waitForLoaded(queryClient);
 
-    // Not classifying until a deliberate prime signal.
-    expect(result.current.c.isClassifying).toBe(false);
+    await waitFor(() => expect(storeActions.begin).toHaveBeenCalledWith('i-bread'));
+    await waitFor(() => expect(storeActions.end).toHaveBeenCalledWith('i-bread'));
+  });
 
-    act(() => result.current.c.prime('bread'));
-    expect(result.current.c.isClassifying).toBe(true);
+  it('publishes the matcher status via setStatus', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-kefir', 'kefir')],
+      locations: [loc('i-kefir', 'a-dairy')],
+    });
+    matcher.status = 'loading';
 
-    // Once the matcher is ready, it is no longer "classifying".
-    matcher.isReady = true;
-    rerender();
-    expect(result.current.c.isClassifying).toBe(false);
+    const { queryClient } = makeRender();
+    await waitForLoaded(queryClient);
+
+    await waitFor(() => expect(storeActions.setStatus).toHaveBeenCalledWith('loading'));
+  });
+
+  it('resets the categorizing set when the active store changes', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62'), store('store-2', 'big-y-worcester')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-kefir', 'kefir')],
+      locations: [loc('i-kefir', 'a-dairy')],
+      activeStoreId: STORE_ID,
+    });
+
+    const { queryClient, result } = makeRender();
+    await waitForLoaded(queryClient);
+
+    storeActions.reset.mockClear();
+    await act(async () => {
+      await result.current.setStore.mutateAsync('store-2');
+    });
+    await waitFor(() => expect(storeActions.reset).toHaveBeenCalled());
+  });
+
+  it('resets the categorizing set when the matcher status is failed', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-kefir', 'kefir')],
+      locations: [loc('i-kefir', 'a-dairy')],
+    });
+    matcher.status = 'failed';
+
+    const { queryClient } = makeRender();
+    await waitForLoaded(queryClient);
+
+    await waitFor(() => expect(storeActions.reset).toHaveBeenCalled());
   });
 });

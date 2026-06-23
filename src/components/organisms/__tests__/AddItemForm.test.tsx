@@ -33,7 +33,6 @@ async function setup({ isPending = false }: { isPending?: boolean } = {}) {
   vi.mocked(useItemClassification).mockReturnValue({
     prime: mockPrime,
     classifyAndPlace: mockClassifyAndPlace,
-    isClassifying: false,
   });
 
   render(<AddItemForm listId="list-1" />, { wrapper: makeWrapper() });
@@ -71,6 +70,11 @@ describe('AddItemForm', () => {
     );
     expect(input.value).toBe('');
     expect(document.activeElement).toBe(input);
+  });
+
+  it('does not render a "Classifying…" banner (superseded by per-item state)', async () => {
+    await setup();
+    expect(screen.queryByText(/classifying/i)).toBeNull();
   });
 
   it('does not submit (or clear) when the input is empty or whitespace', async () => {

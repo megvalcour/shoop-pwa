@@ -32,11 +32,18 @@ const SEMANTIC_RESULTS: Record<string, string> = {
 
 // Manual Worker mock: posts `ready` after `load`, and a correlated `result` after
 // `classify`. Records every instance and every posted message for assertions.
+// `loadMode` controls the reply to a `load` so failure paths can be exercised:
+//   'ready'  → posts { type: 'ready' } (default)
+//   'error'  → posts { type: 'error' }
+//   'onerror'→ fires the worker's onerror handler
+//   'silent' → posts nothing (exercises the readiness timeout)
+let loadMode: 'ready' | 'error' | 'onerror' | 'silent' = 'ready';
 const workerInstances: MockWorker[] = [];
 const postedMessages: unknown[] = [];
 
 class MockWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: unknown) => void) | null = null;
 
   constructor() {
     workerInstances.push(this);
@@ -45,7 +52,14 @@ class MockWorker {
   postMessage(message: { type: string; id?: string; phrase?: string }) {
     postedMessages.push(message);
     if (message.type === 'load') {
-      queueMicrotask(() => this.onmessage?.({ data: { type: 'ready' } } as MessageEvent));
+      if (loadMode === 'ready') {
+        queueMicrotask(() => this.onmessage?.({ data: { type: 'ready' } } as MessageEvent));
+      } else if (loadMode === 'error') {
+        queueMicrotask(() => this.onmessage?.({ data: { type: 'error' } } as MessageEvent));
+      } else if (loadMode === 'onerror') {
+        queueMicrotask(() => this.onerror?.({}));
+      }
+      // 'silent' → no reply.
     } else if (message.type === 'classify') {
       const aisleNumber = SEMANTIC_RESULTS[message.phrase ?? ''] ?? '';
       queueMicrotask(() =>
@@ -60,6 +74,7 @@ class MockWorker {
 }
 
 beforeEach(() => {
+  loadMode = 'ready';
   workerInstances.length = 0;
   postedMessages.length = 0;
   vi.stubGlobal('Worker', MockWorker);
@@ -219,5 +234,87 @@ describe('useAisleMatcher', () => {
     const loadsAfter = postedMessages.filter((m) => (m as { type: string }).type === 'load').length;
     expect(loadsAfter).toBe(loadsBefore + 1);
     expect(workerInstances).toHaveLength(1);
+  });
+
+  it('status becomes "ready" after the worker loads; isReady is true', async () => {
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
+
+    expect(result.current.status).toBe('idle');
+
+    act(() => result.current.prime());
+    expect(result.current.status).toBe('loading');
+
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(result.current.isReady).toBe(true);
+  });
+
+  it('status becomes "failed" when the worker posts an error; isReady stays false', async () => {
+    loadMode = 'error';
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.status).toBe('failed'));
+    expect(result.current.isReady).toBe(false);
+  });
+
+  it('status becomes "failed" when the worker.onerror fires', async () => {
+    loadMode = 'onerror';
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.status).toBe('failed'));
+  });
+
+  it('status becomes "failed" when the readiness timeout elapses with no ready', async () => {
+    loadMode = 'silent';
+    vi.useFakeTimers();
+    try {
+      const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+      const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
+
+      act(() => result.current.prime());
+      expect(result.current.status).toBe('loading');
+
+      act(() => {
+        vi.advanceTimersByTime(20_000);
+      });
+      expect(result.current.status).toBe('failed');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a prime() after a failure retries — re-enters "loading" then "ready"', async () => {
+    loadMode = 'error';
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result } = renderHook(() => useAisleMatcher(STORE, CANDIDATES));
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.status).toBe('failed'));
+
+    // The next load succeeds: priming the same store retries from loading.
+    loadMode = 'ready';
+    act(() => result.current.prime());
+    expect(result.current.status).toBe('loading');
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+  });
+
+  it('a store switch re-enters "loading"', async () => {
+    const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+    const { result, rerender } = renderHook(
+      ({ store }: { store: string }) => useAisleMatcher(store, CANDIDATES),
+      { initialProps: { store: 'store-1' } },
+    );
+
+    act(() => result.current.prime());
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    rerender({ store: 'store-2' });
+    act(() => result.current.prime());
+    expect(result.current.status).toBe('loading');
+    await waitFor(() => expect(result.current.status).toBe('ready'));
   });
 });

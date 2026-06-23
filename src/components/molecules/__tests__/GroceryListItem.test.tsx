@@ -36,7 +36,7 @@ describe('GroceryListItem', () => {
     { id: 'a2', store_id: 's1', number: '2', label: 'Produce', sort_order: 1 },
   ];
 
-  it('uncategorized item: tapping the … badge opens the picker, not onToggle', () => {
+  it('categorizing item: shows a non-interactive spinner badge, no picker; row still toggles', () => {
     const onToggle = vi.fn();
     const onAisleChange = vi.fn();
     render(
@@ -44,7 +44,30 @@ describe('GroceryListItem', () => {
         name="Kefir"
         quantity={1}
         onToggle={onToggle}
-        isAnalyzing
+        isCategorizing
+        aisles={aisles}
+        onAisleChange={onAisleChange}
+      />,
+    );
+
+    // Status, not an action: the badge is not a button and opens no picker.
+    expect(screen.getByLabelText('Categorizing item')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /categorize item/i })).toBeNull();
+    expect(screen.queryByText('Choose aisle')).toBeNull();
+
+    // The row itself still toggles.
+    fireEvent.click(screen.getByText('Kefir').closest('li')!);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('settled-uncategorized item: tapping Categorize opens the picker, not onToggle', () => {
+    const onToggle = vi.fn();
+    const onAisleChange = vi.fn();
+    render(
+      <GroceryListItem
+        name="Kefir"
+        quantity={1}
+        onToggle={onToggle}
         aisles={aisles}
         onAisleChange={onAisleChange}
       />,
@@ -58,17 +81,37 @@ describe('GroceryListItem', () => {
     expect(onAisleChange).toHaveBeenCalledWith('a1');
   });
 
-  it('checked uncategorized item exposes no categorize affordance', () => {
+  it('item with an aisle label: tapping the aisle badge opens the picker', () => {
+    const onToggle = vi.fn();
+    const onAisleChange = vi.fn();
+    render(
+      <GroceryListItem
+        name="Milk"
+        quantity={1}
+        onToggle={onToggle}
+        aisleLabel="Dairy"
+        currentAisleId="a1"
+        aisles={aisles}
+        onAisleChange={onAisleChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /change aisle: dairy/i }));
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(screen.getByText('Choose aisle')).toBeInTheDocument();
+  });
+
+  it('checked uncategorized item exposes no interactive badge', () => {
     render(
       <GroceryListItem
         name="Kefir"
         quantity={1}
         checked
-        isAnalyzing
         aisles={aisles}
         onAisleChange={vi.fn()}
       />,
     );
     expect(screen.queryByRole('button', { name: /categorize item/i })).toBeNull();
+    expect(screen.queryByLabelText('Categorizing item')).toBeNull();
   });
 });
