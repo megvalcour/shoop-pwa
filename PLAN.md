@@ -4,7 +4,7 @@
 
 ## Active Task
 
-`tasks/active--atomic-component-polish.md` — validating (E2E pending).
+(None)
 
 ## Backlog
 
