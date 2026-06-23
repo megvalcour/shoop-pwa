@@ -8,20 +8,6 @@
 
 ## Backlog
 
-### Atomic Component Refactor
-
-Outcome of the atomic-components review (separate presentation from
-functionality; reduce mock-heavy tests). Ordered by leverage; each is an
-independent task file. 1–3 deliver most of the testability/separation gains;
-4–6 are reusability/readability cleanup.
-
-1. ✅ Extract pure grouping + aisle-label formatting out of components — `tasks/complete--extract-pure-grouping-and-aisle-format.md`.
-2. ✅ Make `AppVersionPanel` a presentational molecule (move `usePwaUpdate` up) — `tasks/complete--appversionpanel-presentational.md`.
-3. ✅ Extract item-classification orchestration out of `AddItemForm` into a hook — `tasks/complete--extract-useitemclassification.md`.
-4. ✅ Shared `Modal` + `BottomSheet` primitives (dedup 4 overlays, centralize a11y) — `tasks/complete--shared-modal-bottomsheet-primitives.md`.
-5. ✅ `SelectionList` + `ItemEntryForm` shared molecules — `tasks/complete--selectionlist-itementryform-molecules.md`.
-6. Atomic component polish — `Button` type/variants, `Icon` atom, `GroceryListItem` split — `tasks/backlog--atomic-component-polish.md`.
-
 ### Inline Categorization Indicator
 
 - Distinguish an item that is actively being categorized (spinner) from one that is settled-uncategorized (tappable Categorize badge). Detailed plan preserved in `tasks/backlog--inline-categorization-indicator.md`.
