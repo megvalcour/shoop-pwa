@@ -1,8 +1,7 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import type { Aisle } from '@/db/schema';
 import { formatAisleLabel } from '@/lib/formatAisleLabel';
 import BottomSheet from '@/components/molecules/BottomSheet';
+import SelectionList from '@/components/molecules/SelectionList';
 
 export interface AislePickerSheetProps {
   aisles: Aisle[];
@@ -19,29 +18,16 @@ export default function AislePickerSheet({
 }: AislePickerSheetProps) {
   return (
     <BottomSheet title="Choose aisle" onClose={onClose}>
-      <ul>
-        {aisles.map((aisle) => {
-          const isSelected = aisle.id === currentAisleId;
-          return (
-            <li key={aisle.id}>
-              <button
-                className={`w-full flex items-center justify-between px-4 py-3 text-left ${
-                  isSelected ? 'text-primary font-semibold' : 'text-text'
-                }`}
-                onClick={() => {
-                  onSelect(aisle.id);
-                  onClose();
-                }}
-              >
-                <span>{formatAisleLabel(aisle)}</span>
-                {isSelected && (
-                  <FontAwesomeIcon icon={faCheck} className="text-primary" />
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <SelectionList
+        items={aisles}
+        getKey={(a) => a.id}
+        isSelected={(a) => a.id === currentAisleId}
+        renderLabel={(a) => formatAisleLabel(a)}
+        onSelect={(a) => {
+          onSelect(a.id);
+          onClose();
+        }}
+      />
     </BottomSheet>
   );
 }

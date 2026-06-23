@@ -1,7 +1,6 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import type { Store } from '@/db/schema';
 import BottomSheet from '@/components/molecules/BottomSheet';
+import SelectionList from '@/components/molecules/SelectionList';
 
 export interface StoreSwitcherSheetProps {
   stores: Store[];
@@ -18,32 +17,21 @@ export default function StoreSwitcherSheet({
 }: StoreSwitcherSheetProps) {
   return (
     <BottomSheet title="Switch store" onClose={onClose}>
-      <ul>
-        {stores.map((store) => {
-          const isSelected = store.id === currentStoreId;
-          return (
-            <li key={store.id}>
-              <button
-                className={`w-full flex items-center justify-between px-4 py-3 text-left ${
-                  isSelected ? 'text-primary font-semibold' : 'text-text'
-                }`}
-                onClick={() => {
-                  if (!isSelected) onSelect(store.id);
-                  onClose();
-                }}
-              >
-                <span className="flex flex-col">
-                  <span>{store.name}</span>
-                  <span className="text-sm font-normal text-text-muted">{store.address}</span>
-                </span>
-                {isSelected && (
-                  <FontAwesomeIcon icon={faCheck} className="text-primary" />
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <SelectionList
+        items={stores}
+        getKey={(s) => s.id}
+        isSelected={(s) => s.id === currentStoreId}
+        renderLabel={(s) => (
+          <span className="flex flex-col">
+            <span>{s.name}</span>
+            <span className="text-sm font-normal text-text-muted">{s.address}</span>
+          </span>
+        )}
+        onSelect={(s) => {
+          if (s.id !== currentStoreId) onSelect(s.id);
+          onClose();
+        }}
+      />
     </BottomSheet>
   );
 }
