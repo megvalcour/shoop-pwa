@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/atoms/Button';
+import Icon from '@/components/atoms/Icon';
 
 export interface BottomSheetProps {
   title: string;
@@ -81,8 +81,8 @@ export default function BottomSheet({ title, onClose, children }: BottomSheetPro
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <span className="font-semibold text-text">{title}</span>
-          <Button onClick={onClose} aria-label="Close">
-            <FontAwesomeIcon icon={faXmark} />
+          <Button shape="icon" onClick={onClose} aria-label="Close">
+            <Icon icon={faXmark} />
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto">{children}</div>
