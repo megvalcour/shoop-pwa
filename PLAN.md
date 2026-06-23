@@ -8,6 +8,14 @@
 
 ## Backlog
 
+### Grocery List Item Quantities
+
+- Allow users to add/edit quantities on grocery list items (e.g., "2 lbs", "3 cans").
+
+### Big Y Aisle Adjustments
+
+- Update Big Y store aisle data based on new layout information.
+
 ### Documentation Audit
 
 - Review and correct ADRs to ensure the decision is captured in each, and that each are still valid to the current state of the project.
