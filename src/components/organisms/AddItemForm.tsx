@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAddListItem } from '@/hooks/useListItems';
 import { useItemClassification } from '@/hooks/useItemClassification';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
+import ItemEntryForm from '@/components/molecules/ItemEntryForm';
 
 interface AddItemFormProps {
   listId: string;
@@ -14,8 +13,7 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
   const { mutate } = useAddListItem();
   const { prime, classifyAndPlace, isClassifying } = useItemClassification();
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSubmit() {
     const name = value.trim();
     if (!name) return;
     prime(name);
@@ -35,24 +33,15 @@ export default function AddItemForm({ listId }: AddItemFormProps) {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
-        <label htmlFor="add-item-input" className="sr-only">
-          Item name
-        </label>
-        <Input
-          ref={inputRef}
-          id="add-item-input"
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onBlur={() => prime(value)}
-          placeholder="Add an item…"
-          className="flex-1"
-        />
-        <Button type="submit" variant="primary" disabled={!value.trim()}>
-          Add
-        </Button>
-      </form>
+      <ItemEntryForm
+        value={value}
+        onChange={setValue}
+        onSubmit={handleSubmit}
+        onBlur={() => prime(value)}
+        placeholder="Add an item…"
+        inputId="add-item-input"
+        inputRef={inputRef}
+      />
       {isClassifying && (
         <p className="mt-1 text-xs text-text-muted animate-pulse">Classifying…</p>
       )}

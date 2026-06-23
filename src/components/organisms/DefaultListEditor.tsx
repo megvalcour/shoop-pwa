@@ -6,8 +6,7 @@ import {
 } from '@/hooks/useDefaultList';
 import { useItems } from '@/hooks/useItems';
 import GroceryListItem from '@/components/molecules/GroceryListItem';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
+import ItemEntryForm from '@/components/molecules/ItemEntryForm';
 import type { Item } from '@/db/schema';
 
 /**
@@ -26,8 +25,7 @@ export default function DefaultListEditor() {
 
   const itemById = new Map<string, Item>((items ?? []).map((item) => [item.id, item]));
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSubmit() {
     const name = value.trim();
     if (!name) return;
     setValue('');
@@ -55,23 +53,14 @@ export default function DefaultListEditor() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
-        <label htmlFor="add-default-item-input" className="sr-only">
-          Item name
-        </label>
-        <Input
-          ref={inputRef}
-          id="add-default-item-input"
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Add a default item…"
-          className="flex-1"
-        />
-        <Button type="submit" variant="primary" disabled={!value.trim()}>
-          Add
-        </Button>
-      </form>
+      <ItemEntryForm
+        value={value}
+        onChange={setValue}
+        onSubmit={handleSubmit}
+        placeholder="Add a default item…"
+        inputId="add-default-item-input"
+        inputRef={inputRef}
+      />
       {addItem.isError && (
         <p className="mt-1 text-xs text-destructive">Failed to add item. Please try again.</p>
       )}
