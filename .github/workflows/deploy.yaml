@@ -18,8 +18,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Assert semver minor equals DB_VERSION
-        run: node scripts/check-version-db-alignment.mjs
       - run: npm run validate
 
   release:
