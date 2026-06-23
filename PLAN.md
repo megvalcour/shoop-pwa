@@ -1,6 +1,6 @@
 ## Current Status
 
-`refactor(components): extract item-classification orchestration out of AddItemForm into useItemClassification (ADR-0011/0013/0015)`
+`refactor(components): make AppVersionPanel a presentational molecule, move usePwaUpdate orchestration to SettingsRoute (ADR-0005)`
 
 ## Active Task
 
@@ -17,7 +17,7 @@ independent task file. 1–3 deliver most of the testability/separation gains;
 
 1. ✅ Extract pure grouping + aisle-label formatting out of components — `tasks/complete--extract-pure-grouping-and-aisle-format.md`.
 2. ✅ Make `AppVersionPanel` a presentational molecule (move `usePwaUpdate` up) — `tasks/complete--appversionpanel-presentational.md`.
-3. ✅ Extract item-classification orchestration out of `AddItemForm` into a hook — `tasks/complete--extract-useitemclassification.md`.
+3. Extract item-classification orchestration out of `AddItemForm` into a hook — `tasks/backlog--extract-useitemclassification.md`.
 4. ✅ Shared `Modal` + `BottomSheet` primitives (dedup 4 overlays, centralize a11y) — `tasks/complete--shared-modal-bottomsheet-primitives.md`.
 5. `SelectionList` + `ItemEntryForm` shared molecules — `tasks/backlog--selectionlist-itementryform-molecules.md`.
 6. Atomic component polish — `Button` type/variants, `Icon` atom, `GroceryListItem` split — `tasks/backlog--atomic-component-polish.md`.
