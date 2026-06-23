@@ -1,10 +1,10 @@
 ## Current Status
 
-`refactor(molecules): extract SelectionList and ItemEntryForm shared molecules from duplicated sheet/organism markup`
+`refactor(atoms,molecules): Button shape axis, Icon atom, ListItemRow split, DefaultListEditor cleanup`
 
 ## Active Task
 
-None.
+`tasks/active--atomic-component-polish.md` — validating (E2E pending).
 
 ## Backlog
 

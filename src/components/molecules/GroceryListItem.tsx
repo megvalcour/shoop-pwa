@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import type { Aisle } from '@/db/schema';
 import AislePickerSheet from '@/components/molecules/AislePickerSheet';
-import Button from '@/components/atoms/Button';
 import Badge from '@/components/atoms/Badge';
+import ListItemRow from '@/components/molecules/ListItemRow';
 
 interface GroceryListItemProps {
   name: string;
@@ -37,63 +35,50 @@ export default function GroceryListItem({
   // wired up — this includes uncategorized items still showing the "…" badge.
   const canPickAisle = !checked && Boolean(aisles) && Boolean(onAisleChange);
 
+  let badge: React.ReactNode = null;
+  if (isAnalyzing) {
+    badge = canPickAisle ? (
+      <Badge
+        variant="muted"
+        className="animate-pulse px-2.5 py-1 leading-none"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSheetOpen(true);
+        }}
+        aria-label="Categorize item"
+      >
+        …
+      </Badge>
+    ) : (
+      <Badge variant="muted" className="animate-pulse">
+        …
+      </Badge>
+    );
+  } else if (aisleLabel) {
+    badge = (
+      <Badge
+        className="px-2.5 py-1"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSheetOpen(true);
+        }}
+        aria-label={`Change aisle: ${aisleLabel}`}
+      >
+        {aisleLabel}
+      </Badge>
+    );
+  }
+
   return (
     <>
-      <li
-        className={`px-4 py-3 bg-card rounded-lg shadow-sm flex items-center justify-between ${onToggle ? 'cursor-pointer select-none' : ''} ${checked ? 'opacity-60' : ''}`}
-        onClick={onToggle}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={`font-medium text-text truncate ${checked ? 'line-through' : ''}`}>
-            {name}
-          </span>
-          {isAnalyzing &&
-            (canPickAisle ? (
-              <Badge
-                variant="muted"
-                className="animate-pulse px-2.5 py-1 leading-none"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSheetOpen(true);
-                }}
-                aria-label="Categorize item"
-              >
-                …
-              </Badge>
-            ) : (
-              <Badge variant="muted" className="animate-pulse">
-                …
-              </Badge>
-            ))}
-          {!isAnalyzing && aisleLabel && (
-            <Badge
-              className="px-2.5 py-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSheetOpen(true);
-              }}
-              aria-label={`Change aisle: ${aisleLabel}`}
-            >
-              {aisleLabel}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-sm text-text-muted">×{quantity}</span>
-          {onDelete && (
-            <Button
-              variant="destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              aria-label="Delete item"
-            >
-              <FontAwesomeIcon icon={faTrash} />
-            </Button>
-          )}
-        </div>
-      </li>
+      <ListItemRow
+        name={name}
+        quantity={quantity}
+        checked={checked}
+        onToggle={onToggle}
+        onDelete={onDelete}
+        badge={badge}
+      />
       {sheetOpen && aisles && onAisleChange && (
         <AislePickerSheet
           aisles={aisles}

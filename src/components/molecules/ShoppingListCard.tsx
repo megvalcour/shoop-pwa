@@ -1,7 +1,7 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import type { ShoppingList } from '@/db/schema';
 import Button from '@/components/atoms/Button';
+import Icon from '@/components/atoms/Icon';
 
 interface ShoppingListCardProps {
   list: ShoppingList;
@@ -29,7 +29,8 @@ export default function ShoppingListCard({ list, onClick, onDelete }: ShoppingLi
       </button>
       {onDelete && (
         <Button
-          variant="destructive"
+          variant="danger"
+          shape="icon"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -37,7 +38,7 @@ export default function ShoppingListCard({ list, onClick, onDelete }: ShoppingLi
           aria-label={`Delete list: ${list.name}`}
           className="shrink-0 ml-3"
         >
-          <FontAwesomeIcon icon={faTrash} />
+          <Icon icon={faTrash} />
         </Button>
       )}
     </div>

@@ -5,7 +5,7 @@ import {
   useRemoveDefaultListItem,
 } from '@/hooks/useDefaultList';
 import { useItems } from '@/hooks/useItems';
-import GroceryListItem from '@/components/molecules/GroceryListItem';
+import ListItemRow from '@/components/molecules/ListItemRow';
 import ItemEntryForm from '@/components/molecules/ItemEntryForm';
 import type { Item } from '@/db/schema';
 
@@ -40,7 +40,7 @@ export default function DefaultListEditor() {
     return (
       <ul className="mt-4 flex flex-col gap-2">
         {entries.map((entry) => (
-          <GroceryListItem
+          <ListItemRow
             key={entry.id}
             name={itemById.get(entry.item_id)?.name ?? 'Unknown item'}
             quantity={entry.quantity}
