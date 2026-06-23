@@ -33,6 +33,10 @@ export default function GroceryListItem({
 }: GroceryListItemProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  // The aisle badge is tappable for unchecked items as long as the picker is
+  // wired up — this includes uncategorized items still showing the "…" badge.
+  const canPickAisle = !checked && Boolean(aisles) && Boolean(onAisleChange);
+
   return (
     <>
       <li
@@ -43,11 +47,27 @@ export default function GroceryListItem({
           <span className={`font-medium text-text truncate ${checked ? 'line-through' : ''}`}>
             {name}
           </span>
-          {isAnalyzing && (
-            <Badge variant="muted" className="animate-pulse">…</Badge>
-          )}
+          {isAnalyzing &&
+            (canPickAisle ? (
+              <Badge
+                variant="muted"
+                className="animate-pulse px-2.5 py-1 leading-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSheetOpen(true);
+                }}
+                aria-label="Categorize item"
+              >
+                …
+              </Badge>
+            ) : (
+              <Badge variant="muted" className="animate-pulse">
+                …
+              </Badge>
+            ))}
           {!isAnalyzing && aisleLabel && (
             <Badge
+              className="px-2.5 py-1"
               onClick={(e) => {
                 e.stopPropagation();
                 setSheetOpen(true);
