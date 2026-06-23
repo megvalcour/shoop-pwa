@@ -1,0 +1,194 @@
+import 'fake-indexeddb/auto';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement } from 'react';
+import type { Aisle, Item, ItemLocation, Store } from '@/db/schema';
+import { dbPromise, ACTIVE_STORE_ID_KEY } from '@/db/idbClient';
+import { useItemClassification } from '@/hooks/useItemClassification';
+import { useSetActiveStoreId } from '@/hooks/usePreferences';
+
+// Mock only the worker boundary (ADR-0013). The mocked `prime` identity changes
+// with `storeKey`, mirroring the real `useCallback`, so the consumer's
+// "re-embed on store switch" effect re-fires when the active store changes.
+const matcher = vi.hoisted(() => ({
+  isReady: false,
+  prime: vi.fn<(storeKey?: string) => void>(),
+  classify: vi.fn<() => Promise<string>>(async () => ''),
+}));
+
+vi.mock('@/hooks/useAisleMatcher', async () => {
+  const React = await vi.importActual<typeof import('react')>('react');
+  return {
+    useAisleMatcher: (storeKey: string | undefined) => {
+      const prime = React.useMemo(() => () => matcher.prime(storeKey), [storeKey]);
+      return { prime, classify: matcher.classify, isReady: matcher.isReady };
+    },
+  };
+});
+
+const STORE_ID = 'store-1';
+
+function makeRender() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: React.ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  const utils = renderHook(
+    () => ({ c: useItemClassification(), setStore: useSetActiveStoreId() }),
+    { wrapper },
+  );
+  return { queryClient, ...utils };
+}
+
+async function clearAll() {
+  const db = await dbPromise;
+  for (const store of ['stores', 'aisles', 'items', 'item_locations', 'preferences'] as const) {
+    await db.clear(store);
+  }
+}
+
+async function seed(opts: {
+  stores: Store[];
+  aisles: Aisle[];
+  items: Item[];
+  locations: ItemLocation[];
+  activeStoreId?: string;
+}) {
+  const db = await dbPromise;
+  for (const s of opts.stores) await db.put('stores', s);
+  for (const a of opts.aisles) await db.put('aisles', a);
+  for (const i of opts.items) await db.put('items', i);
+  for (const l of opts.locations) await db.put('item_locations', l);
+  await db.put('preferences', {
+    key: ACTIVE_STORE_ID_KEY,
+    value: opts.activeStoreId ?? STORE_ID,
+  });
+}
+
+const store = (id: string, slug: string): Store => ({ id, name: id, address: '', slug });
+const aisle = (id: string, number: string): Aisle => ({
+  id,
+  store_id: STORE_ID,
+  number,
+  label: number,
+  sort_order: 0,
+});
+const item = (id: string, name: string): Item => ({ id, name, canonical_name: name });
+const loc = (item_id: string, aisle_id: string, store_id = STORE_ID): ItemLocation => ({
+  id: `loc-${item_id}-${store_id}`,
+  item_id,
+  store_id,
+  aisle_id,
+});
+
+// Wait until the active-store-scoped queries have resolved so `locatedItemIds`
+// reflects the seeded data before we exercise the placement rules.
+async function waitForLoaded(queryClient: QueryClient) {
+  await waitFor(() => {
+    expect(queryClient.getQueryData(['items'])).toBeDefined();
+    expect(queryClient.getQueryData(['item_locations', STORE_ID])).toBeDefined();
+    expect(queryClient.getQueryData(['aisles', STORE_ID])).toBeDefined();
+  });
+}
+
+describe('useItemClassification', () => {
+  beforeEach(async () => {
+    matcher.isReady = false;
+    matcher.prime.mockReset();
+    matcher.classify.mockReset();
+    matcher.classify.mockResolvedValue('');
+    await clearAll();
+  });
+
+  it('does not classify an item already located at the active store (no-clobber)', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-kefir', 'kefir')],
+      locations: [loc('i-kefir', 'a-dairy')],
+    });
+    matcher.isReady = true;
+
+    const { queryClient, result } = makeRender();
+    await waitForLoaded(queryClient);
+
+    act(() => result.current.c.classifyAndPlace('i-kefir', 'kefir'));
+    await Promise.resolve();
+
+    expect(matcher.classify).not.toHaveBeenCalled();
+    const rows = await (await dbPromise).getAllFromIndex('item_locations', 'item_id', 'i-kefir');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].aisle_id).toBe('a-dairy');
+  });
+
+  it('classifies a freshly added item lacking a location and writes via the auto path', async () => {
+    await seed({
+      // Catalog item already located so the backfill effect classifies nothing —
+      // the only classify call must come from classifyAndPlace for the new item.
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-bread', '21'), aisle('a-produce', '7')],
+      items: [item('i-bread', 'bread')],
+      locations: [loc('i-bread', 'a-bread')],
+    });
+    matcher.isReady = true;
+    matcher.classify.mockResolvedValue('a-produce');
+
+    const { queryClient, result } = makeRender();
+    await waitForLoaded(queryClient);
+
+    act(() => result.current.c.classifyAndPlace('i-new', 'bananas'));
+
+    await waitFor(async () => {
+      const rows = await (await dbPromise).getAllFromIndex('item_locations', 'item_id', 'i-new');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ store_id: STORE_ID, aisle_id: 'a-produce' });
+    });
+    expect(matcher.classify).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-primes the matcher when the active store changes', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62'), store('store-2', 'big-y-worcester')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-kefir', 'kefir')],
+      locations: [loc('i-kefir', 'a-dairy')],
+      activeStoreId: STORE_ID,
+    });
+
+    const { queryClient, result } = makeRender();
+    await waitForLoaded(queryClient);
+
+    // Deliberate user signal primes for the current store.
+    act(() => result.current.c.prime('milk'));
+    await waitFor(() => expect(matcher.prime).toHaveBeenCalledWith(STORE_ID));
+
+    // Switching the active store re-embeds the worker for the new store.
+    await act(async () => {
+      await result.current.setStore.mutateAsync('store-2');
+    });
+    await waitFor(() => expect(matcher.prime).toHaveBeenCalledWith('store-2'));
+  });
+
+  it('isClassifying reflects "matcher not ready AND unlocated items remain"', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-bread', 'bread')], // unlocated at the active store
+      locations: [],
+    });
+
+    const { queryClient, result, rerender } = makeRender();
+    await waitForLoaded(queryClient);
+
+    // Not classifying until a deliberate prime signal.
+    expect(result.current.c.isClassifying).toBe(false);
+
+    act(() => result.current.c.prime('bread'));
+    expect(result.current.c.isClassifying).toBe(true);
+
+    // Once the matcher is ready, it is no longer "classifying".
+    matcher.isReady = true;
+    rerender();
+    expect(result.current.c.isClassifying).toBe(false);
+  });
+});

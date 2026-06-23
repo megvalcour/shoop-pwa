@@ -1,18 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { createElement } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { Item, ItemLocation } from '@/db/schema';
 
 vi.mock('@/hooks/useListItems', () => ({ useAddListItem: vi.fn() }));
-vi.mock('@/hooks/useItems', () => ({
-  useItems: vi.fn(),
-  useItemLocations: vi.fn(),
-  useUpsertItemLocation: vi.fn(),
-}));
-vi.mock('@/hooks/useAisles', () => ({ useAisles: vi.fn() }));
-vi.mock('@/hooks/useStores', () => ({ useActiveStore: vi.fn() }));
-vi.mock('@/hooks/useAisleMatcher', () => ({ useAisleMatcher: vi.fn() }));
+// The classification orchestration lives in its own hook (and is tested there).
+// Here we stub it so the form's own behavior — submit, clear, refocus, no-disable
+// — is exercised without the matcher/IndexedDB machinery.
+vi.mock('@/hooks/useItemClassification', () => ({ useItemClassification: vi.fn() }));
 
 function makeWrapper() {
   const queryClient = new QueryClient({
@@ -23,48 +18,22 @@ function makeWrapper() {
 }
 
 const mockMutate = vi.fn();
-const mockUpsertMutate = vi.fn();
 const mockPrime = vi.fn();
-const mockClassify = vi.fn().mockResolvedValue('');
+const mockClassifyAndPlace = vi.fn();
 
-async function setup({
-  isPending = false,
-  isReady = false,
-  items = [],
-  locations = [],
-}: {
-  isPending?: boolean;
-  isReady?: boolean;
-  items?: Item[];
-  locations?: ItemLocation[];
-} = {}) {
+async function setup({ isPending = false }: { isPending?: boolean } = {}) {
   const { useAddListItem } = await import('@/hooks/useListItems');
-  const { useItems, useItemLocations, useUpsertItemLocation } = await import('@/hooks/useItems');
-  const { useAisles } = await import('@/hooks/useAisles');
-  const { useActiveStore } = await import('@/hooks/useStores');
-  const { useAisleMatcher } = await import('@/hooks/useAisleMatcher');
+  const { useItemClassification } = await import('@/hooks/useItemClassification');
   const AddItemForm = (await import('@/components/organisms/AddItemForm')).default;
 
   vi.mocked(useAddListItem).mockReturnValue({
     mutate: mockMutate,
     isPending,
   } as unknown as ReturnType<typeof useAddListItem>);
-  vi.mocked(useItems).mockReturnValue({ data: items } as unknown as ReturnType<typeof useItems>);
-  vi.mocked(useItemLocations).mockReturnValue({
-    data: locations,
-    isSuccess: true,
-  } as unknown as ReturnType<typeof useItemLocations>);
-  vi.mocked(useUpsertItemLocation).mockReturnValue({
-    mutate: mockUpsertMutate,
-  } as unknown as ReturnType<typeof useUpsertItemLocation>);
-  vi.mocked(useAisles).mockReturnValue({ data: [] } as unknown as ReturnType<typeof useAisles>);
-  vi.mocked(useActiveStore).mockReturnValue({
-    data: { id: 'store-1', name: 'Test', address: '', slug: 'oxford-62' },
-  } as unknown as ReturnType<typeof useActiveStore>);
-  vi.mocked(useAisleMatcher).mockReturnValue({
+  vi.mocked(useItemClassification).mockReturnValue({
     prime: mockPrime,
-    classify: mockClassify,
-    isReady,
+    classifyAndPlace: mockClassifyAndPlace,
+    isClassifying: false,
   });
 
   render(<AddItemForm listId="list-1" />, { wrapper: makeWrapper() });
@@ -75,7 +44,6 @@ describe('AddItemForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMutate.mockReset();
-    mockClassify.mockResolvedValue('');
   });
 
   it('keeps focus in the input and clears it after submitting via Enter', async () => {
@@ -118,48 +86,29 @@ describe('AddItemForm', () => {
     expect(input).not.toBeDisabled();
   });
 
-  it('classifies a new item and writes its location via the auto path', async () => {
-    mockClassify.mockResolvedValue('aisle-produce');
+  it('primes on submit and places the classified item on add success', async () => {
     mockMutate.mockImplementation((_payload, options) => {
       options?.onSuccess?.({ itemCreated: true, newItemId: 'item-new' });
     });
 
-    const input = await setup({ isReady: true });
+    const input = await setup();
     fireEvent.change(input, { target: { value: 'Bananas' } });
     fireEvent.submit(input.closest('form')!);
 
-    await waitFor(() =>
-      expect(mockUpsertMutate).toHaveBeenCalledWith({
-        itemId: 'item-new',
-        storeId: 'store-1',
-        aisleId: 'aisle-produce',
-        auto: true,
-      }),
-    );
+    expect(mockPrime).toHaveBeenCalledWith('Bananas');
+    expect(mockClassifyAndPlace).toHaveBeenCalledWith('item-new', 'Bananas');
   });
 
-  it('does not re-classify an item already located at the active store', async () => {
-    mockClassify.mockResolvedValue('aisle-produce');
-    // Re-adding an existing item returns its shared id but it already has a
-    // location at the active store, so it must not be re-classified.
+  it('does not place a classification when no item id is returned', async () => {
     mockMutate.mockImplementation((_payload, options) => {
-      options?.onSuccess?.({ itemCreated: false, newItemId: 'item-existing' });
+      options?.onSuccess?.({ itemCreated: false, newItemId: '' });
     });
 
-    const input = await setup({
-      isReady: true,
-      items: [{ id: 'item-existing', name: 'Blueberry kefir', canonical_name: 'blueberry kefir' }],
-      locations: [
-        { id: 'loc-1', item_id: 'item-existing', store_id: 'store-1', aisle_id: 'aisle-dairy' },
-      ],
-    });
-    fireEvent.change(input, { target: { value: 'Blueberry kefir' } });
+    const input = await setup();
+    fireEvent.change(input, { target: { value: 'Bread' } });
     fireEvent.submit(input.closest('form')!);
 
-    // Allow any stray async classification to settle before asserting it never ran.
-    await Promise.resolve();
-    expect(mockClassify).not.toHaveBeenCalled();
-    expect(mockUpsertMutate).not.toHaveBeenCalled();
+    expect(mockClassifyAndPlace).not.toHaveBeenCalled();
   });
 
   it('supports back-to-back entry without re-focusing the field', async () => {
