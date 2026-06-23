@@ -1,16 +1,12 @@
 ## Current Status
 
-`refactor(atoms,molecules): Button shape axis, Icon atom, ListItemRow split, DefaultListEditor cleanup`
+`feat(categorization): inline "categorizing" indicator distinct from settled-uncategorized`
 
 ## Active Task
 
 (None)
 
 ## Backlog
-
-### Inline Categorization Indicator
-
-- Distinguish an item that is actively being categorized (spinner) from one that is settled-uncategorized (tappable Categorize badge). Detailed plan preserved in `tasks/backlog--inline-categorization-indicator.md`.
 
 ### Documentation Audit
 

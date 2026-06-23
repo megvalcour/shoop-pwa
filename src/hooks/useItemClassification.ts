@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useItems, useItemLocations, useUpsertItemLocation } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
 import { useActiveStore } from '@/hooks/useStores';
 import { useAisleMatcher } from '@/hooks/useAisleMatcher';
 import { buildAisleCandidates } from '@/lib/buildAisleCandidates';
+import { useCategorizationStore } from '@/stores/useCategorizationStore';
 
 export interface UseItemClassification {
   /** Begin model loading on a deliberate user signal (blur/submit); no-op on
@@ -12,8 +13,6 @@ export interface UseItemClassification {
   /** Classify one item by name and write its location via the auto path, but
    *  only when it has no location at the active store (no-clobber). */
   classifyAndPlace: (itemId: string, name: string) => void;
-  /** True while the matcher is loading and unlocated catalog items remain. */
-  isClassifying: boolean;
 }
 
 /**
@@ -33,6 +32,13 @@ export function useItemClassification(): UseItemClassification {
   const upsertLocation = useUpsertItemLocation();
   const [hasPrimed, setHasPrimed] = useState(false);
 
+  // Select store actions (not the set) so this hook doesn't re-render on every
+  // begin/end/setStatus from other parts of the tree.
+  const begin = useCategorizationStore((s) => s.begin);
+  const end = useCategorizationStore((s) => s.end);
+  const setStatus = useCategorizationStore((s) => s.setStatus);
+  const reset = useCategorizationStore((s) => s.reset);
+
   // The matcher's candidate set is the active store's item→aisle map (joined
   // from item_locations) plus that store's aliases (ADR-0015). Empty until the
   // backing queries resolve so the matcher never primes against a partial set.
@@ -41,13 +47,51 @@ export function useItemClassification(): UseItemClassification {
     return buildAisleCandidates(items, aisles, locations, activeStore?.slug);
   }, [items, aisles, locations, activeStore?.slug]);
 
-  const { prime, classify, isReady } = useAisleMatcher(activeStore?.id, candidates);
+  const { prime, classify, isReady, status } = useAisleMatcher(activeStore?.id, candidates);
 
   // Items located at the active store; an item missing here triggers classification.
   const locatedItemIds = useMemo(
     () => new Set((locations ?? []).map((l) => l.item_id)),
     [locations],
   );
+
+  // Publish the matcher lifecycle so the sibling ShoppingListBuilder can tell
+  // "actively categorizing" apart from "settled-uncategorized".
+  useEffect(() => {
+    setStatus(status);
+  }, [status, setStatus]);
+
+  // A store switch re-enters loading for the new store; drop ids that belonged
+  // to the old store so its in-flight spinners don't leak across.
+  useEffect(() => {
+    reset();
+  }, [activeStore?.id, reset]);
+
+  // On `failed` (worker error or readiness timeout), settle everything so the
+  // affected items drop to Uncategorized rather than spin forever (the grouping
+  // rule keeps `status: 'loading'` items in Categorizing; `failed` does not).
+  useEffect(() => {
+    if (status === 'failed') reset();
+  }, [status, reset]);
+
+  // Track ids this hook claimed so unmount can release them (no orphan spinners
+  // when navigating away mid-classify).
+  const trackedIds = useRef<Set<string>>(new Set());
+  function beginTracked(itemId: string) {
+    trackedIds.current.add(itemId);
+    begin(itemId);
+  }
+  function endTracked(itemId: string) {
+    trackedIds.current.delete(itemId);
+    end(itemId);
+  }
+  useEffect(() => {
+    const tracked = trackedIds.current;
+    return () => {
+      for (const id of tracked) end(id);
+      tracked.clear();
+    };
+  }, [end]);
 
   // Kick off model loading only on a deliberate user signal (blur or submit)
   // with non-empty text — never on mount, while typing, or in the empty state.
@@ -76,10 +120,13 @@ export function useItemClassification(): UseItemClassification {
     const unlocated = (items ?? []).filter((item) => !located.has(item.id));
     if (unlocated.length === 0) return;
     for (const item of unlocated) {
-      classify(item.name, aisles ?? []).then((aisleId) => {
-        if (aisleId)
-          upsertLocation.mutate({ itemId: item.id, storeId: activeStore.id, aisleId, auto: true });
-      });
+      beginTracked(item.id);
+      classify(item.name, aisles ?? [])
+        .then((aisleId) => {
+          if (aisleId)
+            upsertLocation.mutate({ itemId: item.id, storeId: activeStore.id, aisleId, auto: true });
+        })
+        .finally(() => endTracked(item.id));
     }
     // Fire only when readiness or the active store flips — not on every items /
     // locations change — to avoid classify → invalidate → re-classify loops.
@@ -90,15 +137,23 @@ export function useItemClassification(): UseItemClassification {
   // freshly-created item and for an existing catalog item re-added at a store
   // where it isn't placed yet. The auto path never clobbers a manual location.
   function classifyAndPlace(itemId: string, name: string) {
-    if (!isReady || !activeStore || locatedItemIds.has(itemId)) return;
-    classify(name, aisles ?? []).then((aisleId) => {
-      if (aisleId)
-        upsertLocation.mutate({ itemId, storeId: activeStore.id, aisleId, auto: true });
-    });
+    if (!activeStore || locatedItemIds.has(itemId)) return;
+    // Only claim "categorizing" if the matcher can actually run now. If it's
+    // still loading, mark the item categorizing for the load window — the
+    // deferred reclassify effect claims+releases it once ready; if the matcher
+    // never readies, status:'failed' resets the set (effect above).
+    if (!isReady) {
+      if (status === 'loading') beginTracked(itemId);
+      return;
+    }
+    beginTracked(itemId);
+    classify(name, aisles ?? [])
+      .then((aisleId) => {
+        if (aisleId)
+          upsertLocation.mutate({ itemId, storeId: activeStore.id, aisleId, auto: true });
+      })
+      .finally(() => endTracked(itemId));
   }
 
-  const isClassifying =
-    hasPrimed && !isReady && (items ?? []).some((i) => !locatedItemIds.has(i.id));
-
-  return { prime: primeFromSignal, classifyAndPlace, isClassifying };
+  return { prime: primeFromSignal, classifyAndPlace };
 }

@@ -37,6 +37,7 @@ type WorkerRequest =
 // Outbound messages this worker posts back. Mirrored in `useAisleMatcher.ts`.
 type WorkerResponse =
   | { type: 'ready' }
+  | { type: 'error' }
   | { type: 'result'; id: string; aisleNumber: string };
 
 // The DOM lib types `self` as a Window; type the dedicated-worker surface we use
@@ -64,22 +65,29 @@ async function embed(text: string): Promise<number[]> {
 
 async function load(candidates: SerializedCandidate[]): Promise<void> {
   const myToken = ++loadToken;
-  if (!pipe) {
-    pipe = (await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-      dtype: 'fp32',
-    })) as unknown as EmbedPipeline;
-  }
+  try {
+    if (!pipe) {
+      pipe = (await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+        dtype: 'fp32',
+      })) as unknown as EmbedPipeline;
+    }
 
-  const entries: EmbeddedCandidate[] = [];
-  for (const candidate of candidates) {
-    const embedding = await embed(candidate.phrase);
-    if (myToken !== loadToken) return; // a newer load started — abandon this one.
-    entries.push({ aisleNumber: candidate.aisleNumber, embedding });
-  }
-  if (myToken !== loadToken) return;
+    const entries: EmbeddedCandidate[] = [];
+    for (const candidate of candidates) {
+      const embedding = await embed(candidate.phrase);
+      if (myToken !== loadToken) return; // a newer load started — abandon this one.
+      entries.push({ aisleNumber: candidate.aisleNumber, embedding });
+    }
+    if (myToken !== loadToken) return;
 
-  catalogEmbeddings = entries;
-  ctx.postMessage({ type: 'ready' });
+    catalogEmbeddings = entries;
+    ctx.postMessage({ type: 'ready' });
+  } catch {
+    // WASM init failure, or a first-ever load with no cached model and no
+    // network. Only the latest load reports failure so a superseded load (store
+    // switch) doesn't post a spurious error.
+    if (myToken === loadToken) ctx.postMessage({ type: 'error' });
+  }
 }
 
 async function classify(id: string, phrase: string): Promise<void> {
