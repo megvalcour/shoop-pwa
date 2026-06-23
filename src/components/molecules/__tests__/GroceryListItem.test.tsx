@@ -30,4 +30,45 @@ describe('GroceryListItem', () => {
     expect(onToggle).not.toHaveBeenCalled();
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+
+  const aisles = [
+    { id: 'a1', store_id: 's1', number: '1', label: 'Dairy', sort_order: 0 },
+    { id: 'a2', store_id: 's1', number: '2', label: 'Produce', sort_order: 1 },
+  ];
+
+  it('uncategorized item: tapping the … badge opens the picker, not onToggle', () => {
+    const onToggle = vi.fn();
+    const onAisleChange = vi.fn();
+    render(
+      <GroceryListItem
+        name="Kefir"
+        quantity={1}
+        onToggle={onToggle}
+        isAnalyzing
+        aisles={aisles}
+        onAisleChange={onAisleChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /categorize item/i }));
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(screen.getByText('Choose aisle')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /dairy/i }));
+    expect(onAisleChange).toHaveBeenCalledWith('a1');
+  });
+
+  it('checked uncategorized item exposes no categorize affordance', () => {
+    render(
+      <GroceryListItem
+        name="Kefir"
+        quantity={1}
+        checked
+        isAnalyzing
+        aisles={aisles}
+        onAisleChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /categorize item/i })).toBeNull();
+  });
 });
