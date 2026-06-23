@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import type { Aisle } from '@/db/schema';
 import Button from '@/components/atoms/Button';
+import { formatAisleLabel } from '@/lib/formatAisleLabel';
 
 export interface AislePickerSheetProps {
   aisles: Aisle[];
@@ -44,11 +45,7 @@ export default function AislePickerSheet({
                     onClose();
                   }}
                 >
-                  <span>
-                    {aisle.number && /^\d+$/.test(aisle.number)
-                      ? `Aisle ${aisle.number} — ${aisle.label}`
-                      : aisle.label}
-                  </span>
+                  <span>{formatAisleLabel(aisle)}</span>
                   {isSelected && (
                     <FontAwesomeIcon icon={faCheck} className="text-primary" />
                   )}

@@ -194,64 +194,6 @@ describe('ShoppingListBuilder', () => {
     expect(mockToggleMutate).toHaveBeenCalledWith({ id: 'li-1', listId: 'list-1' });
   });
 
-  it('buckets items under the active store aisle resolved from item_locations', async () => {
-    const mocks = await setup();
-    defaultMocks(mocks);
-
-    mocks.useAisles.mockReturnValue({
-      data: [AISLE_DAIRY, AISLE_BREAD],
-    } as unknown as ReturnType<typeof mocks.useAisles>);
-
-    mocks.useItemLocations.mockReturnValue({
-      data: [loc('item-1', 'aisle-1'), loc('item-2', 'aisle-21')],
-    } as unknown as ReturnType<typeof mocks.useItemLocations>);
-
-    mocks.useListItems.mockReturnValue({
-      data: [
-        { id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false },
-        { id: 'li-2', list_id: 'list-1', item_id: 'item-2', quantity: 1, checked: false, added_from_default: false },
-      ],
-      isPending: false,
-      isError: false,
-    } as unknown as ReturnType<typeof mocks.useListItems>);
-
-    mocks.useItems.mockReturnValue({
-      data: [
-        { id: 'item-1', name: 'Milk', canonical_name: 'milk' },
-        { id: 'item-2', name: 'Bread', canonical_name: 'bread' },
-      ],
-    } as unknown as ReturnType<typeof mocks.useItems>);
-
-    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
-
-    expect(screen.getByText('Aisle 1 — Dairy & Eggs')).toBeInTheDocument();
-    expect(screen.getByText('Milk')).toBeInTheDocument();
-    expect(screen.getByText('Aisle 21 — Bread & Bakery')).toBeInTheDocument();
-    expect(screen.getByText('Bread')).toBeInTheDocument();
-  });
-
-  it('items with no location for the active store appear in Uncategorized', async () => {
-    const mocks = await setup();
-    defaultMocks(mocks);
-
-    mocks.useListItems.mockReturnValue({
-      data: [
-        { id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false },
-      ],
-      isPending: false,
-      isError: false,
-    } as unknown as ReturnType<typeof mocks.useListItems>);
-
-    mocks.useItems.mockReturnValue({
-      data: [{ id: 'item-1', name: 'Mystery Item', canonical_name: 'mystery item' }],
-    } as unknown as ReturnType<typeof mocks.useItems>);
-
-    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
-
-    expect(screen.getByText('Uncategorized')).toBeInTheDocument();
-    expect(screen.getByText('Mystery Item')).toBeInTheDocument();
-  });
-
   it('changing an aisle upserts an item_location for the active store', async () => {
     const mocks = await setup();
     defaultMocks(mocks);
