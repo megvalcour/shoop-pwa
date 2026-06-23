@@ -61,7 +61,21 @@ describe('AislePickerSheet', () => {
         onClose={onClose}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /close aisle picker/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^close$/i }));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('calls onClose when Escape is pressed', () => {
+    const onClose = vi.fn();
+    render(
+      <AislePickerSheet
+        aisles={AISLES}
+        currentAisleId=""
+        onSelect={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
 });

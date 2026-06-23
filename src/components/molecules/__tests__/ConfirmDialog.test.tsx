@@ -100,4 +100,18 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: 'Keep' })).toBeInTheDocument();
     expect(screen.getByText('Failed to delete. Please try again.')).toBeInTheDocument();
   });
+
+  it('calls onCancel when Escape is pressed', () => {
+    const onCancel = vi.fn();
+    render(
+      <ConfirmDialog
+        title="Delete list?"
+        message="This cannot be undone."
+        onConfirm={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
 });
