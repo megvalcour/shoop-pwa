@@ -36,19 +36,20 @@ In the GitHub repository go to **Settings → Secrets and variables → Actions*
 
 ## How Deploys Work
 
-The `.github/workflows/deploy.yaml` pipeline runs on every push to `main` with three sequential jobs:
+The `.github/workflows/deploy.yaml` pipeline runs on every push to `main` with four sequential jobs:
 
 ```
-validate → e2e-tests → build-and-deploy
+validate → e2e-tests → release → build-and-deploy
 ```
 
 | Job               | What it does                                                                 |
 | ----------------- | ---------------------------------------------------------------------------- |
 | `validate`        | Runs `npm run validate` (typecheck + lint + Vitest unit tests)               |
 | `e2e-tests`       | Runs the full Playwright suite against a local dev server; uploads HTML report as a build artifact |
+| `release`         | Runs semantic-release: tags the version, bumps `package.json`, generates release notes |
 | `build-and-deploy`| Runs `npm run build`, then deploys `dist/` to Cloudflare Pages via Wrangler |
 
-A deploy only lands if **both** `validate` and `e2e-tests` pass. A failure in either gate leaves the current production deployment untouched.
+A deploy only lands if **both** `validate` and `e2e-tests` pass. A failure in either gate blocks the version tag and leaves the current production deployment untouched.
 
 ## Viewing Deployments
 
@@ -114,7 +115,7 @@ to match via a migration in `schema.ts`/`idbClient.ts`, keeping the invariant.
 ### Pipeline ordering
 
 ```
-validate → release → build-and-deploy
+validate → e2e-tests → release → build-and-deploy
 ```
 
 `release` runs semantic-release (needs `contents: write` to push the bump/tag and

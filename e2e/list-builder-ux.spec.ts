@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/offlineModel';
 
 // Creates a fresh empty list via the UI and lands on its detail route.
 async function createEmptyList(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {

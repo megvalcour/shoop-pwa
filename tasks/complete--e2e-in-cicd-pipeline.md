@@ -1,9 +1,3 @@
----
-status: planned
-class: standard
-e2e_required: true
----
-
 # Add E2E Tests to the CI/CD Pipeline
 
 ## Summary
@@ -30,18 +24,18 @@ documentation (ADR + backlog) left stale by the original removal.
   failures.
 - The good news: the existing specs are **deliberately model-agnostic in their
   assertions**:
-  - `e2e/smart-aisle-location.spec.ts` seeds *pre-classified* list items so
+  - `e2e/smart-aisle-location.spec.ts` seeds _pre-classified_ list items so
     grouping assertions never wait on live inference.
   - `e2e/list-builder-ux.spec.ts` only asserts the page stays interactive
-    *while* the model loads — it never asserts a classification result.
+    _while_ the model loads — it never asserts a classification result.
   - The worker already has a graceful `{ type: 'error' }` path when the model
     can't load (no network / no cache).
-  This means we can make the model network **deterministic** in CI without
-  losing any coverage.
+    This means we can make the model network **deterministic** in CI without
+    losing any coverage.
 
 ## Relevant ADRs
 
-- **ADR-0010 (Cloudflare Pages CI/CD)** — *Accepted, immutable.* Documents the
+- **ADR-0010 (Cloudflare Pages CI/CD)** — _Accepted, immutable._ Documents the
   original three-job chain `validate → e2e-tests → build-and-deploy`. The real
   pipeline has since diverged (E2E removed, `release` job added per ADR-0017).
   This task changes the pipeline again, so it needs a **new superseding ADR**
@@ -67,7 +61,7 @@ validate ─┬─> e2e-tests ─┐
 ```
 
 - `e2e-tests` → `needs: [validate]`
-- `release` → `needs: [validate, e2e-tests]`  (currently `[validate]`)
+- `release` → `needs: [validate, e2e-tests]` (currently `[validate]`)
 - `build-and-deploy` → unchanged `needs: [release]`
 
 Rationale: gating only `build-and-deploy` would still let semantic-release cut a
@@ -113,29 +107,26 @@ is **out of scope** to keep the diff focused; note it as a follow-up.
 
 ## Implementation Checklist
 
-- [ ] **Workflow** — edit `.github/workflows/deploy.yaml`:
-  - [ ] Add `e2e-tests` job (`needs: [validate]`): checkout → setup Node 24
+- [x] **Workflow** — edit `.github/workflows/deploy.yaml`:
+  - [x] Add `e2e-tests` job (`needs: [validate]`): checkout → setup Node 24
         (`cache: npm`) → `npm ci` → cache `~/.cache/ms-playwright` →
         `npx playwright install --with-deps chromium` → `npm run test:e2e` →
         `upload-artifact` `playwright-report/` with `if: always()`,
         `retention-days: 7`.
-  - [ ] Change `release` job to `needs: [validate, e2e-tests]`.
-  - [ ] Leave `build-and-deploy` `needs: [release]` unchanged.
-- [ ] **Test hardening** — add the offline-model route fixture/helper under
-      `e2e/` and wire it into the suite (per Design Decision #2). Verify
+  - [x] Change `release` job to `needs: [validate, e2e-tests]`.
+  - [x] Leave `build-and-deploy` `needs: [release]` unchanged.
+- [x] **Test hardening** — add the offline-model route fixture/helper under
+      `e2e/support/offlineModel.ts` and wire it into all 7 specs. Verify
       `your-stores`, `aisle-sorting`, `reset-data`, `navigation`,
       `shopping-lists`, `list-builder-ux`, `smart-aisle-location` all still pass.
-- [ ] **Config** — update `playwright.config.ts` `reporter` to
-      `[['html'], ['github']]` (and optionally bump navigation timeout for the
-      model-download fallback path).
-- [ ] **ADR** — author `docs/adrs/0018-reinstate-e2e-gate-in-pipeline.md` (see
-      below) and set ADR-0010 `Status: Superseded by ADR-0018`.
-- [ ] **Backlog/PLAN** — apply the PLAN.md edits described below.
-- [ ] **Docs** — if `docs/releases.md` describes the job sequence, update it to
-      reflect the four-job chain.
-- [ ] **Repo hygiene** — ignore and untrack Playwright output (see below).
-- [ ] Run `npm run validate` (typecheck + lint + unit) and `npm run test:e2e`
-      locally before pushing. A change is not done while CI is red.
+- [x] **Config** — update `playwright.config.ts` `reporter` to
+      `[['html'], ['github']]`.
+- [x] **ADR** — author `docs/adrs/0018-reinstate-e2e-gate-in-pipeline.md` and set ADR-0010 `Status: Superseded by ADR-0018`.
+- [x] **Backlog/PLAN** — apply the PLAN.md edits described below.
+- [x] **Docs** — updated `docs/releases.md` to reflect the four-job chain.
+- [x] **Repo hygiene** — ignore and untrack Playwright output (see below).
+- [x] Run `npm run validate` (typecheck + lint + unit) and `npm run test:e2e`
+      locally before pushing. All 31 E2E tests pass.
 
 ## Repo Hygiene
 
@@ -179,7 +170,7 @@ ADR plus the single permitted `Status` edit on the old one:
   ADR-0013). Reference ADR-0017 for why `release` sits in the chain.
 - **Edit ADR-0010** → `Status: Superseded by ADR-0018` (body untouched).
 
-This new ADR fully captures the *correct* pipeline, which means it **resolves
+This new ADR fully captures the _correct_ pipeline, which means it **resolves
 the ADR-0010 half** of the existing "Reconcile Diverged ADRs (0008 & 0010)"
 backlog item — that item no longer needs its own superseding ADR for 0010.
 
@@ -187,14 +178,14 @@ backlog item — that item no longer needs its own superseding ADR for 0010.
 
 1. **"E2E Audit" item** — its first bullet ("Implement E2E testing in pipeline
    (currently commented out due to failures)") is **completed** by this task.
-   Remove that bullet and narrow the item to the remaining work: *"Audit existing
-   E2E tests and harden/expand coverage"* (a test-quality effort, separate from
+   Remove that bullet and narrow the item to the remaining work: _"Audit existing
+   E2E tests and harden/expand coverage"_ (a test-quality effort, separate from
    pipeline wiring). Also fix the inaccurate "commented out" wording — it was
    removed, now reinstated.
 2. **"Reconcile Diverged ADRs (0008 & 0010)" item** — the **0010 portion is
    handled here** (superseded by ADR-0018). Narrow this backlog item to ADR-0008
    only (design-tokens / visual-identity drift), retitling it to
-   *"Reconcile Diverged ADR (0008)"*.
+   _"Reconcile Diverged ADR (0008)"_.
 3. **Task lifecycle** — on completion, per CLAUDE.md: rename this file to
    `tasks/complete--e2e-in-cicd-pipeline.md`, update PLAN.md "Current Status",
    and clear the Active Task slot.

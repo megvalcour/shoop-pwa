@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/offlineModel';
 
 test.describe('Reset all data', () => {
   test('confirming the reset clears lists but keeps the store catalog', async ({ page }) => {

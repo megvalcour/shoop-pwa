@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/offlineModel';
 
 test.describe('Bottom nav navigation', () => {
   test('/ — Shop and Settings tabs are present, no Default List tab', async ({ page }) => {

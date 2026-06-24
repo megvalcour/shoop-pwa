@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/offlineModel';
 
 test.describe('Your Stores settings section', () => {
   test('lists the seeded store and opens its detail view', async ({ page }) => {

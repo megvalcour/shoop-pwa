@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Locator } from '@playwright/test';
+import { test, expect, type Page, type Locator } from './support/offlineModel';
 
 // Reads the current visual order of aisles from their reorder-handle labels
 // ("Reorder <label>"), which mirror the on-screen card order.

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/offlineModel';
 
 // Known items from the seeded oxford-62.json data; aisle_id is already set.
 const SEED_ITEMS = [
@@ -27,7 +27,7 @@ async function seedList(page: Parameters<Parameters<typeof test>[1]>[0]['page'])
 
   const listId = await page.evaluate(async (seedItems) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('shoop', 3);
+      const req = indexedDB.open('shoop', 5);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
@@ -113,10 +113,14 @@ test.describe('Smart Aisle Location', () => {
     // Select Household Supplies (Aisle 12) instead
     await page.getByRole('button', { name: 'Aisle 12 — Household Supplies' }).click();
 
-    // The sheet should close and the badge should update
+    // The sheet should close and the badge should update (scope to the moved item's row to
+    // avoid matching Aluminum Foil, which was already in Household Supplies).
     await expect(page.getByText('Choose aisle')).not.toBeVisible();
     await expect(
-      page.getByRole('button', { name: /Change aisle: Household Supplies/i }),
+      page
+        .getByRole('listitem')
+        .filter({ hasText: 'Air Freshener' })
+        .getByRole('button', { name: /Change aisle: Household Supplies/i }),
     ).toBeVisible();
   });
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/offlineModel';
 
 test.describe('Shopping Lists', () => {
   test('shows empty state on first visit to /', async ({ page }) => {
