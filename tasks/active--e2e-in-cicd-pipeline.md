@@ -133,8 +133,38 @@ is **out of scope** to keep the diff focused; note it as a follow-up.
 - [ ] **Backlog/PLAN** — apply the PLAN.md edits described below.
 - [ ] **Docs** — if `docs/releases.md` describes the job sequence, update it to
       reflect the four-job chain.
+- [ ] **Repo hygiene** — ignore and untrack Playwright output (see below).
 - [ ] Run `npm run validate` (typecheck + lint + unit) and `npm run test:e2e`
       locally before pushing. A change is not done while CI is red.
+
+## Repo Hygiene
+
+Reinstating the E2E job means Playwright output is regenerated on every local and
+CI run, so the generated directories must not be version-controlled. Today they
+partially are:
+
+- `.gitignore` has **no** entries for `test-results/` or `playwright-report/`.
+- Two generated files are already **tracked** and will otherwise churn on every
+  run: `playwright-report/index.html` and `test-results/.last-run.json`.
+
+Fix as part of this task:
+
+- [ ] Add to `.gitignore`:
+  ```
+  /test-results/
+  /playwright-report/
+  /playwright/.cache/
+  ```
+- [ ] Untrack the already-committed artifacts (keep them on disk):
+  ```
+  git rm -r --cached test-results playwright-report
+  ```
+- [ ] Confirm `git status` is clean after a fresh `npm run test:e2e` run — no
+      `test-results/` or `playwright-report/` noise should appear.
+
+Rationale: these are build/run artifacts, not source. Leaving them tracked
+creates noisy diffs, merge conflicts on `.last-run.json`, and stale reports in
+history. Catching this now avoids every future E2E run dirtying the tree.
 
 ## ADR Changes
 
