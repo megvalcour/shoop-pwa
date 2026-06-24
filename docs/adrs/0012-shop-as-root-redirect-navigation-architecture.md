@@ -8,6 +8,10 @@ Accepted
 
 Define the primary navigation structure and how the app's entry point (`/`) routes users into the shopping flow.
 
+## The Solution
+
+Route `/` to `ShopRoute`, which auto-redirects to the most recently created list (or shows an empty-state CTA if none exist), with navigation reduced to two tabs: Shop and Settings.
+
 ## Options Considered
 
 - Route `/` directly to a shopping lists index (user must pick a list each visit)

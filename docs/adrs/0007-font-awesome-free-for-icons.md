@@ -8,6 +8,10 @@ Accepted
 
 The app needs a consistent set of UI icons for bottom navigation and future interactive controls without adding a build-time SVG pipeline.
 
+## The Solution
+
+Use Font Awesome Free via `@fortawesome/react-fontawesome` + `@fortawesome/free-solid-svg-icons` as the single, tree-shakeable icon source.
+
 ## Options Considered
 
 - **`@fortawesome/react-fontawesome` + `@fortawesome/free-solid-svg-icons`** — tree-shakeable React components, no font file, free tier covers all needed glyphs

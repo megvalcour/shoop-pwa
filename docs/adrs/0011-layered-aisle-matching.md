@@ -11,6 +11,10 @@ non-numbered department (Produce, Cheese Case, Meat, Deli/Fish, Bakery, Freezer)
 and was too fragile for the concrete nouns users actually type ("bananas",
 "mozzarella", "ground beef").
 
+## The Solution
+
+Use a layered matcher: a deterministic lexical fast-path (alias table + catalog tokens) followed by an improved top-k voting semantic fallback, with all scoring as pure functions in `src/services/classifier.ts`.
+
 ## Options Considered
 
 - **Pure semantic nearest-neighbour over the catalog (the original ADR-0003

@@ -8,6 +8,10 @@ Accepted
 
 The PWA needs automated quality gates and a repeatable deployment path so that every push to `main` is validated and published without manual intervention.
 
+## The Solution
+
+Use GitHub Actions to run quality gates and deploy to Cloudflare Pages on every push to `main`.
+
 ## Options Considered
 
 - GitHub Actions + **Cloudflare Pages** (selected)

@@ -8,6 +8,10 @@ Accepted
 
 The original schema modeled grocery shopping as a weekly recurring activity (`weekly_list` with a `week_start` date), but users need to create and manage named shopping trips on demand with no time-scoping.
 
+## The Solution
+
+Replace the weekly list with user-created on-demand named `shopping_lists` (id, name, created_at) and `list_items` rows referencing them.
+
 ## Options Considered
 
 - Keep `weekly_list`: single static list tied to the current week

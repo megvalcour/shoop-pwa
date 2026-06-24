@@ -8,6 +8,10 @@ Accepted
 
 We need to classify free-text grocery item names to a store aisle without a network round-trip.
 
+## The Solution
+
+Use `@huggingface/transformers` (Transformers.js v3) to run `Xenova/all-MiniLM-L6-v2` in-browser via WASM + ONNX for fully offline aisle classification.
+
 ## Options Considered
 
 - Server-side embedding API (OpenAI, Cohere) — requires network, violates offline constraint

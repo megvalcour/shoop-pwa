@@ -10,6 +10,10 @@ A single shopping list must work at more than one store: the same list should
 re-bucket its items into whichever store's aisle layout is currently active,
 without duplicating the list or its items per store.
 
+## The Solution
+
+Make `items` store-agnostic (`{ id, name, canonical_name }`), record per-store aisle assignments in a new `item_locations` join store, and persist the active store in a `preferences` store so one list re-buckets across stores.
+
 ## Options Considered
 
 - **Keep item identity coupled to a store** (`Item.store_id` + `Item.aisle_id`,

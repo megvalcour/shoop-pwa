@@ -8,6 +8,10 @@ Accepted
 
 We need a build setup for a personal PWA that is simple to maintain without monorepo tooling overhead.
 
+## The Solution
+
+Build the app as a single-repo Vite + React project with all app logic, assets, and config in a unified root.
+
 ## Options Considered
 
 - Monorepo (Nx, Turborepo) with separate packages for app, shared logic, and assets

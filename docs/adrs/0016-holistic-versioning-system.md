@@ -12,6 +12,10 @@ independently — `DB_VERSION` is now 4 while the displayed app version is still
 state, and there is no automated gate preventing a deploy where the two drift
 silently.
 
+## The Solution
+
+Use semantic-release to automate semver bumps from conventional commits, keep `semver.minor(appVersion) === DB_VERSION`, and enforce that invariant in CI before every deploy. (Superseded by ADR-0017.)
+
 ## Options Considered
 
 1. **Manual semver with no enforcement** (status quo) — developer bumps

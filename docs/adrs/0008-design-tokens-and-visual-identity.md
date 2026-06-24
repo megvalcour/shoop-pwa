@@ -8,6 +8,10 @@ Accepted
 
 The app needs a coherent visual language that all components can reference, defined once and not scattered across Tailwind utility classes.
 
+## The Solution
+
+Define design tokens as semantically-named CSS custom properties in Tailwind v4's `@theme` block in `src/index.css`, surfaced automatically as utility classes, as the single source of truth for the app's visual identity.
+
 ## Options Considered
 
 - **CSS custom properties in `@theme` (Tailwind v4) with semantic names** — tokens defined in `src/index.css`, surfaced as Tailwind utilities automatically; single source of truth

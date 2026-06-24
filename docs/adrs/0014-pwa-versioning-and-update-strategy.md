@@ -9,6 +9,10 @@ Accepted
 The service worker silently auto-updated and reloaded the app mid-session, with no
 user-facing version and no way to see whether the installed app was current.
 
+## The Solution
+
+Use prompt-based PWA updates (`registerType: 'prompt'`) with a manual "Check for updates" affordance and a user-facing version, so a freshly installed worker activates only when the user taps "Update now".
+
 ## Options Considered
 
 - **Prompt-based (`registerType: 'prompt'`) with a manual "Check for updates" button (selected)**

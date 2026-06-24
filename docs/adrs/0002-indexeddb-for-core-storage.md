@@ -8,6 +8,10 @@ Accepted
 
 The app must store relational grocery data (stores, aisles, items, lists) fully offline with no backend infrastructure.
 
+## The Solution
+
+Use IndexedDB via the `idb` wrapper as the sole persistence layer — async, transactional, structured, and entirely on-device.
+
 ## Options Considered
 
 - Remote database (Supabase, Firebase, PocketBase) with offline sync

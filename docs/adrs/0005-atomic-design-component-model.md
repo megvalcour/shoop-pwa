@@ -8,6 +8,10 @@ Accepted
 
 We need a component architecture that enforces reusability boundaries and keeps business logic out of primitive UI elements from the start.
 
+## The Solution
+
+Organize components using the Atomic Design hierarchy (Atoms → Molecules → Organisms → Templates), where lower layers have no knowledge of higher layers or application stores.
+
 ## Options Considered
 
 - Feature-folder structure (components co-located with routes)

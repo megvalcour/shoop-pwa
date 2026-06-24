@@ -10,6 +10,10 @@ Priming the semantic matcher on the add-item flow ran model init, catalog
 embedding, and per-query embedding on the main thread, freezing all interaction
 (typing, tapping Add) until the work finished.
 
+## The Solution
+
+Move model init, catalog embedding, and per-query embedding into a dedicated module Web Worker, keeping the lexical fast-path on the main thread so the add-item flow stays responsive.
+
 ## Options Considered
 
 - **Move `pipeline()` + catalog embedding + per-query embedding into a dedicated

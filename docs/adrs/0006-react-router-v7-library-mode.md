@@ -8,6 +8,10 @@ Accepted
 
 We need client-side routing between the app's views (weekly list, default list, store management) without introducing server-side rendering complexity.
 
+## The Solution
+
+Use React Router v7 in library mode for pure client-side SPA routing, with no server runtime or SSR.
+
 ## Options Considered
 
 - React Router v7 in framework mode (requires a server runtime or SSR adapter)

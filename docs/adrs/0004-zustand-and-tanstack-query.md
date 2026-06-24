@@ -8,6 +8,10 @@ Accepted
 
 We need two distinct state management concerns: session-only UI toggles (active tab, expanded aisles) and persistent, reactively cached reads/writes to IndexedDB.
 
+## The Solution
+
+Use Zustand for ephemeral UI state and TanStack Query (with a custom IndexedDB storage adapter) for persistent data, keeping the two concerns non-overlapping.
+
 ## Options Considered
 
 - Single global Redux store for all state
