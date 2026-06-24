@@ -1,13 +1,10 @@
 ## Current Status
 
-`feat(categorization): inline "categorizing" indicator distinct from settled-uncategorized`
+`feat(big-y): refresh Big Y aisle layout (15 numbered + Frozen) with v5 migration`
 
 ## Active Task
 
-### Big Y Aisle Adjustments
-
-- Update Big Y store aisle data based on new layout information.
-- Plan: `tasks/active--big-y-aisle-adjustments.md`
+_None — pick the next item from the backlog._
 
 ## Backlog
 

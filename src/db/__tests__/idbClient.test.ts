@@ -27,8 +27,8 @@ describe('idbClient', () => {
     const { dbPromise } = await import('@/db/idbClient');
     const db = await dbPromise;
     expect(await db.count('stores')).toBe(2);
-    // 31 oxford aisles + 28 big-y aisles.
-    expect(await db.count('aisles')).toBe(59);
+    // 31 oxford aisles + 26 big-y aisles.
+    expect(await db.count('aisles')).toBe(57);
     // The catalog is shared and store-agnostic.
     expect(await db.count('items')).toBe(182);
     // Per-store placements: 182 oxford + 182 big-y.
@@ -186,9 +186,81 @@ describe('idbClient', () => {
     const bigY = stores.find((s) => s.slug === 'big-y-worcester');
     expect(bigY).toBeDefined();
     // Big Y's full aisle layout and per-store locations come along.
-    expect(await db.getAllFromIndex('aisles', 'store_id', bigY!.id)).toHaveLength(28);
+    expect(await db.getAllFromIndex('aisles', 'store_id', bigY!.id)).toHaveLength(26);
     expect(await db.getAllFromIndex('item_locations', 'store_id', bigY!.id)).toHaveLength(182);
     // The user's existing active-store choice is left untouched.
+    expect((await db.get('preferences', 'active_store_id'))?.value).toBe('st-mb');
+  });
+
+  it('refreshes the Big Y layout on v4→v5, replacing aisles and resetting overrides', async () => {
+    const { openDB } = await import('idb');
+    const bigYRaw = (await import('@/assets/aisles/big-y-worcester.json')).default;
+    const bigYStoreId = bigYRaw.store.id;
+
+    // A v4-shaped DB carrying the OLD Big Y layout plus a manual aisle override.
+    const v4 = await openDB('shoop', 4, {
+      upgrade(db) {
+        db.createObjectStore('stores', { keyPath: 'id' });
+        const aisles = db.createObjectStore('aisles', { keyPath: 'id' });
+        aisles.createIndex('store_id', 'store_id');
+        db.createObjectStore('items', { keyPath: 'id' });
+        const il = db.createObjectStore('item_locations', { keyPath: 'id' });
+        il.createIndex('item_id', 'item_id');
+        il.createIndex('store_id', 'store_id');
+        db.createObjectStore('preferences', { keyPath: 'key' });
+        db.createObjectStore('default_list', { keyPath: 'id' });
+        db.createObjectStore('shopping_lists', { keyPath: 'id' });
+        const li = db.createObjectStore('list_items', { keyPath: 'id' });
+        li.createIndex('list_id', 'list_id');
+      },
+    });
+    await v4.add('stores', {
+      id: 'st-mb',
+      name: 'Oxford Market Basket #62',
+      address: '',
+      slug: 'oxford-62',
+    });
+    await v4.add('stores', bigYRaw.store);
+    // An old Big Y aisle that no longer exists in the new layout.
+    await v4.add('aisles', {
+      id: 'old-big-y-aisle',
+      store_id: bigYStoreId,
+      number: '18',
+      label: 'Baby & Pet Care',
+      sort_order: 24,
+    });
+    // A user's manual aisle override at Big Y, plus an unrelated oxford location.
+    await v4.add('item_locations', {
+      id: 'manual-override',
+      item_id: 'it-x',
+      store_id: bigYStoreId,
+      aisle_id: 'old-big-y-aisle',
+    });
+    await v4.add('item_locations', {
+      id: 'oxford-loc',
+      item_id: 'it-y',
+      store_id: 'st-mb',
+      aisle_id: 'ox-ai',
+    });
+    await v4.add('preferences', { key: 'active_store_id', value: 'st-mb' });
+    v4.close();
+
+    vi.resetModules();
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+
+    // Big Y aisles are replaced wholesale with the new 26-aisle layout.
+    const bigYAisles = await db.getAllFromIndex('aisles', 'store_id', bigYStoreId);
+    expect(bigYAisles).toHaveLength(26);
+    expect(bigYAisles.some((a) => a.label === 'Frozen')).toBe(true);
+    expect(bigYAisles.some((a) => a.id === 'old-big-y-aisle')).toBe(false);
+
+    // The manual override is gone; Big Y locations match the fresh seed count.
+    expect(await db.get('item_locations', 'manual-override')).toBeUndefined();
+    expect(await db.getAllFromIndex('item_locations', 'store_id', bigYStoreId)).toHaveLength(182);
+
+    // Unrelated stores/locations are untouched.
+    expect(await db.get('item_locations', 'oxford-loc')).toBeDefined();
     expect((await db.get('preferences', 'active_store_id'))?.value).toBe('st-mb');
   });
 
@@ -267,7 +339,7 @@ describe('idbClient', () => {
       await resetUserData();
 
       expect(await db.count('stores')).toBe(2);
-      expect(await db.count('aisles')).toBe(59);
+      expect(await db.count('aisles')).toBe(57);
       const oxford = (await db.getAll('stores')).find((s) => s.slug === 'oxford-62')!;
       expect((await db.get('preferences', ACTIVE_STORE_ID_KEY))?.value).toBe(oxford.id);
     });
