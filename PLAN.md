@@ -4,7 +4,15 @@ ci: Adds E2E testing to the CI/CD pipeline.
 
 ## Active Task
 
-_None — pick the next item from the backlog._
+### Recipe Import — Add to Grocery Lists from a Recipe
+
+Register the PWA as a Web Share Target and add a manual import entry point.
+A first-party Cloudflare Pages Function fetches the shared recipe URL, extracts
+schema.org `Recipe` JSON-LD, and an import screen lets the user pick which
+ingredients to add and which list to add them to.
+
+- Plan: `tasks/active--recipe-import.md`
+- New ADR-0019 required (first-party serverless fetch proxy).
 
 ## Backlog
 
