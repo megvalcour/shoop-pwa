@@ -4,12 +4,12 @@
 
 ## Active Task
 
+## Backlog
+
 ### Grocery List Item Quantities
 
 - Allow users to add/edit quantities on grocery list items (e.g., "2 lbs", "3 cans").
-- Plan: `tasks/active--grocery-item-quantities.md`
-
-## Backlog
+- Plan: `tasks/backlog--grocery-item-quantities.md`
 
 ### Big Y Aisle Adjustments
 
