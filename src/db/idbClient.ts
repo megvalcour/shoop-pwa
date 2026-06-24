@@ -156,6 +156,48 @@ async function upgrade(
       }
     }
   }
+
+  if (oldVersion < 5) {
+    // Refresh the Big Y layout (tasks/active--big-y-aisle-adjustments.md): the
+    // numbered aisles and the per-store item_locations are replaced wholesale to
+    // match the store's new floor plan, and a Frozen department is added. Any
+    // prior manual Big Y aisle picks are intentionally reset — those items simply
+    // re-classify against the new layout. Other stores, user items, lists, and
+    // the default list are untouched. Fresh installs (empty `stores`) are skipped
+    // here and fully populated by seedDatabase() afterward, same guard as v4.
+    const storesStore = tx.objectStore('stores');
+    const populated = (await storesStore.count()) > 0;
+    if (populated) {
+      const hasBigY = (await storesStore.get(bigYSeed.store.id)) != null;
+      if (hasBigY) {
+        // Drop the old Big Y aisles (by store_id index) and all Big Y locations.
+        const aislesStore = tx.objectStore('aisles');
+        const oldAisleKeys = await aislesStore
+          .index('store_id')
+          .getAllKeys(bigYSeed.store.id);
+        for (const key of oldAisleKeys) await aislesStore.delete(key);
+
+        const locationsStore = tx.objectStore('item_locations');
+        const oldLocationKeys = await locationsStore
+          .index('store_id')
+          .getAllKeys(bigYSeed.store.id);
+        for (const key of oldLocationKeys) await locationsStore.delete(key);
+
+        for (const aisle of bigYSeed.aisles) aislesStore.add(aisle);
+        for (const loc of bigYSeed.item_locations) locationsStore.add(loc);
+      } else {
+        // Older install that never grafted Big Y — graft it fresh with the new
+        // layout (mirrors the v4 backfill).
+        storesStore.add(bigYSeed.store);
+        for (const aisle of bigYSeed.aisles) tx.objectStore('aisles').add(aisle);
+        for (const loc of bigYSeed.item_locations) tx.objectStore('item_locations').add(loc);
+        const prefs = tx.objectStore('preferences');
+        if ((await prefs.get(ACTIVE_STORE_ID_KEY)) == null) {
+          prefs.put({ key: ACTIVE_STORE_ID_KEY, value: DEFAULT_ACTIVE_STORE_ID });
+        }
+      }
+    }
+  }
 }
 
 async function seedDatabase(db: IDBPDatabase<ShoopDB>): Promise<void> {
