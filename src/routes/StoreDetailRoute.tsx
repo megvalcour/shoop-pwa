@@ -15,8 +15,11 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useStores } from '@/hooks/useStores';
+import { useStores, useActiveStore } from '@/hooks/useStores';
+import { useSetActiveStoreId } from '@/hooks/usePreferences';
 import { useAisles, useReorderAisles } from '@/hooks/useAisles';
+import Badge from '@/components/atoms/Badge';
+import Button from '@/components/atoms/Button';
 import StoreLogo from '@/components/atoms/StoreLogo';
 import SortableAisleCard from '@/components/molecules/SortableAisleCard';
 import type { Aisle } from '@/db/schema';
@@ -26,6 +29,8 @@ export default function StoreDetailRoute() {
   const { data: stores, isPending, isError } = useStores();
   const { data: aisles, isPending: aislesPending } = useAisles(id);
   const reorderAisles = useReorderAisles();
+  const { data: activeStore } = useActiveStore();
+  const setActiveStoreId = useSetActiveStoreId();
   const store = stores?.find((s) => s.id === id);
 
   // Mirror the fetched order locally so dragging feels instant and survives the
@@ -95,7 +100,18 @@ export default function StoreDetailRoute() {
           <span className="text-text-muted text-sm truncate">{store.address}</span>
         </div>
       </div>
-
+      {store.id === activeStore?.id ? (
+        <Badge className="mb-4 self-start">Current store</Badge>
+      ) : (
+        <Button
+          variant="secondary"
+          className="mb-4 self-start"
+          onClick={() => setActiveStoreId.mutate(store.id)}
+          disabled={setActiveStoreId.isPending}
+        >
+          Set as current store
+        </Button>
+      )}
       <h2 className="font-display font-bold text-text text-lg mb-3">Aisles</h2>
       {renderAisles()}
       {reorderAisles.isError && (
