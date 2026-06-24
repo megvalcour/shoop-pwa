@@ -13,11 +13,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the DB_VERSION guard can resolve the commit range
+          # of a merge (ADR-0017).
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+      # ADR-0017: app semver and DB_VERSION version independently, but a schema
+      # migration must never ship as a silent patch. If this push changed
+      # DB_VERSION, require at least one feat-level commit in the range so
+      # semantic-release emits at least a minor bump.
+      - name: DB migrations must ship at least a minor release
+        run: |
+          if git diff HEAD^ HEAD -- src/db/schema.ts \
+               | grep -qE '^\+export const DB_VERSION'; then
+            if ! git log HEAD^..HEAD --format='%s%n%b' \
+                 | grep -qE '^feat(\(.+\))?!?:'; then
+              echo "DB_VERSION changed but no feat: commit in range — a migration would ship as a silent patch."
+              echo "Use a feat(db): commit for schema migrations."
+              exit 1
+            fi
+          fi
       - run: npm run validate
 
   release:

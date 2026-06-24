@@ -3,6 +3,7 @@ import type { UpdateState } from '@/hooks/usePwaUpdate';
 
 export interface AppVersionPanelProps {
   version: string;
+  dbVersion: number;
   state: UpdateState;
   updateAvailable: boolean;
   onCheck: () => void;
@@ -11,6 +12,7 @@ export interface AppVersionPanelProps {
 
 export default function AppVersionPanel({
   version,
+  dbVersion,
   state,
   updateAvailable,
   onCheck,
@@ -21,6 +23,7 @@ export default function AppVersionPanel({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-text-muted text-sm">Shoop v{version}</p>
+      <p className="text-text-muted text-sm">DB schema v{dbVersion}</p>
 
       {updateAvailable ? (
         <Button variant="primary" className="w-full" onClick={onApply}>

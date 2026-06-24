@@ -8,6 +8,7 @@ import AppVersionPanel, {
 function renderPanel(overrides: Partial<AppVersionPanelProps> = {}) {
   const props: AppVersionPanelProps = {
     version: '1.2.3',
+    dbVersion: 5,
     state: 'idle',
     updateAvailable: false,
     onCheck: vi.fn(),
@@ -22,6 +23,11 @@ describe('AppVersionPanel', () => {
   it('renders the app version string', () => {
     renderPanel({ version: '4.5.6' });
     expect(screen.getByText('Shoop v4.5.6')).toBeInTheDocument();
+  });
+
+  it('renders the DB schema version independently of the app version', () => {
+    renderPanel({ version: '4.5.6', dbVersion: 7 });
+    expect(screen.getByText('DB schema v7')).toBeInTheDocument();
   });
 
   it('shows "Check for updates" when idle and wires the click', async () => {

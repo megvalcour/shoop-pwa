@@ -13,6 +13,7 @@ import { useStores } from '@/hooks/useStores';
 import { useResetData } from '@/hooks/useResetData';
 import { usePwaUpdate } from '@/hooks/usePwaUpdate';
 import { APP_VERSION } from '@/lib/appVersion';
+import { DB_VERSION } from '@/db/schema';
 import type { ShoppingList } from '@/db/schema';
 
 export default function SettingsRoute() {
@@ -87,6 +88,7 @@ export default function SettingsRoute() {
         <h2 className="font-display font-bold text-text text-lg mb-3">About</h2>
         <AppVersionPanel
           version={APP_VERSION}
+          dbVersion={DB_VERSION}
           state={updateState}
           updateAvailable={needRefresh || updateState === 'update-available'}
           onCheck={() => void checkForUpdate()}
