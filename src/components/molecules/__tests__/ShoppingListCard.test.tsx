@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ShoppingListCard from '@/components/molecules/ShoppingListCard';
 import type { ShoppingList } from '@/db/schema';
@@ -10,6 +10,16 @@ const LIST: ShoppingList = {
 };
 
 describe('ShoppingListCard', () => {
+  // The fixture's created_at is UTC midnight; without a fixed zone it renders as
+  // the previous day in runners west of UTC, so pin the suite to UTC.
+  const originalTz = process.env.TZ;
+  beforeAll(() => {
+    process.env.TZ = 'UTC';
+  });
+  afterAll(() => {
+    process.env.TZ = originalTz;
+  });
+
   it('renders the list name and formatted date', () => {
     render(<ShoppingListCard list={LIST} onClick={vi.fn()} />);
     expect(screen.getByText('Oxford - June 1')).toBeInTheDocument();
