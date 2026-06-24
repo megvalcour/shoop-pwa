@@ -4,16 +4,17 @@
 
 ## Active Task
 
+### Big Y Aisle Adjustments
+
+- Update Big Y store aisle data based on new layout information.
+- Plan: `tasks/active--big-y-aisle-adjustments.md`
+
 ## Backlog
 
 ### Grocery List Item Quantities
 
 - Allow users to add/edit quantities on grocery list items (e.g., "2 lbs", "3 cans").
 - Plan: `tasks/backlog--grocery-item-quantities.md`
-
-### Big Y Aisle Adjustments
-
-- Update Big Y store aisle data based on new layout information.
 
 ### Documentation Audit
 
