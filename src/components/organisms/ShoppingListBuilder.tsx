@@ -29,7 +29,9 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   const aisleById = new Map<string, Aisle>((aisles ?? []).map((a) => [a.id, a]));
   // item_id → aisle_id for the active store (ADR-0015). Lists are store-agnostic;
   // the aisle each list item buckets into is resolved per-store here.
-  const aisleByItem = new Map<string, string>((locations ?? []).map((l) => [l.item_id, l.aisle_id]));
+  const aisleByItem = new Map<string, string>(
+    (locations ?? []).map((l) => [l.item_id, l.aisle_id]),
+  );
 
   if (isPending || !items) {
     return <span className="text-text-muted">Loading…</span>;
@@ -81,17 +83,17 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      {buckets.map(({ aisle, listItems: lis }) => (
-        <AisleGroup key={aisle.id} header={formatAisleLabel(aisle)}>
-          {lis.map((li) => renderListItem(li))}
-        </AisleGroup>
-      ))}
-
       {categorizing.length > 0 && (
         <AisleGroup header="Categorizing…" isSpecial>
           {categorizing.map((li) => renderListItem(li, true))}
         </AisleGroup>
       )}
+
+      {buckets.map(({ aisle, listItems: lis }) => (
+        <AisleGroup key={aisle.id} header={formatAisleLabel(aisle)}>
+          {lis.map((li) => renderListItem(li))}
+        </AisleGroup>
+      ))}
 
       {uncategorized.length > 0 && (
         <AisleGroup header="Uncategorized" isSpecial>
