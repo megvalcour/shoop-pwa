@@ -91,7 +91,29 @@ needed for v1.
   manual-paste-only (kept as fallback, not primary), first-party function
   (selected).
 - Notes: explicitly does not weaken the IndexedDB-only data model; no secrets,
-  no storage, no auth; bounded by a domain/size/time budget (see Step 2).
+  no storage; bounded by a domain/size/time budget and protected by the
+  "cheap defense-in-depth" measures in Step 2 (SSRF guards + shared token +
+  Cloudflare rate-limit rule). Record the threat model and why those three
+  suffice for a single-user app on the free plan.
+
+### Security posture (decided)
+
+Cloudflare's **free plan hard-stops at its daily request quota and does not
+bill overages** — the abuse worst-case is "import is unavailable until the
+00:00 UTC reset," not a surprise bill. Given that, the chosen posture is
+**cheap defense-in-depth**, not heavyweight auth:
+
+1. **SSRF / open-proxy guards** in the function (scheme allowlist, private-IP
+   blocking, redirect/size/time caps) — Step 2.
+2. **Shared token** the app sends with every call — Step 2 / Step 3. Filters out
+   internet scanners that probe the path. Not a true secret (it ships in client
+   JS), but raises the bar enormously for ~zero effort.
+3. **Cloudflare rate-limit rule** (dashboard, free tier) on
+   `/api/import-recipe` per-IP — caps any single abuser well under the daily
+   quota. No code; configured in the Pages/Zone dashboard.
+
+The function stays stateless with no secrets and no DB access, so even a full
+compromise leaks nothing — blast radius is "free proxy + daily quota."
 
 ## Step 1 — Manifest: register as Share Target
 
@@ -120,15 +142,21 @@ Responsibilities:
 1. Read `?url=` query param. Validate it is a well-formed `http(s)` URL. Reject
    anything else (no SSRF to internal hosts: block private/loopback/link-local
    ranges and non-http schemes).
-2. `fetch(url)` with a browser-like `User-Agent`, a hard timeout (~8s via
+2. **Shared-token check (cheap defense-in-depth #2):** require a token header
+   (e.g. `X-Shoop-Import`) matching an env var bound to the Pages project
+   (`IMPORT_TOKEN`, set in the Cloudflare dashboard, **not** committed). Reject
+   with `401` when absent/wrong. The client sends it from a build-time env value
+   (Step 3). This is not a real secret (it ships in the bundle) — its only job is
+   to drop drive-by scanners that hit the bare path.
+3. `fetch(url)` with a browser-like `User-Agent`, a hard timeout (~8s via
    `AbortController`), a response **size cap** (e.g. abort past ~2 MB), and
    `redirect: 'follow'` with a small cap.
-3. Extract every `<script type="application/ld+json">` block, `JSON.parse` each
+4. Extract every `<script type="application/ld+json">` block, `JSON.parse` each
    (tolerate trailing data / arrays / `@graph`), and locate the node whose
    `@type` is `Recipe` (string or array containing `"Recipe"`).
-4. Pull `recipeIngredient` (preferred) or legacy `ingredients`; coerce to a
+5. Pull `recipeIngredient` (preferred) or legacy `ingredients`; coerce to a
    string array. Also capture `name` for the default list/new-list title.
-5. Respond `200 application/json`: `{ title, ingredients: string[], sourceUrl }`.
+6. Respond `200 application/json`: `{ title, ingredients: string[], sourceUrl }`.
    On no-recipe-found respond `422` with a typed error code; on fetch failure
    `502`; on bad input `400`. Always set permissive same-origin CORS (it's
    same-origin in prod, but allow localhost dev origin).
@@ -150,6 +178,11 @@ rule — no inline fetch in components).
   `GET /api/import-recipe?url=…`; `staleTime` long (recipes don't change);
   `retry` low. Returns `{ title, ingredients }`, plus typed error surface for the
   422/502/400 cases so the UI can show "Couldn't find a recipe on that page."
+  Map `401` to a distinct "import not configured" state (token missing).
+- Send the **shared token** (Step 2) on the request, e.g.
+  `headers: { 'X-Shoop-Import': import.meta.env.VITE_IMPORT_TOKEN }`. Document
+  the var in `.env.example` (empty value, per CLAUDE.md — never commit the real
+  one); it must match the `IMPORT_TOKEN` bound to the Pages project.
 
 ## Step 4 — Ingredient normalization
 
@@ -233,6 +266,19 @@ This makes iOS and desktop first-class without relying on the share intent.
 - Note in plan: real share-intent dispatch can't be E2E-tested in Playwright;
   cover the route + extraction logic instead.
 
+## Step 7.5 — Cloudflare dashboard setup (out-of-code, do at deploy)
+
+These are manual one-time config steps, not code — note them in
+`docs/releases.md` alongside the existing Pages setup:
+
+- Bind `IMPORT_TOKEN` as an environment variable / secret on the Pages project
+  (Production + Preview). Set `VITE_IMPORT_TOKEN` in the build env to the same
+  value so the client and function agree.
+- Add a **rate-limiting rule** (free tier) targeting the
+  `/api/import-recipe` path, scoped per client IP (e.g. ≤ ~20 req/min), action
+  = block/challenge. This is the per-IP throttle (defense-in-depth #3); it lives
+  in the dashboard, not the repo.
+
 ## Step 8 — Validate & ship
 
 - `npm run validate` (typecheck + lint + unit).
@@ -249,9 +295,12 @@ This makes iOS and desktop first-class without relying on the share intent.
   the ingredient list (parse client-side with the same pure parser, or accept a
   newline-separated paste). Consider a small allow-tested set of popular sites.
 - **iOS:** no Web Share Target — manual entry point (Step 6) is the iOS path.
-- **SSRF / abuse:** the function fetches arbitrary URLs. Lock down scheme, block
-  private IP ranges, cap size/time/redirects (Step 2). Single-user app, but do
-  it right.
+- **SSRF / abuse:** the function fetches arbitrary URLs and is a public endpoint.
+  Posture decided = **cheap defense-in-depth** (see "Security posture" under
+  Step 0): SSRF guards (Step 2), shared token (Steps 2–3), per-IP rate-limit rule
+  (Step 7.5). The free plan hard-stops at its daily quota with **no overage
+  billing**, so the abuse ceiling is "import unavailable till 00:00 UTC reset,"
+  not a surprise bill. Function is stateless with no secrets/DB → nothing to leak.
 - **Cloudflare Function in CI:** confirm the `build-and-deploy` job publishes the
   `/functions` dir (Pages does this automatically) and that `wrangler`/Pages
   config doesn't need a `compatibility_date`. Verify in a preview deploy.
