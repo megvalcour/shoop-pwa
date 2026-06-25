@@ -52,14 +52,24 @@ probe the bare path.
 1. In the Cloudflare Pages project (**Workers & Pages → shoop-pwa → Settings →
    Variables and Secrets**), add `IMPORT_TOKEN` for **both** Production and
    Preview environments. Use a long random string (e.g. `openssl rand -hex 24`).
-2. Set the same value as `VITE_IMPORT_TOKEN` in the **build** environment so the
-   client and function agree. (Locally, copy `.env.example` to `.env.local` and
-   set `VITE_IMPORT_TOKEN` there — never commit it.) Both sides return `401` when
-   the token check fails, and the UI now distinguishes the two cases: if the
-   server-side `IMPORT_TOKEN` is unbound it shows "Recipe import isn't enabled on
-   the server yet (no import token bound)" (`not_configured`); if the tokens are
-   bound but differ it shows "Recipe import token doesn't match the server (check
-   VITE_IMPORT_TOKEN)" (`unauthorized`).
+   This is the **runtime** (server-side) value the function reads.
+2. Set the same value as a **GitHub Actions secret** named `VITE_IMPORT_TOKEN`
+   (**repo → Settings → Secrets and variables → Actions**). Vite inlines this at
+   **build time**, and the build runs in GitHub Actions (Direct Upload — see
+   step 1), so the value must be injected there; the `build-and-deploy` job passes
+   it into `npm run build` via `env:`. **Do not** rely on a `VITE_IMPORT_TOKEN`
+   set in the Cloudflare build environment — Cloudflare never builds this app, so
+   that value is a no-op and produces an empty client token. (Locally, copy
+   `.env.example` to `.env.local` and set `VITE_IMPORT_TOKEN` there — never commit
+   it.) The token is baked into the bundle at build time, so a value change only
+   takes effect on the **next deploy**.
+
+Both sides return `401` when the token check fails, and the UI distinguishes the
+two cases: if the server-side `IMPORT_TOKEN` is unbound it shows "Recipe import
+isn't enabled on the server yet (no import token bound)" (`not_configured`); if
+the tokens are bound but differ (including an empty client token from a build that
+never received `VITE_IMPORT_TOKEN`) it shows "Recipe import token doesn't match the
+server (check VITE_IMPORT_TOKEN)" (`unauthorized`).
 
 **b) (Deferred once on custom domain) Add a per-IP rate-limit rule.** This is **defense-in-depth #3** — the
 function fetches arbitrary URLs, so cap any single abuser well under the free
