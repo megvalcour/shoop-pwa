@@ -21,8 +21,8 @@ export interface RecipeImporterProps {
 /** Human-readable copy for each typed import failure. */
 const ERROR_MESSAGES: Record<RecipeImportErrorCode, string> = {
   invalid_url: "That doesn't look like a valid recipe link.",
-  not_configured: 'Recipe import isn’t set up on this build yet.',
-  unauthorized: 'Recipe import isn’t set up on this build yet.',
+  not_configured: 'Recipe import isn’t enabled on the server yet (no import token bound).',
+  unauthorized: 'Recipe import token doesn’t match the server (check VITE_IMPORT_TOKEN).',
   no_recipe: 'Couldn’t find a recipe on that page. Try a direct recipe link.',
   fetch_failed: 'Couldn’t reach that page. Check the link and try again.',
   unknown: 'Something went wrong. Please try again.',
