@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCarrot, faStore } from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 interface Props {
   slug: string;
@@ -6,16 +9,35 @@ interface Props {
   sizeClassName?: string;
 }
 
-export default function StoreLogo({ slug, name, sizeClassName = 'h-9 w-9' }: Props) {
-  const [hidden, setHidden] = useState(false);
+// Logoless stores fall back to a Font Awesome icon (ADR-0007) chosen from the
+// slug — symmetric with how the PNG `src` is derived from the slug. The General
+// Store is intentionally icon-only (a carrot); any other store without a PNG
+// gets a generic storefront badge rather than rendering nothing.
+const FALLBACK_ICON_BY_SLUG: Record<string, IconDefinition> = {
+  general: faCarrot,
+};
 
-  if (hidden) return null;
+export default function StoreLogo({ slug, name, sizeClassName = 'h-9 w-9' }: Props) {
+  const [errored, setErrored] = useState(false);
+
+  if (errored) {
+    const icon = FALLBACK_ICON_BY_SLUG[slug] ?? faStore;
+    return (
+      <span
+        role="img"
+        aria-label={name}
+        className={`${sizeClassName} flex items-center justify-center rounded-full bg-white text-primary shadow-md`}
+      >
+        <FontAwesomeIcon icon={icon} />
+      </span>
+    );
+  }
 
   return (
     <img
       src={`/store-logos/${slug}.png`}
       alt={name}
-      onError={() => setHidden(true)}
+      onError={() => setErrored(true)}
       className={`${sizeClassName} rounded-full bg-white object-contain p-1 shadow-md`}
     />
   );

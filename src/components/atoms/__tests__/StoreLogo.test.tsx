@@ -23,10 +23,31 @@ describe('StoreLogo', () => {
     expect(img).not.toHaveClass('h-9');
   });
 
-  it('img is removed from DOM when error event fires', () => {
+  it('falls back to a generic icon badge when the image errors', () => {
     render(<StoreLogo slug="oxford-62" name="Oxford Market Basket #62" />);
     const img = screen.getByRole('img', { name: 'Oxford Market Basket #62' });
     fireEvent.error(img);
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    // The <img> is replaced by an accessible icon badge, not removed entirely.
+    expect(screen.queryByRole('img', { name: 'Oxford Market Basket #62' })).not.toHaveAttribute(
+      'src',
+    );
+    const badge = screen.getByRole('img', { name: 'Oxford Market Basket #62' });
+    expect(badge.querySelector('[data-icon="store"]')).toBeInTheDocument();
+  });
+
+  it('preserves the size class on the fallback badge', () => {
+    render(<StoreLogo slug="general" name="General Store" sizeClassName="h-16 w-16" />);
+    const img = screen.getByRole('img', { name: 'General Store' });
+    fireEvent.error(img);
+    const badge = screen.getByRole('img', { name: 'General Store' });
+    expect(badge).toHaveClass('h-16', 'w-16');
+  });
+
+  it('uses the carrot icon for the General Store fallback', () => {
+    render(<StoreLogo slug="general" name="General Store" />);
+    const img = screen.getByRole('img', { name: 'General Store' });
+    fireEvent.error(img);
+    const badge = screen.getByRole('img', { name: 'General Store' });
+    expect(badge.querySelector('[data-icon="carrot"]')).toBeInTheDocument();
   });
 });

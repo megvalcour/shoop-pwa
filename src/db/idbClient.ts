@@ -10,6 +10,7 @@ import {
 } from '@/db/schema';
 import oxfordRaw from '@/assets/aisles/oxford-62.json';
 import bigYRaw from '@/assets/aisles/big-y-worcester.json';
+import generalRaw from '@/assets/aisles/general.json';
 
 /** preferences key holding the id of the currently-active store. */
 export const ACTIVE_STORE_ID_KEY = 'active_store_id';
@@ -26,6 +27,14 @@ interface RawCatalogItem {
 }
 const oxfordSeed = oxfordRaw as { store: Store; aisles: Aisle[]; items: RawCatalogItem[] };
 const bigYSeed = bigYRaw as { store: Store; aisles: Aisle[]; item_locations: ItemLocation[] };
+// The General Store (ADR-0015, tasks/active--general-store.md): a built-in,
+// non-surveyed store of generic sections for shopping anywhere not yet loaded.
+// Authored in the post-0015 shape (its own item_locations against the shared
+// catalog ids), mirroring big-y.
+const generalSeed = generalRaw as { store: Store; aisles: Aisle[]; item_locations: ItemLocation[] };
+
+/** Stable id of the built-in General Store (used by the v7 migration guard). */
+export const GENERAL_STORE_ID = generalSeed.store.id;
 
 /** The default active store on a fresh install. */
 const DEFAULT_ACTIVE_STORE_ID = oxfordSeed.store.id;
@@ -61,10 +70,10 @@ function buildSeedData(): SeedData {
     }));
 
   return {
-    stores: [oxfordSeed.store, bigYSeed.store],
-    aisles: [...oxfordSeed.aisles, ...bigYSeed.aisles],
+    stores: [oxfordSeed.store, bigYSeed.store, generalSeed.store],
+    aisles: [...oxfordSeed.aisles, ...bigYSeed.aisles, ...generalSeed.aisles],
     items,
-    itemLocations: [...oxfordLocations, ...bigYSeed.item_locations],
+    itemLocations: [...oxfordLocations, ...bigYSeed.item_locations, ...generalSeed.item_locations],
   };
 }
 
@@ -172,9 +181,7 @@ async function upgrade(
       if (hasBigY) {
         // Drop the old Big Y aisles (by store_id index) and all Big Y locations.
         const aislesStore = tx.objectStore('aisles');
-        const oldAisleKeys = await aislesStore
-          .index('store_id')
-          .getAllKeys(bigYSeed.store.id);
+        const oldAisleKeys = await aislesStore.index('store_id').getAllKeys(bigYSeed.store.id);
         for (const key of oldAisleKeys) await aislesStore.delete(key);
 
         const locationsStore = tx.objectStore('item_locations');
@@ -211,6 +218,25 @@ async function upgrade(
         await cursor.update({ ...cursor.value, unit: '' });
       }
       cursor = await cursor.continue();
+    }
+  }
+
+  if (oldVersion < 7) {
+    // Graft in the built-in General Store (tasks/active--general-store.md) for
+    // existing installs, mirroring the Big Y backfill. seedDatabase()
+    // early-returns once any store exists, so already-populated devices would
+    // never see the General Store without this. A fresh install reaches this
+    // case with an empty `stores` store and is fully populated by seedDatabase()
+    // afterward, so it is intentionally skipped here. Idempotent: guarded on the
+    // store id. The active-store preference is left untouched — the General
+    // Store is purely additive (Oxford stays the default current store).
+    const storesStore = tx.objectStore('stores');
+    const populated = (await storesStore.count()) > 0;
+    const hasGeneral = (await storesStore.get(GENERAL_STORE_ID)) != null;
+    if (populated && !hasGeneral) {
+      storesStore.add(generalSeed.store);
+      for (const aisle of generalSeed.aisles) tx.objectStore('aisles').add(aisle);
+      for (const loc of generalSeed.item_locations) tx.objectStore('item_locations').add(loc);
     }
   }
 }

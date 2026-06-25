@@ -13,12 +13,16 @@ function makeWrapper() {
 }
 
 describe('useStores', () => {
-  it('returns both seeded stores', async () => {
+  it('returns all seeded stores', async () => {
     const { result } = renderHook(() => useStores(), { wrapper: makeWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toHaveLength(2);
+    expect(result.current.data).toHaveLength(3);
     const names = result.current.data!.map((s) => s.name).sort();
-    expect(names).toEqual(['Big Y World Class Market', 'Oxford Market Basket #62']);
+    expect(names).toEqual([
+      'Big Y World Class Market',
+      'General Store',
+      'Oxford Market Basket #62',
+    ]);
   });
 });
 

@@ -1,5 +1,5 @@
 ---
-status: active
+status: complete
 class: complex
 e2e_required: true
 clarifications: |
@@ -182,14 +182,14 @@ General Store alongside oxford + big-y.
 
 ## Implementation checklist
 
-- [ ] `general.json` authored (store + 21 sections + shared-catalog item_locations).
-- [ ] `general-aliases.json` authored, keyed by section `number`.
-- [ ] `aisleAliases.ts` registers the `general` slug.
-- [ ] `DB_VERSION` → 7; append-only `oldVersion < 7` graft for existing installs.
-- [ ] `buildSeedData()` + `resetUserData()` include the General Store.
-- [ ] `StoreLogo` renders the carrot fallback badge; sizing matches PNG logos.
-- [ ] `npm run validate` clean.
-- [ ] `npm run test:e2e` green.
+- [x] `general.json` authored (store + 21 sections + shared-catalog item_locations).
+- [x] `general-aliases.json` authored, keyed by section `number`.
+- [x] `aisleAliases.ts` registers the `general` slug.
+- [x] `DB_VERSION` → 7; append-only `oldVersion < 7` graft for existing installs.
+- [x] `buildSeedData()` + `resetUserData()` include the General Store.
+- [x] `StoreLogo` renders the carrot fallback badge; sizing matches PNG logos.
+- [x] `npm run validate` clean.
+- [x] `npm run test:e2e` green (41 specs, via session Chromium-build override).
 
 ## Tests
 

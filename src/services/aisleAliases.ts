@@ -4,11 +4,13 @@
 
 import oxfordAliases from '@/assets/aisles/oxford-62-aliases.json';
 import bigYAliases from '@/assets/aisles/big-y-worcester-aliases.json';
+import generalAliases from '@/assets/aisles/general-aliases.json';
 import type { AliasMap } from '@/services/classifier';
 
 const ALIASES_BY_SLUG: Record<string, AliasMap> = {
   'oxford-62': oxfordAliases as AliasMap,
   'big-y-worcester': bigYAliases as AliasMap,
+  general: generalAliases as AliasMap,
 };
 
 /** Alias map for a store slug, or an empty map for an unknown/absent slug. */
