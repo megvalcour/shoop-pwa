@@ -8,6 +8,7 @@ vi.mock('@/hooks/useDefaultList', () => ({
   useDefaultList: vi.fn(),
   useAddDefaultListItem: vi.fn(),
   useRemoveDefaultListItem: vi.fn(),
+  useUpdateDefaultListItem: vi.fn(),
 }));
 vi.mock('@/hooks/useItems', () => ({ useItems: vi.fn() }));
 
@@ -19,6 +20,7 @@ function makeWrapper() {
 
 const mockAdd = vi.fn();
 const mockRemove = vi.fn();
+const mockUpdate = vi.fn();
 
 async function setup({
   entries = [],
@@ -31,9 +33,12 @@ async function setup({
   isPending?: boolean;
   isError?: boolean;
 } = {}) {
-  const { useDefaultList, useAddDefaultListItem, useRemoveDefaultListItem } = await import(
-    '@/hooks/useDefaultList'
-  );
+  const {
+    useDefaultList,
+    useAddDefaultListItem,
+    useRemoveDefaultListItem,
+    useUpdateDefaultListItem,
+  } = await import('@/hooks/useDefaultList');
   const { useItems } = await import('@/hooks/useItems');
 
   vi.mocked(useDefaultList).mockReturnValue({
@@ -49,6 +54,9 @@ async function setup({
   vi.mocked(useRemoveDefaultListItem).mockReturnValue({
     mutate: mockRemove,
   } as unknown as ReturnType<typeof useRemoveDefaultListItem>);
+  vi.mocked(useUpdateDefaultListItem).mockReturnValue({
+    mutate: mockUpdate,
+  } as unknown as ReturnType<typeof useUpdateDefaultListItem>);
 
   const { default: DefaultListEditor } = await import('@/components/organisms/DefaultListEditor');
   render(createElement(DefaultListEditor), { wrapper: makeWrapper() });
@@ -88,5 +96,19 @@ describe('DefaultListEditor', () => {
     });
     fireEvent.click(screen.getByLabelText('Delete item'));
     expect(mockRemove).toHaveBeenCalledWith('d1');
+  });
+
+  it('editing an entry quantity opens the sheet and calls the update mutation', async () => {
+    await setup({
+      entries: [{ id: 'd1', item_id: 'i1', quantity: 2, unit: '', notes: 'keep' }],
+      items: [{ id: 'i1', name: 'Milk', canonical_name: 'milk' }],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /edit quantity/i }));
+    expect(screen.getByText('Edit quantity')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    expect(mockUpdate).toHaveBeenCalledWith({ id: 'd1', quantity: 3, unit: '' });
   });
 });

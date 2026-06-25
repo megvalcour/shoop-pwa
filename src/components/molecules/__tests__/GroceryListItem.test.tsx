@@ -101,6 +101,51 @@ describe('GroceryListItem', () => {
     expect(screen.getByText('Choose aisle')).toBeInTheDocument();
   });
 
+  it('tapping the quantity opens QuantitySheet; saving calls onQuantityChange', () => {
+    const onQuantityChange = vi.fn();
+    render(
+      <GroceryListItem
+        name="Beef"
+        quantity={2}
+        unit="lbs"
+        onQuantityChange={onQuantityChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /edit quantity/i }));
+    expect(screen.getByText('Edit quantity')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    expect(onQuantityChange).toHaveBeenCalledWith(3, 'lbs');
+  });
+
+  it('quantity is read-only (no editor) when onQuantityChange is omitted', () => {
+    render(<GroceryListItem name="Beef" quantity={2} unit="lbs" />);
+    expect(screen.queryByRole('button', { name: /edit quantity/i })).toBeNull();
+  });
+
+  it('the aisle picker still works independently of the quantity editor', () => {
+    const onAisleChange = vi.fn();
+    const onQuantityChange = vi.fn();
+    render(
+      <GroceryListItem
+        name="Milk"
+        quantity={1}
+        aisleLabel="Dairy"
+        currentAisleId="a1"
+        aisles={aisles}
+        onAisleChange={onAisleChange}
+        onQuantityChange={onQuantityChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /change aisle: dairy/i }));
+    expect(screen.getByText('Choose aisle')).toBeInTheDocument();
+    // The quantity editor did not open.
+    expect(screen.queryByText('Edit quantity')).toBeNull();
+  });
+
   it('checked uncategorized item exposes no interactive badge', () => {
     render(
       <GroceryListItem

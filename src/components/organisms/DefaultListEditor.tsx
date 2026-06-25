@@ -3,11 +3,13 @@ import {
   useDefaultList,
   useAddDefaultListItem,
   useRemoveDefaultListItem,
+  useUpdateDefaultListItem,
 } from '@/hooks/useDefaultList';
 import { useItems } from '@/hooks/useItems';
 import ListItemRow from '@/components/molecules/ListItemRow';
+import QuantitySheet from '@/components/molecules/QuantitySheet';
 import ItemEntryForm from '@/components/molecules/ItemEntryForm';
-import type { Item } from '@/db/schema';
+import type { DefaultListEntry, Item } from '@/db/schema';
 
 /**
  * Manages the store-agnostic default list (ADR-0009). Entries reference catalog
@@ -17,11 +19,13 @@ import type { Item } from '@/db/schema';
  */
 export default function DefaultListEditor() {
   const [value, setValue] = useState('');
+  const [editing, setEditing] = useState<DefaultListEntry | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: entries, isPending, isError } = useDefaultList();
   const { data: items } = useItems();
   const addItem = useAddDefaultListItem();
   const removeItem = useRemoveDefaultListItem();
+  const updateItem = useUpdateDefaultListItem();
 
   const itemById = new Map<string, Item>((items ?? []).map((item) => [item.id, item]));
 
@@ -44,7 +48,9 @@ export default function DefaultListEditor() {
             key={entry.id}
             name={itemById.get(entry.item_id)?.name ?? 'Unknown item'}
             quantity={entry.quantity}
+            unit={entry.unit}
             onDelete={() => removeItem.mutate(entry.id)}
+            onQuantityClick={() => setEditing(entry)}
           />
         ))}
       </ul>
@@ -65,6 +71,14 @@ export default function DefaultListEditor() {
         <p className="mt-1 text-xs text-destructive">Failed to add item. Please try again.</p>
       )}
       {renderEntries()}
+      {editing && (
+        <QuantitySheet
+          quantity={editing.quantity}
+          unit={editing.unit}
+          onSave={(quantity, unit) => updateItem.mutate({ id: editing.id, quantity, unit })}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }

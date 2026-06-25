@@ -1,7 +1,7 @@
 import type { DBSchema } from 'idb';
 
 export const DB_NAME = 'shoop';
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 export interface Store {
   id: string;
@@ -61,6 +61,7 @@ export interface ListItem {
   list_id: string;
   item_id: string;
   quantity: number;
+  unit: string;
   checked: boolean;
   added_from_default: boolean;
   created_at: number;

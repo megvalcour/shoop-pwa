@@ -27,7 +27,7 @@ async function seedList(page: Parameters<Parameters<typeof test>[1]>[0]['page'])
 
   const listId = await page.evaluate(async (seedItems) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('shoop', 5);
+      const req = indexedDB.open('shoop', 6);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
@@ -47,6 +47,7 @@ async function seedList(page: Parameters<Parameters<typeof test>[1]>[0]['page'])
           list_id: id,
           item_id: item.id,
           quantity: 1,
+          unit: '',
           checked: false,
           added_from_default: false,
           created_at: Date.now(),

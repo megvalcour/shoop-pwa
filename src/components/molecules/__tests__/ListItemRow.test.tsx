@@ -9,6 +9,37 @@ describe('ListItemRow', () => {
     expect(screen.getByText('×2')).toBeInTheDocument();
   });
 
+  it('renders "N unit" when a unit is present', () => {
+    render(<ListItemRow name="Beef" quantity={2} unit="lbs" />);
+    expect(screen.getByText('2 lbs')).toBeInTheDocument();
+  });
+
+  it('renders "×N" when the unit is empty', () => {
+    render(<ListItemRow name="Milk" quantity={2} unit="" />);
+    expect(screen.getByText('×2')).toBeInTheDocument();
+  });
+
+  it('quantity is static text (not a button) when onQuantityClick is omitted', () => {
+    render(<ListItemRow name="Milk" quantity={2} />);
+    expect(screen.queryByRole('button', { name: /edit quantity/i })).toBeNull();
+  });
+
+  it('tapping the quantity fires onQuantityClick without onToggle', () => {
+    const onToggle = vi.fn();
+    const onQuantityClick = vi.fn();
+    render(
+      <ListItemRow
+        name="Milk"
+        quantity={2}
+        onToggle={onToggle}
+        onQuantityClick={onQuantityClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /edit quantity/i }));
+    expect(onQuantityClick).toHaveBeenCalledTimes(1);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
   it('unchecked: no line-through on name', () => {
     render(<ListItemRow name="Milk" quantity={1} checked={false} />);
     expect(screen.getByText('Milk').className).not.toContain('line-through');

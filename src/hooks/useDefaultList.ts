@@ -22,6 +22,8 @@ export function useDefaultList() {
 
 interface AddDefaultListItemResult {
   itemCreated: boolean;
+  /** True when the add resolved to an existing entry whose quantity was bumped. */
+  incremented: boolean;
 }
 
 export function useAddDefaultListItem() {
@@ -41,9 +43,13 @@ export function useAddDefaultListItem() {
 
       const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-      // Dedupe by item_id — the default list is a set of catalog references.
-      if (allEntries.some((e) => e.item_id === itemId)) {
-        return { itemCreated: false };
+      // Duplicate add (case-insensitive exact name, via resolveItem): bump the
+      // existing entry's quantity by one step instead of adding a second row.
+      // Spread preserves the entry's unit and notes.
+      const existing = allEntries.find((e) => e.item_id === itemId);
+      if (existing) {
+        await db.put('default_list', { ...existing, quantity: existing.quantity + 1 });
+        return { itemCreated: false, incremented: true };
       }
 
       const entry: DefaultListEntry = {
@@ -64,7 +70,7 @@ export function useAddDefaultListItem() {
         await db.add('default_list', entry);
       }
 
-      return { itemCreated };
+      return { itemCreated, incremented: false };
     },
     onSuccess: ({ itemCreated }) =>
       Promise.all([
@@ -73,6 +79,39 @@ export function useAddDefaultListItem() {
           ? queryClient.invalidateQueries({ queryKey: ['items'] })
           : Promise.resolve(),
       ]),
+  });
+}
+
+interface UpdateDefaultListItemInput {
+  id: string;
+  quantity: number;
+  unit: string;
+}
+
+export function useUpdateDefaultListItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, quantity, unit }: UpdateDefaultListItemInput) => {
+      const db = await dbPromise;
+      const row = await db.get('default_list', id);
+      if (!row) throw new Error(`default_list entry not found: ${id}`);
+      // Spread preserves notes (not edited here).
+      await db.put('default_list', { ...row, quantity, unit });
+    },
+    onMutate: async ({ id, quantity, unit }) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const snapshot = queryClient.getQueryData<DefaultListEntry[]>(QUERY_KEY);
+      queryClient.setQueryData<DefaultListEntry[]>(QUERY_KEY, (old) =>
+        (old ?? []).map((e) => (e.id === id ? { ...e, quantity, unit } : e)),
+      );
+      return { snapshot };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.snapshot !== undefined) {
+        queryClient.setQueryData(QUERY_KEY, context.snapshot);
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
 

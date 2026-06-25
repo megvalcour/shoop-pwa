@@ -198,6 +198,21 @@ async function upgrade(
       }
     }
   }
+
+  if (oldVersion < 6) {
+    // Backfill ListItem.unit on existing rows so reads are type-safe
+    // (tasks/active--item-quantities-dedup.md). A fresh install reaches this
+    // with an empty list_items store and is unaffected; new rows set unit
+    // explicitly from here on.
+    const store = tx.objectStore('list_items');
+    let cursor = await store.openCursor();
+    while (cursor) {
+      if (cursor.value.unit === undefined) {
+        await cursor.update({ ...cursor.value, unit: '' });
+      }
+      cursor = await cursor.continue();
+    }
+  }
 }
 
 async function seedDatabase(db: IDBPDatabase<ShoopDB>): Promise<void> {

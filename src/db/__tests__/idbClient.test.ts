@@ -264,6 +264,52 @@ describe('idbClient', () => {
     expect((await db.get('preferences', 'active_store_id'))?.value).toBe('st-mb');
   });
 
+  it('backfills ListItem.unit on v5→v6 for rows created before the field existed', async () => {
+    const { openDB } = await import('idb');
+    // A v5-shaped DB with a list_items row that predates the `unit` field.
+    const v5 = await openDB('shoop', 5, {
+      upgrade(db) {
+        db.createObjectStore('stores', { keyPath: 'id' });
+        const aisles = db.createObjectStore('aisles', { keyPath: 'id' });
+        aisles.createIndex('store_id', 'store_id');
+        db.createObjectStore('items', { keyPath: 'id' });
+        const il = db.createObjectStore('item_locations', { keyPath: 'id' });
+        il.createIndex('item_id', 'item_id');
+        il.createIndex('store_id', 'store_id');
+        db.createObjectStore('preferences', { keyPath: 'key' });
+        db.createObjectStore('default_list', { keyPath: 'id' });
+        db.createObjectStore('shopping_lists', { keyPath: 'id' });
+        const li = db.createObjectStore('list_items', { keyPath: 'id' });
+        li.createIndex('list_id', 'list_id');
+      },
+    });
+    await v5.add('list_items', {
+      id: 'li-legacy',
+      list_id: 'list-1',
+      item_id: 'it-1',
+      quantity: 3,
+      checked: false,
+      added_from_default: false,
+      created_at: 1,
+    } as never);
+    v5.close();
+
+    vi.resetModules();
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+
+    const row = await db.get('list_items', 'li-legacy');
+    expect(row?.unit).toBe('');
+    // Other fields are preserved.
+    expect(row?.quantity).toBe(3);
+  });
+
+  it('leaves a fresh install unaffected by the v6 backfill (empty list_items)', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    expect(await db.count('list_items')).toBe(0);
+  });
+
   describe('resetUserData', () => {
     it('clears all user data stores', async () => {
       const { dbPromise, resetUserData } = await import('@/db/idbClient');
@@ -274,6 +320,7 @@ describe('idbClient', () => {
         list_id: 'sl-1',
         item_id: 'it-1',
         quantity: 1,
+        unit: '',
         checked: false,
         added_from_default: false,
         created_at: 1,

@@ -1,4 +1,9 @@
-import { useListItems, useDeleteListItem, useToggleListItem } from '@/hooks/useListItems';
+import {
+  useListItems,
+  useDeleteListItem,
+  useToggleListItem,
+  useUpdateListItem,
+} from '@/hooks/useListItems';
 import { useItems, useItemLocations, useUpsertItemLocation } from '@/hooks/useItems';
 import { useAisles } from '@/hooks/useAisles';
 import { useActiveStore } from '@/hooks/useStores';
@@ -21,6 +26,7 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   const { data: locations } = useItemLocations(activeStore?.id);
   const deleteItem = useDeleteListItem();
   const toggleItem = useToggleListItem();
+  const updateItem = useUpdateListItem();
   const upsertLocation = useUpsertItemLocation();
   const categorizingIds = useCategorizationStore((s) => s.categorizingIds);
   const status = useCategorizationStore((s) => s.status);
@@ -62,9 +68,13 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
         key={li.id}
         name={item?.name ?? 'Unknown item'}
         quantity={li.quantity}
+        unit={li.unit}
         checked={li.checked}
         onToggle={() => toggleItem.mutate({ id: li.id, listId })}
         onDelete={() => deleteItem.mutate({ id: li.id, listId })}
+        onQuantityChange={(quantity, unit) =>
+          updateItem.mutate({ id: li.id, listId, quantity, unit })
+        }
         aisleLabel={aisle?.label}
         isCategorizing={isCategorizing}
         aisles={aisles}

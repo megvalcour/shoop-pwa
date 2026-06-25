@@ -25,6 +25,8 @@ interface AddListItemInput {
 interface AddListItemResult {
   itemCreated: boolean;
   newItemId: string;
+  /** True when the add resolved to an existing row whose quantity was bumped. */
+  incremented: boolean;
 }
 
 // Tracks (listId, canonical_name) adds currently in flight. Now that the input
@@ -43,7 +45,7 @@ export function useAddListItem() {
       const inFlightKey = `${listId}::${canonical}`;
       // Reject a same-name add to the same list that is already in flight.
       if (inFlightAdds.has(inFlightKey)) {
-        return { itemCreated: false, newItemId: '' };
+        return { itemCreated: false, newItemId: '', incremented: false };
       }
       inFlightAdds.add(inFlightKey);
       try {
@@ -80,8 +82,14 @@ async function addListItem(listId: string, trimmed: string): Promise<AddListItem
 
   const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-  if (allListItems.some((li) => li.list_id === listId && li.item_id === itemId)) {
-    return { itemCreated: false, newItemId: '' };
+  // Duplicate add (case-insensitive exact name, via resolveItem): bump the
+  // existing row's quantity by one step instead of creating a second row.
+  const existing = allListItems.find(
+    (li) => li.list_id === listId && li.item_id === itemId,
+  );
+  if (existing) {
+    await db.put('list_items', { ...existing, quantity: existing.quantity + 1 });
+    return { itemCreated: false, newItemId: '', incremented: true };
   }
 
   const listItem: ListItem = {
@@ -89,6 +97,7 @@ async function addListItem(listId: string, trimmed: string): Promise<AddListItem
     list_id: listId,
     item_id: itemId,
     quantity: 1,
+    unit: '',
     checked: false,
     added_from_default: false,
     created_at: Date.now(),
@@ -107,7 +116,42 @@ async function addListItem(listId: string, trimmed: string): Promise<AddListItem
     await db.add('list_items', listItem);
   }
 
-  return { itemCreated, newItemId: itemId };
+  return { itemCreated, newItemId: itemId, incremented: false };
+}
+
+interface UpdateListItemInput {
+  id: string;
+  listId: string;
+  quantity: number;
+  unit: string;
+}
+
+export function useUpdateListItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, quantity, unit }: UpdateListItemInput) => {
+      const db = await dbPromise;
+      const row = await db.get('list_items', id);
+      if (!row) throw new Error(`list_items row not found: ${id}`);
+      await db.put('list_items', { ...row, quantity, unit });
+    },
+    onMutate: async ({ id, listId, quantity, unit }) => {
+      await queryClient.cancelQueries({ queryKey: listItemsKey(listId) });
+      const snapshot = queryClient.getQueryData<ListItem[]>(listItemsKey(listId));
+      queryClient.setQueryData<ListItem[]>(listItemsKey(listId), (old) =>
+        (old ?? []).map((li) => (li.id === id ? { ...li, quantity, unit } : li)),
+      );
+      return { snapshot };
+    },
+    onError: (_err, { listId }, context) => {
+      if (context?.snapshot !== undefined) {
+        queryClient.setQueryData(listItemsKey(listId), context.snapshot);
+      }
+    },
+    onSettled: (_data, _err, { listId }) => {
+      queryClient.invalidateQueries({ queryKey: listItemsKey(listId) });
+    },
+  });
 }
 
 interface ToggleListItemInput {

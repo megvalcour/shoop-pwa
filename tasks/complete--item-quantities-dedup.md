@@ -328,5 +328,3 @@ preserve `notes`.
 - **Editing `notes`** on default entries — preserved on write, not edited here.
 - **Specifying quantity at add-time** — add form stays a single fast-entry field
   defaulting to qty 1; quantity is set via edit (or duplicate-add increment).
-</content>
-</invoke>

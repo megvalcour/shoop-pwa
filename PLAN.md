@@ -1,21 +1,16 @@
 ## Current Status
 
-fix: Recipe-imported items now auto-categorize. Added a single auto-prime effect
-in `useItemClassification` that primes the matcher on mount when the active store
-has unlocated catalog items, so the import flow triggers classification without a
-manual add. Covered by extended unit tests and a new E2E case in
-`e2e/recipe-import.spec.ts`. Plan moved to
-`tasks/complete--recipe-import-categorization.md`.
-
-## Active Task
-
-### Item Quantities + Duplicate-Add Increment
-
-Add a unitless quantity stepper (with optional free-text unit) to grocery items,
-and make a duplicate add (case-insensitive exact name match, no fuzzy) increment
-the existing entry by one step instead of creating a second row. Works on the
-default list, shopping lists, and the recipe-import flow (dedup only). Plan:
-`tasks/active--item-quantities-dedup.md`.
+feat: Item quantities + duplicate-add increment. Items now carry an integer
+quantity (stepper, min 1) plus an optional free-text unit, edited via a
+`QuantitySheet` molecule on both shopping lists and the default list and
+persisted through new optimistic update mutations. Adding an item whose name
+already exists (case-insensitive exact match) now increments the existing
+entry's quantity instead of creating a duplicate row — on manual add and recipe
+import alike. `ListItem` gained a `unit` field (`DB_VERSION` 5 → 6 with an
+append-only backfill); list seeding carries `unit` forward from the default.
+Covered by extended unit tests, a new `formatQuantity`/`QuantitySheet` suite, and
+two new E2E cases in `e2e/shopping-lists.spec.ts`. Plan moved to
+`tasks/complete--item-quantities-dedup.md`.
 
 ## Backlog
 
@@ -37,7 +32,8 @@ Lower-priority stale _notes_ (no new ADR required; fix in place if/when touched)
   unit "cups") into the added item. `normalizeIngredient` already parses these;
   `RecipeImporter` currently discards them. Requires extending the add mutations
   to accept an optional `{ quantity, unit }` and deciding merge semantics when the
-  added item is also a duplicate. Follow-up to the Item Quantities task.
+  added item is also a duplicate. Follow-up to the Item Quantities task. Plan:
+  `tasks/backlog--recipe-import-quantities.md`.
 
 ### Unit Test Audit
 

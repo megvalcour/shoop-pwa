@@ -101,7 +101,7 @@ describe('useCreateShoppingList', () => {
     const db = await dbPromise;
     await db.add('items', { id: 'it-a', name: 'Bananas', canonical_name: 'bananas' });
     await db.add('items', { id: 'it-b', name: 'Coffee', canonical_name: 'coffee' });
-    await db.add('default_list', { id: 'de-a', item_id: 'it-a', quantity: 3, unit: '', notes: '' });
+    await db.add('default_list', { id: 'de-a', item_id: 'it-a', quantity: 3, unit: 'lbs', notes: '' });
     await db.add('default_list', { id: 'de-b', item_id: 'it-b', quantity: 1, unit: '', notes: '' });
 
     const { result } = renderHook(() => useCreateShoppingList(), { wrapper: makeWrapper() });
@@ -114,9 +114,10 @@ describe('useCreateShoppingList', () => {
     expect(seeded).toHaveLength(2);
     expect(seeded.every((li) => li.added_from_default === true)).toBe(true);
     expect(seeded.every((li) => li.checked === false)).toBe(true);
-    const byItem = new Map(seeded.map((li) => [li.item_id, li.quantity]));
-    expect(byItem.get('it-a')).toBe(3);
-    expect(byItem.get('it-b')).toBe(1);
+    const byItem = new Map(seeded.map((li) => [li.item_id, li]));
+    // Quantity and unit both carry forward from the default entry.
+    expect(byItem.get('it-a')).toMatchObject({ quantity: 3, unit: 'lbs' });
+    expect(byItem.get('it-b')).toMatchObject({ quantity: 1, unit: '' });
   });
 
   it('creates an empty list when seedFromDefault is true but the default list is empty', async () => {
@@ -199,9 +200,9 @@ describe('useDeleteShoppingList', () => {
     const db = await dbPromise;
     await db.add('shopping_lists', { id: 'del-2', name: 'With Items', created_at: '2026-06-01T00:00:00.000Z' });
     await db.add('shopping_lists', { id: 'keep-1', name: 'Survivor', created_at: '2026-06-02T00:00:00.000Z' });
-    await db.add('list_items', { id: 'li-1', list_id: 'del-2', item_id: 'it-1', quantity: 1, checked: false, added_from_default: false, created_at: 1 });
-    await db.add('list_items', { id: 'li-2', list_id: 'del-2', item_id: 'it-2', quantity: 2, checked: false, added_from_default: false, created_at: 2 });
-    await db.add('list_items', { id: 'li-3', list_id: 'keep-1', item_id: 'it-3', quantity: 1, checked: false, added_from_default: false, created_at: 3 });
+    await db.add('list_items', { id: 'li-1', list_id: 'del-2', item_id: 'it-1', quantity: 1, unit: '', checked: false, added_from_default: false, created_at: 1 });
+    await db.add('list_items', { id: 'li-2', list_id: 'del-2', item_id: 'it-2', quantity: 2, unit: '', checked: false, added_from_default: false, created_at: 2 });
+    await db.add('list_items', { id: 'li-3', list_id: 'keep-1', item_id: 'it-3', quantity: 1, unit: '', checked: false, added_from_default: false, created_at: 3 });
 
     vi.resetModules();
     const { useDeleteShoppingList } = await import('@/hooks/useShoppingLists');
@@ -223,7 +224,7 @@ describe('useDeleteShoppingList', () => {
     // referenced only by the deleted list.
     await db.add('items', { id: 'it-override', name: 'Tofu', canonical_name: 'tofu' });
     await db.add('item_locations', { id: 'loc-ov', item_id: 'it-override', store_id: 's1', aisle_id: 'dairy' });
-    await db.add('list_items', { id: 'li-ov', list_id: 'del-3', item_id: 'it-override', quantity: 1, checked: false, added_from_default: false, created_at: 1 });
+    await db.add('list_items', { id: 'li-ov', list_id: 'del-3', item_id: 'it-override', quantity: 1, unit: '', checked: false, added_from_default: false, created_at: 1 });
 
     vi.resetModules();
     const { useDeleteShoppingList } = await import('@/hooks/useShoppingLists');

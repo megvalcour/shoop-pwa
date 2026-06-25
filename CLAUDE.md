@@ -102,7 +102,7 @@ aisles         — id (string, PK), store_id (Index), number, label, sort_order
 items          — id (string, PK), name, canonical_name, aisle_id (Index), store_id (Index)
 default_list   — id (string, PK), item_id, quantity, unit, notes
 shopping_lists — id (string, PK), name, created_at
-list_items     — id (string, PK), list_id (Index), item_id, quantity, checked, added_from_default
+list_items     — id (string, PK), list_id (Index), item_id, quantity, unit, checked, added_from_default
 ```
 
 Canonical TypeScript interfaces for these shapes live in `src/db/schema.ts`.
