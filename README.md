@@ -23,42 +23,6 @@ The app is installable as a PWA: in Chrome/Safari, open the link and choose "Add
 
 ---
 
-## Features
-
-### Default List
-Maintain a standing list of items you buy regularly. Items are grouped by aisle automatically. Add new items by typing a description — the in-browser AI (HuggingFace `all-MiniLM-L6-v2` via WASM) classifies the item into the right aisle without any network call.
-
-### Shopping Lists
-Create on-demand shopping lists with a single tap. Seed a new list from your default list in one action, then add one-off items on the fly. Each list is independent — start a new one each trip without disturbing the last.
-
-### Smart Aisle Matching
-Semantic embedding model runs fully in-browser via WebAssembly. No API key, no network required after the model is cached. Layered matching (aliases → embeddings) keeps common items snappy.
-
-### AI-Powered Recipe Import
-Paste a recipe URL and Shoop extracts the ingredient list, classifies each item into an aisle, and adds everything to your active shopping list. Duplicate items increment quantity rather than creating a second row.
-
-### Item Quantities & Units
-Every item carries an integer quantity and an optional free-text unit (e.g. "2 cups"). A quantity stepper is available on both the default list and shopping lists. Adding a duplicate item — manually or via recipe import — increments the existing entry instead of creating a duplicate.
-
-### Multi-Store Support
-Switch between stores from the navigation bar. Each store has its own aisle layout. New stores can be added or configured from Settings. Items are scoped to their store.
-
-### Manual Aisle Override
-When the AI gets it wrong, override the aisle assignment inline. Drag-and-drop reordering is also available to arrange aisles to match how you actually walk the store.
-
-### Shopping View
-Items are displayed in aisle order — the order you encounter them in the store. Tap an item to check it off instantly (optimistic update, no spinner). Checked items collapse. Everything persists locally.
-
-### PWA Lifecycle
-Installable on iOS and Android. Service worker precaches all static assets and the HuggingFace model weights so the app functions identically online or off. Background updates are delivered silently.
-
-### Settings
-- Manage stores (add, rename, delete)
-- Reset the app to a clean state
-- View app version and DB schema version
-
----
-
 ## Quick Start
 
 **Prerequisites**
@@ -124,6 +88,42 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | [`docs/adrs/`](docs/adrs/) | Architecture Decision Records — the why behind every major technical choice |
 | [`docs/prd/`](docs/prd/) | Original product requirements |
 | [`PLAN.md`](PLAN.md) | Current development status and backlog |
+
+---
+
+## Features
+
+### Default List
+Maintain a standing list of items you buy regularly. Items are grouped by aisle automatically. Add new items by typing a description — the in-browser AI (HuggingFace `all-MiniLM-L6-v2` via WASM) classifies the item into the right aisle without any network call.
+
+### Shopping Lists
+Create on-demand shopping lists with a single tap. Seed a new list from your default list in one action, then add one-off items on the fly. Each list is independent — start a new one each trip without disturbing the last.
+
+### Smart Aisle Matching
+Semantic embedding model runs fully in-browser via WebAssembly. No API key, no network required after the model is cached. Layered matching (aliases → embeddings) keeps common items snappy.
+
+### AI-Powered Recipe Import
+Paste a recipe URL and Shoop extracts the ingredient list, classifies each item into an aisle, and adds everything to your active shopping list. Duplicate items increment quantity rather than creating a second row.
+
+### Item Quantities & Units
+Every item carries an integer quantity and an optional free-text unit (e.g. "2 cups"). A quantity stepper is available on both the default list and shopping lists. Adding a duplicate item — manually or via recipe import — increments the existing entry instead of creating a duplicate.
+
+### Multi-Store Support
+Switch between stores from the navigation bar. Each store has its own aisle layout. New stores can be added or configured from Settings. Items are scoped to their store.
+
+### Manual Aisle Override
+When the AI gets it wrong, override the aisle assignment inline. Drag-and-drop reordering is also available to arrange aisles to match how you actually walk the store.
+
+### Shopping View
+Items are displayed in aisle order — the order you encounter them in the store. Tap an item to check it off instantly (optimistic update, no spinner). Checked items collapse. Everything persists locally.
+
+### PWA Lifecycle
+Installable on iOS and Android. Service worker precaches all static assets and the HuggingFace model weights so the app functions identically online or off. Background updates are delivered silently.
+
+### Settings
+- Manage stores (add, rename, delete)
+- Reset the app to a clean state
+- View app version and DB schema version
 
 ---
 
