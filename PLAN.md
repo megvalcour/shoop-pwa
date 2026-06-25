@@ -9,7 +9,17 @@ manual add. Covered by extended unit tests and a new E2E case in
 
 ## Active Task
 
-_None — pick the next backlog item._
+### Item Quantities + Duplicate-Add Increment
+
+Add a unitless quantity stepper (with optional free-text unit) to grocery items,
+and make a duplicate add (case-insensitive exact name match, no fuzzy) increment
+the existing entry by one step instead of creating a second row. Works on the
+default list, shopping lists, and the recipe-import flow (dedup only). Plan:
+`tasks/active--item-quantities-dedup.md`.
+
+> Note: `tasks/complete--grocery-item-quantities.md` is an earlier cut of this
+> feature that was **never implemented** (code-verified) and is superseded by the
+> active plan above.
 
 ## Backlog
 
@@ -25,10 +35,13 @@ Lower-priority stale _notes_ (no new ADR required; fix in place if/when touched)
 
 - Update the readme to align with the current project. Include links to other documents as needed (such as releases.md)
 
-### Grocery List Item Quantities
+### Recipe Import Quantities
 
-- Allow users to add/edit quantities on grocery list items (e.g., "2 lbs", "3 cans").
-- Plan: `tasks/backlog--grocery-item-quantities.md`
+- Carry a recipe ingredient's parsed quantity/unit (e.g. "2 cups flour" → qty 2,
+  unit "cups") into the added item. `normalizeIngredient` already parses these;
+  `RecipeImporter` currently discards them. Requires extending the add mutations
+  to accept an optional `{ quantity, unit }` and deciding merge semantics when the
+  added item is also a duplicate. Follow-up to the Item Quantities task.
 
 ### Unit Test Audit
 
