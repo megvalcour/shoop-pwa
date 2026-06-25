@@ -1,3 +1,13 @@
+---
+step: 7
+substep: 1
+status: validating
+class: lightweight
+e2e_required: false
+clarifications: |
+  Phase 1 scope: ADR-0019 + share_target manifest only. No UI, no logic.
+---
+
 # Recipe Import — Add to Grocery Lists from a Recipe
 
 ## Goal

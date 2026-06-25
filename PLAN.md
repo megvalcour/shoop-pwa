@@ -1,26 +1,10 @@
 ## Current Status
 
-ci: Adds E2E testing to the CI/CD pipeline.
+feat: Recipe Import Phase 1 — ADR-0019 + Web Share Target manifest
 
 ## Active Task
 
-### Recipe Import · Phase 1 — ADR + Share Target registration
-
-Foundation for the Recipe Import feature: record the new server-side execution
-surface as an ADR and register the PWA as a Web Share Target. No user-facing
-import behavior yet.
-
-- Plan: `tasks/active--recipe-import.md` (Steps 0–1)
-- Scope: write `docs/adrs/0019-serverless-fetch-proxy-for-recipe-import.md`
-  (Accepted; threat model + why cheap defense-in-depth suffices); add the
-  `share_target` block to the `VitePWA.manifest` in `vite.config.ts`; route the
-  Android `text`-vs-`url` extraction note into the plan for Phase 4.
-- Done when: ADR committed; `npm run build` emits `share_target` in the
-  generated `manifest.webmanifest`; `npm run validate` green.
-
-> Full feature decomposed into 5 linear phases (Phase 1 active; Phases 2–5 at
-> the top of the backlog). All phases share the single master plan
-> `tasks/active--recipe-import.md`; each phase cites the step range it covers.
+None.
 
 ## Backlog
 
