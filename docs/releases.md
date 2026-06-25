@@ -54,9 +54,12 @@ probe the bare path.
    Preview environments. Use a long random string (e.g. `openssl rand -hex 24`).
 2. Set the same value as `VITE_IMPORT_TOKEN` in the **build** environment so the
    client and function agree. (Locally, copy `.env.example` to `.env.local` and
-   set `VITE_IMPORT_TOKEN` there — never commit it.) If the var is absent the
-   function returns `401`, which the UI surfaces as "Recipe import isn't set up
-   on this build yet."
+   set `VITE_IMPORT_TOKEN` there — never commit it.) Both sides return `401` when
+   the token check fails, and the UI now distinguishes the two cases: if the
+   server-side `IMPORT_TOKEN` is unbound it shows "Recipe import isn't enabled on
+   the server yet (no import token bound)" (`not_configured`); if the tokens are
+   bound but differ it shows "Recipe import token doesn't match the server (check
+   VITE_IMPORT_TOKEN)" (`unauthorized`).
 
 **b) (Deferred once on custom domain) Add a per-IP rate-limit rule.** This is **defense-in-depth #3** — the
 function fetches arbitrary URLs, so cap any single abuser well under the free

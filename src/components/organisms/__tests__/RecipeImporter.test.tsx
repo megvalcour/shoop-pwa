@@ -162,4 +162,12 @@ describe('RecipeImporter', () => {
     await setup({ data: undefined, isError: true, errorCode: 'no_recipe' });
     expect(screen.getByText(/couldn’t find a recipe/i)).toBeInTheDocument();
   });
+
+  it('distinguishes a missing server token from a mismatched client token', async () => {
+    await setup({ data: undefined, isError: true, errorCode: 'not_configured' });
+    expect(screen.getByText(/isn’t enabled on the server/i)).toBeInTheDocument();
+
+    await setup({ data: undefined, isError: true, errorCode: 'unauthorized' });
+    expect(screen.getByText(/token doesn’t match the server/i)).toBeInTheDocument();
+  });
 });
