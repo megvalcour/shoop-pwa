@@ -1,6 +1,11 @@
 ## Current Status
 
-docs: overhaul README with overview, live demo, features, quick start, badges, and links to docs/releases.md and ADRs. Plan moved to `tasks/complete--readme-overhaul.md`.
+Add a built-in "General Store" — a store seeded with generic grocery sections for
+shopping anywhere not yet loaded into the app. It appears under Your Stores, is
+switchable, reorderable, re-aisles lists, and uses a Font Awesome (carrot) logo.
+Plan: `tasks/active--general-store.md`.
+
+Previously: docs README overhaul, `tasks/complete--readme-overhaul.md`.
 
 ## Backlog
 
