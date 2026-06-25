@@ -61,7 +61,7 @@ describe('SelectionList', () => {
       />,
     );
     fireEvent.click(screen.getByText('Cherry'));
-    expect(onSelect).toHaveBeenCalledWith(FRUITS[2]);
+    expect(onSelect).toHaveBeenCalledWith(FRUITS[2], 2);
   });
 
   it('uses getKey for stable list keys (no duplicate key warnings)', () => {
