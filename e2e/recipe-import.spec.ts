@@ -102,4 +102,42 @@ test.describe('Recipe Import', () => {
 
     await expect(page.getByText(/couldn’t find a recipe on that page/i)).toBeVisible();
   });
+
+  // Regression: imported ingredients used to sit under "Uncategorized" forever and
+  // only started categorizing once the user manually added another item (the only
+  // path that primed the matcher). The fix auto-primes the matcher on mount when
+  // the active store has unlocated items, so the import itself triggers it.
+  //
+  // The model network is normally aborted by the offline-model fixture, which lets
+  // the worker fail fast — too fast to observe the loading window deterministically.
+  // Here we override that route to *hold* the model request so the matcher stays in
+  // its `loading` state, giving a stable "Categorizing…" window to assert against.
+  // (`status: 'loading'` is set synchronously on the main thread the instant the
+  // matcher primes, so its presence proves auto-prime fired — with the Add-item
+  // field never touched.)
+  test('imported items auto-categorize without any manual add', async ({ page }) => {
+    // Hold the model fetch open (overrides the fixture's abort) so the matcher
+    // stays in `loading` rather than failing fast.
+    await page.route(/huggingface\.co|hf\.co|cdn-lfs/, () => {
+      /* intentionally never resolved — keep the request pending */
+    });
+    await mockImportEndpoint(page);
+
+    await page.goto(`/import?url=${encodeURIComponent(RECIPE_URL)}`);
+    const commit = page.getByRole('button', { name: /add 3 items/i });
+    await expect(commit).toBeEnabled();
+    await commit.click();
+
+    // On the new list, the matcher auto-primes (no manual add): the imported items
+    // surface under "Categorizing…", never flashing under "Uncategorized".
+    await expect(page).toHaveURL(/\/lists\/[0-9a-f-]{36}/);
+    await expect(page.getByText('Categorizing…')).toBeVisible();
+    for (const name of NORMALIZED_NAMES) {
+      await expect(page.getByText(name, { exact: true })).toBeVisible();
+    }
+    await expect(page.getByText('Uncategorized')).toHaveCount(0);
+
+    // The Add-item field was never interacted with — it is still empty.
+    await expect(page.getByPlaceholder(/add an item/i)).toHaveValue('');
+  });
 });
