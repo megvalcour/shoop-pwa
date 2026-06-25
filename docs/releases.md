@@ -27,10 +27,10 @@ Shoop deploys automatically to Cloudflare Pages on every push to `main` via GitH
 
 In the GitHub repository go to **Settings → Secrets and variables → Actions** and add:
 
-| Secret name              | Value                                     |
-| ------------------------ | ----------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`   | Token created in step 2                   |
-| `CLOUDFLARE_ACCOUNT_ID`  | Found in the Cloudflare dashboard sidebar |
+| Secret name             | Value                                     |
+| ----------------------- | ----------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Token created in step 2                   |
+| `CLOUDFLARE_ACCOUNT_ID` | Found in the Cloudflare dashboard sidebar |
 
 ### 4. Recipe import — Pages Function setup (ADR-0019)
 
@@ -58,7 +58,7 @@ probe the bare path.
    function returns `401`, which the UI surfaces as "Recipe import isn't set up
    on this build yet."
 
-**b) Add a per-IP rate-limit rule.** This is **defense-in-depth #3** — the
+**b) (Deferred once on custom domain) Add a per-IP rate-limit rule.** This is **defense-in-depth #3** — the
 function fetches arbitrary URLs, so cap any single abuser well under the free
 plan's daily request quota.
 
@@ -84,12 +84,12 @@ The `.github/workflows/deploy.yaml` pipeline runs on every push to `main` with f
 validate → e2e-tests → release → build-and-deploy
 ```
 
-| Job               | What it does                                                                 |
-| ----------------- | ---------------------------------------------------------------------------- |
-| `validate`        | Runs `npm run validate` (typecheck + lint + Vitest unit tests)               |
-| `e2e-tests`       | Runs the full Playwright suite against a local dev server; uploads HTML report as a build artifact |
-| `release`         | Runs semantic-release: tags the version, bumps `package.json`, generates release notes |
-| `build-and-deploy`| Runs `npm run build`, then deploys `dist/` to Cloudflare Pages via Wrangler |
+| Job                | What it does                                                                                       |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| `validate`         | Runs `npm run validate` (typecheck + lint + Vitest unit tests)                                     |
+| `e2e-tests`        | Runs the full Playwright suite against a local dev server; uploads HTML report as a build artifact |
+| `release`          | Runs semantic-release: tags the version, bumps `package.json`, generates release notes             |
+| `build-and-deploy` | Runs `npm run build`, then deploys `dist/` to Cloudflare Pages via Wrangler                        |
 
 A deploy only lands if **both** `validate` and `e2e-tests` pass. A failure in either gate blocks the version tag and leaves the current production deployment untouched.
 
@@ -133,12 +133,12 @@ The invariant is enforced by `scripts/check-version-db-alignment.mjs`, which run
 
 ### Commit type → version bump
 
-| Commit type             | semver bump | DB_VERSION changes?              |
-| ----------------------- | ----------- | ------------------------------- |
-| `fix:` / `fix(scope):`  | patch       | no                              |
-| `feat:` / `feat(scope):`| minor       | yes, if `schema.ts` is touched  |
-| `feat(db):`             | minor       | yes (canonical schema-migration signal) |
-| `BREAKING CHANGE:` footer | major     | manual coordination required    |
+| Commit type               | semver bump | DB_VERSION changes?                     |
+| ------------------------- | ----------- | --------------------------------------- |
+| `fix:` / `fix(scope):`    | patch       | no                                      |
+| `feat:` / `feat(scope):`  | minor       | yes, if `schema.ts` is touched          |
+| `feat(db):`               | minor       | yes (canonical schema-migration signal) |
+| `BREAKING CHANGE:` footer | major       | manual coordination required            |
 
 **Schema migrations:** any PR that increments `DB_VERSION` in `schema.ts` **must**
 include at least one `feat:` commit — use `feat(db):` as the canonical scope.
