@@ -8,6 +8,7 @@ vi.mock('@/hooks/useListItems', () => ({
   useListItems: vi.fn(),
   useDeleteListItem: vi.fn(),
   useToggleListItem: vi.fn(),
+  useUpdateListItem: vi.fn(),
 }));
 
 vi.mock('@/hooks/useItems', () => ({
@@ -33,7 +34,7 @@ function makeWrapper() {
 }
 
 async function setup() {
-  const { useListItems, useDeleteListItem, useToggleListItem } = await import(
+  const { useListItems, useDeleteListItem, useToggleListItem, useUpdateListItem } = await import(
     '@/hooks/useListItems'
   );
   const { useItems, useItemLocations, useUpsertItemLocation } = await import('@/hooks/useItems');
@@ -46,6 +47,7 @@ async function setup() {
     useListItems: vi.mocked(useListItems),
     useDeleteListItem: vi.mocked(useDeleteListItem),
     useToggleListItem: vi.mocked(useToggleListItem),
+    useUpdateListItem: vi.mocked(useUpdateListItem),
     useItems: vi.mocked(useItems),
     useItemLocations: vi.mocked(useItemLocations),
     useUpsertItemLocation: vi.mocked(useUpsertItemLocation),
@@ -58,6 +60,7 @@ async function setup() {
 const mockMutate = vi.fn();
 const mockToggleMutate = vi.fn();
 const mockUpsertMutate = vi.fn();
+const mockUpdateMutate = vi.fn();
 
 const AISLE_DAIRY = {
   id: 'aisle-1',
@@ -87,6 +90,7 @@ describe('ShoppingListBuilder', () => {
     mockMutate.mockReset();
     mockToggleMutate.mockReset();
     mockUpsertMutate.mockReset();
+    mockUpdateMutate.mockReset();
     // Reset the ephemeral categorization store (a singleton) between tests.
     useCategorizationStore.setState({ status: 'idle', categorizingIds: new Set() });
   });
@@ -94,6 +98,7 @@ describe('ShoppingListBuilder', () => {
   function defaultMocks(mocks: Mocks) {
     mocks.useDeleteListItem.mockReturnValue({ mutate: mockMutate } as unknown as ReturnType<typeof mocks.useDeleteListItem>);
     mocks.useToggleListItem.mockReturnValue({ mutate: mockToggleMutate } as unknown as ReturnType<typeof mocks.useToggleListItem>);
+    mocks.useUpdateListItem.mockReturnValue({ mutate: mockUpdateMutate } as unknown as ReturnType<typeof mocks.useUpdateListItem>);
     mocks.useUpsertItemLocation.mockReturnValue({ mutate: mockUpsertMutate } as unknown as ReturnType<typeof mocks.useUpsertItemLocation>);
     mocks.useAisles.mockReturnValue({ data: [] } as unknown as ReturnType<typeof mocks.useAisles>);
     mocks.useItemLocations.mockReturnValue({ data: [] } as unknown as ReturnType<typeof mocks.useItemLocations>);
@@ -306,6 +311,47 @@ describe('ShoppingListBuilder', () => {
       itemId: 'item-1',
       storeId: 'store-1',
       aisleId: 'aisle-1',
+    });
+  });
+
+  it('renders an item unit and edits quantity via the list-item update mutation', async () => {
+    const mocks = await setup();
+    defaultMocks(mocks);
+
+    mocks.useListItems.mockReturnValue({
+      data: [
+        {
+          id: 'li-1',
+          list_id: 'list-1',
+          item_id: 'item-1',
+          quantity: 2,
+          unit: 'lbs',
+          checked: false,
+          added_from_default: false,
+        },
+      ],
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof mocks.useListItems>);
+
+    mocks.useItems.mockReturnValue({
+      data: [{ id: 'item-1', name: 'Beef', canonical_name: 'beef' }],
+    } as unknown as ReturnType<typeof mocks.useItems>);
+
+    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+
+    // The unit is rendered alongside the quantity.
+    expect(screen.getByText('2 lbs')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /edit quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    expect(mockUpdateMutate).toHaveBeenCalledWith({
+      id: 'li-1',
+      listId: 'list-1',
+      quantity: 3,
+      unit: 'lbs',
     });
   });
 

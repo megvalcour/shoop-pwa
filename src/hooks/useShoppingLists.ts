@@ -49,6 +49,7 @@ export function useCreateShoppingList() {
         list_id: record.id,
         item_id: entry.item_id,
         quantity: entry.quantity,
+        unit: entry.unit,
         checked: false,
         added_from_default: true,
         created_at: Date.now(),

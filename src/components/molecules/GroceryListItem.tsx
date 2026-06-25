@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Aisle } from '@/db/schema';
 import AislePickerSheet from '@/components/molecules/AislePickerSheet';
+import QuantitySheet from '@/components/molecules/QuantitySheet';
 import Badge from '@/components/atoms/Badge';
 import Spinner from '@/components/atoms/Spinner';
 import ListItemRow from '@/components/molecules/ListItemRow';
@@ -8,9 +9,12 @@ import ListItemRow from '@/components/molecules/ListItemRow';
 interface GroceryListItemProps {
   name: string;
   quantity: number;
+  unit?: string;
   checked?: boolean;
   onToggle?: () => void;
   onDelete?: () => void;
+  /** Wire up to make the quantity editable (stepper + optional unit). */
+  onQuantityChange?: (quantity: number, unit: string) => void;
   aisleLabel?: string;
   /** The matcher is actively working on this item — a status, not an action.
    *  Renders a non-interactive spinner badge; never under "Uncategorized". */
@@ -23,9 +27,11 @@ interface GroceryListItemProps {
 export default function GroceryListItem({
   name,
   quantity,
+  unit = '',
   checked = false,
   onToggle,
   onDelete,
+  onQuantityChange,
   aisleLabel,
   isCategorizing = false,
   aisles,
@@ -33,6 +39,7 @@ export default function GroceryListItem({
   onAisleChange,
 }: GroceryListItemProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [qtySheetOpen, setQtySheetOpen] = useState(false);
 
   // The aisle badge is tappable for unchecked items as long as the picker is
   // wired up — this includes settled-uncategorized items (the "Categorize" badge).
@@ -72,9 +79,13 @@ export default function GroceryListItem({
       <ListItemRow
         name={name}
         quantity={quantity}
+        unit={unit}
         checked={checked}
         onToggle={onToggle}
         onDelete={onDelete}
+        // Quantity is meaningful on done items too, so it stays editable
+        // regardless of checked state (unlike the aisle badge).
+        onQuantityClick={onQuantityChange ? () => setQtySheetOpen(true) : undefined}
         badge={badge}
       />
       {sheetOpen && aisles && onAisleChange && (
@@ -83,6 +94,14 @@ export default function GroceryListItem({
           currentAisleId={currentAisleId}
           onSelect={onAisleChange}
           onClose={() => setSheetOpen(false)}
+        />
+      )}
+      {qtySheetOpen && onQuantityChange && (
+        <QuantitySheet
+          quantity={quantity}
+          unit={unit}
+          onSave={onQuantityChange}
+          onClose={() => setQtySheetOpen(false)}
         />
       )}
     </>

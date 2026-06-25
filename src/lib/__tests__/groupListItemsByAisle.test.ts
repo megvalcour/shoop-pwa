@@ -29,6 +29,7 @@ function listItem(id: string, item_id: string, checked = false): ListItem {
     list_id: 'list-1',
     item_id,
     quantity: 1,
+    unit: '',
     checked,
     added_from_default: false,
     created_at: 0,

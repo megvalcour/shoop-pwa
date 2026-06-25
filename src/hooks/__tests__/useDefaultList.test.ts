@@ -78,7 +78,7 @@ describe('useAddDefaultListItem', () => {
     expect(milks).toHaveLength(1);
   });
 
-  it('is a no-op when the same item is added twice', async () => {
+  it('increments the existing entry (no duplicate) when the same item is added twice', async () => {
     const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
     const wrapper = makeWrapper();
     const { result } = renderHook(
@@ -89,11 +89,98 @@ describe('useAddDefaultListItem', () => {
 
     await act(() => result.current.add.mutateAsync('Bread'));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
-    await act(() => result.current.add.mutateAsync('bread'));
 
-    // Still one entry — dedupe by item_id.
-    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+    let second: { incremented: boolean } | undefined;
+    await act(async () => {
+      second = await result.current.add.mutateAsync('bread');
+    });
+
+    // Still one entry — dedupe by item_id — but its quantity went up by one.
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(2));
     expect(result.current.list.data).toHaveLength(1);
+    expect(second?.incremented).toBe(true);
+  });
+
+  it('preserves unit and notes when incrementing an existing entry', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    // A name guaranteed not to collide with the seeded catalog so resolveItem
+    // maps deterministically to our entry's item.
+    await db.add('items', { id: 'it-zorp', name: 'Zorpflour', canonical_name: 'zorpflour' });
+    await db.add('default_list', {
+      id: 'd-zorp',
+      item_id: 'it-zorp',
+      quantity: 2,
+      unit: 'cups',
+      notes: 'sifted',
+    });
+
+    vi.resetModules();
+    const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+
+    await act(() => result.current.add.mutateAsync('ZORPFLOUR'));
+
+    const entry = await db.get('default_list', 'd-zorp');
+    expect(entry).toMatchObject({ quantity: 3, unit: 'cups', notes: 'sifted' });
+  });
+});
+
+describe('useUpdateDefaultListItem', () => {
+  beforeEach(() => {
+    globalThis.indexedDB = new IDBFactory() as unknown as IDBFactory;
+    vi.resetModules();
+  });
+
+  it('persists quantity and unit while preserving notes', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('default_list', {
+      id: 'd-1',
+      item_id: 'it-1',
+      quantity: 1,
+      unit: '',
+      notes: 'keep me',
+    });
+
+    vi.resetModules();
+    const { useUpdateDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(() => useUpdateDefaultListItem(), { wrapper });
+
+    await act(() => result.current.mutateAsync({ id: 'd-1', quantity: 4, unit: 'oz' }));
+
+    const entry = await db.get('default_list', 'd-1');
+    expect(entry).toMatchObject({ quantity: 4, unit: 'oz', notes: 'keep me' });
+  });
+
+  it('optimistically updates the query then rolls back on error', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('default_list', { id: 'd-1', item_id: 'it-1', quantity: 1, unit: '', notes: '' });
+
+    vi.resetModules();
+    const { useDefaultList, useUpdateDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), update: useUpdateDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+
+    await act(() =>
+      result.current.update
+        .mutateAsync({ id: 'missing', quantity: 9, unit: 'oz' })
+        .catch(() => {}),
+    );
+
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(1));
+    expect(result.current.list.data?.[0].unit).toBe('');
   });
 });
 

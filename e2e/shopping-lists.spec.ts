@@ -149,6 +149,91 @@ test.describe('Item check-off', () => {
   });
 });
 
+test.describe('Item quantities', () => {
+  test('editing quantity + unit persists across reload and never toggles the row', async ({
+    page,
+  }) => {
+    // Seed a list with a pre-classified item so the row sits in a stable aisle
+    // group and the background classifier never re-buckets (and thus remounts)
+    // it mid-edit. Mirrors the seeding in smart-aisle-location.spec.ts.
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: /new list/i })).toBeVisible();
+
+    const listId = await page.evaluate(async () => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const req = indexedDB.open('shoop', 6);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      const id = crypto.randomUUID();
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(['shopping_lists', 'list_items'], 'readwrite');
+        tx.objectStore('shopping_lists').add({
+          id,
+          name: 'Quantity E2E',
+          created_at: new Date().toISOString(),
+        });
+        tx.objectStore('list_items').add({
+          id: crypto.randomUUID(),
+          list_id: id,
+          // 'Air Freshener' from the seeded oxford-62 catalog (pre-classified).
+          item_id: '7f547b35-7272-4997-b447-f2cce7a136df',
+          quantity: 1,
+          unit: '',
+          checked: false,
+          added_from_default: false,
+          created_at: Date.now(),
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      return id;
+    });
+
+    await page.goto(`/lists/${listId}`);
+    await expect(page.getByText('Air Freshener')).toBeVisible();
+
+    // Default render is the bare "×1".
+    await expect(page.getByRole('button', { name: /edit quantity/i })).toHaveText('×1');
+
+    await page.getByRole('button', { name: /edit quantity/i }).click();
+    await expect(page.getByText('Edit quantity')).toBeVisible();
+    await page.getByRole('button', { name: /increase quantity/i }).click();
+    await page.getByRole('button', { name: /increase quantity/i }).click();
+    await page.getByLabel('Unit').fill('cans');
+    await page.getByRole('button', { name: /^save$/i }).click();
+
+    await expect(page.getByText('3 cans')).toBeVisible();
+    // Tapping the quantity must never check the item off.
+    await expect(page.getByText('Air Freshener', { exact: true })).not.toHaveClass(/line-through/);
+
+    await page.reload();
+    await expect(page.getByText('3 cans')).toBeVisible();
+  });
+
+  test('adding an item already on the list (different casing) increments instead of duplicating', async ({
+    page,
+  }) => {
+    await page.goto('/settings');
+    await page.getByRole('button', { name: /new list/i }).click();
+    await expect(page).toHaveURL(/\/lists\//);
+
+    const input = page.getByPlaceholder(/add an item/i);
+    await input.fill('Apples');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+    await expect(page.getByRole('button', { name: /edit quantity/i })).toHaveText('×1');
+
+    await input.fill('apples');
+    await page.getByRole('button', { name: /^add$/i }).click();
+    await expect(input).toBeEnabled();
+
+    // One row, quantity bumped to 2 — no second Apples row.
+    await expect(page.getByText('Apples', { exact: true })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /edit quantity/i })).toHaveText('×2');
+  });
+});
+
 test.describe('AddItemForm', () => {
   test('renders input and submit button on list detail page', async ({ page }) => {
     await page.goto('/settings');
