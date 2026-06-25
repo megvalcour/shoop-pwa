@@ -216,7 +216,7 @@ describe('SettingsRoute', () => {
 
     await waitFor(() => expect(screen.queryByText('Wiped List')).not.toBeInTheDocument());
     expect(await db.count('shopping_lists')).toBe(0);
-    expect(await db.count('stores')).toBe(2);
+    expect(await db.count('stores')).toBe(3);
     expect(await db.count('items')).toBe(182);
   });
 });

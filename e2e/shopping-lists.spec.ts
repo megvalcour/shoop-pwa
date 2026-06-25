@@ -161,7 +161,7 @@ test.describe('Item quantities', () => {
 
     const listId = await page.evaluate(async () => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const req = indexedDB.open('shoop', 6);
+        const req = indexedDB.open('shoop', 7);
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });

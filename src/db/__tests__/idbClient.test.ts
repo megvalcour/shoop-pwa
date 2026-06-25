@@ -23,18 +23,39 @@ describe('idbClient', () => {
     ]);
   });
 
-  it('seeds both stores, the shared catalog, and per-store locations', async () => {
+  it('seeds all stores, the shared catalog, and per-store locations', async () => {
     const { dbPromise } = await import('@/db/idbClient');
     const db = await dbPromise;
-    expect(await db.count('stores')).toBe(2);
-    // 31 oxford aisles + 26 big-y aisles.
-    expect(await db.count('aisles')).toBe(57);
+    expect(await db.count('stores')).toBe(3);
+    // 31 oxford aisles + 26 big-y aisles + 21 general sections.
+    expect(await db.count('aisles')).toBe(78);
     // The catalog is shared and store-agnostic.
     expect(await db.count('items')).toBe(182);
-    // Per-store placements: 182 oxford + 182 big-y.
-    expect(await db.count('item_locations')).toBe(364);
+    // Per-store placements: 182 oxford + 182 big-y + 182 general.
+    expect(await db.count('item_locations')).toBe(546);
     const names = (await db.getAll('stores')).map((s) => s.name).sort();
-    expect(names).toEqual(['Big Y World Class Market', 'Oxford Market Basket #62']);
+    expect(names).toEqual([
+      'Big Y World Class Market',
+      'General Store',
+      'Oxford Market Basket #62',
+    ]);
+  });
+
+  it('seeds the General Store with its 21 sections in path order', async () => {
+    const { dbPromise, GENERAL_STORE_ID } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    const general = (await db.getAll('stores')).find((s) => s.slug === 'general');
+    expect(general).toMatchObject({ id: GENERAL_STORE_ID, name: 'General Store' });
+    const aisles = await db.getAllFromIndex('aisles', 'store_id', GENERAL_STORE_ID);
+    expect(aisles).toHaveLength(21);
+    const byOrder = [...aisles].sort((a, b) => a.sort_order - b.sort_order);
+    expect(byOrder[0].label).toBe('Produce');
+    expect(byOrder[20].label).toBe('Other');
+    expect(byOrder.map((a) => a.sort_order)).toEqual([...Array(21).keys()]);
+    // Every shared-catalog item is placed in this store.
+    expect(await db.getAllFromIndex('item_locations', 'store_id', GENERAL_STORE_ID)).toHaveLength(
+      182,
+    );
   });
 
   it('seeds the default active store preference', async () => {
@@ -62,9 +83,9 @@ describe('idbClient', () => {
 
     const { dbPromise: second } = await import('@/db/idbClient');
     const db = await second;
-    expect(await db.count('stores')).toBe(2);
+    expect(await db.count('stores')).toBe(3);
     expect(await db.count('items')).toBe(182);
-    expect(await db.count('item_locations')).toBe(364);
+    expect(await db.count('item_locations')).toBe(546);
   });
 
   it('upgrades from v1 to v4: creates the new stores and migrates as expected', async () => {
@@ -310,6 +331,72 @@ describe('idbClient', () => {
     expect(await db.count('list_items')).toBe(0);
   });
 
+  it('grafts the General Store into a populated v6 DB missing it', async () => {
+    const { openDB } = await import('idb');
+    // A v6-shaped DB carrying the two surveyed stores but no General Store.
+    const v6 = await openDB('shoop', 6, {
+      upgrade(db) {
+        db.createObjectStore('stores', { keyPath: 'id' });
+        const aisles = db.createObjectStore('aisles', { keyPath: 'id' });
+        aisles.createIndex('store_id', 'store_id');
+        db.createObjectStore('items', { keyPath: 'id' });
+        const il = db.createObjectStore('item_locations', { keyPath: 'id' });
+        il.createIndex('item_id', 'item_id');
+        il.createIndex('store_id', 'store_id');
+        db.createObjectStore('preferences', { keyPath: 'key' });
+        db.createObjectStore('default_list', { keyPath: 'id' });
+        db.createObjectStore('shopping_lists', { keyPath: 'id' });
+        const li = db.createObjectStore('list_items', { keyPath: 'id' });
+        li.createIndex('list_id', 'list_id');
+      },
+    });
+    await v6.add('stores', {
+      id: 'st-mb',
+      name: 'Oxford Market Basket #62',
+      address: '',
+      slug: 'oxford-62',
+    });
+    await v6.add('preferences', { key: 'active_store_id', value: 'st-mb' });
+    v6.close();
+
+    vi.resetModules();
+    const { dbPromise, GENERAL_STORE_ID } = await import('@/db/idbClient');
+    const db = await dbPromise;
+
+    const general = await db.get('stores', GENERAL_STORE_ID);
+    expect(general).toMatchObject({ slug: 'general', name: 'General Store' });
+    expect(await db.getAllFromIndex('aisles', 'store_id', GENERAL_STORE_ID)).toHaveLength(21);
+    expect(await db.getAllFromIndex('item_locations', 'store_id', GENERAL_STORE_ID)).toHaveLength(
+      182,
+    );
+    // The active-store preference is purely additive — left untouched.
+    expect((await db.get('preferences', 'active_store_id'))?.value).toBe('st-mb');
+  });
+
+  it('is idempotent: re-opening a v7 DB does not duplicate the General Store', async () => {
+    const { dbPromise: first, GENERAL_STORE_ID } = await import('@/db/idbClient');
+    const db1 = await first;
+    expect(await db1.getAllFromIndex('aisles', 'store_id', GENERAL_STORE_ID)).toHaveLength(21);
+
+    vi.resetModules();
+    const { dbPromise: second } = await import('@/db/idbClient');
+    const db2 = await second;
+    expect(await db2.getAllFromIndex('aisles', 'store_id', GENERAL_STORE_ID)).toHaveLength(21);
+    expect(await db2.getAllFromIndex('item_locations', 'store_id', GENERAL_STORE_ID)).toHaveLength(
+      182,
+    );
+  });
+
+  it('skips the v7 graft on a fresh install (seedDatabase populates it instead)', async () => {
+    // A fresh install reaches the v7 case with an empty stores store; the graft
+    // must no-op there so seedDatabase() can populate the full catalog. The end
+    // state still contains exactly one General Store.
+    const { dbPromise, GENERAL_STORE_ID } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    const generals = (await db.getAll('stores')).filter((s) => s.id === GENERAL_STORE_ID);
+    expect(generals).toHaveLength(1);
+  });
+
   describe('resetUserData', () => {
     it('clears all user data stores', async () => {
       const { dbPromise, resetUserData } = await import('@/db/idbClient');
@@ -370,7 +457,7 @@ describe('idbClient', () => {
         (l) => l.aisle_id === 'tampered-aisle',
       );
       expect(stillTampered).toBe(false);
-      expect(await db.count('item_locations')).toBe(364);
+      expect(await db.count('item_locations')).toBe(546);
       const restored = (await db.getAllFromIndex('item_locations', 'item_id', loc.item_id)).find(
         (l) => l.store_id === loc.store_id,
       );
@@ -385,10 +472,26 @@ describe('idbClient', () => {
 
       await resetUserData();
 
-      expect(await db.count('stores')).toBe(2);
-      expect(await db.count('aisles')).toBe(57);
+      expect(await db.count('stores')).toBe(3);
+      expect(await db.count('aisles')).toBe(78);
       const oxford = (await db.getAll('stores')).find((s) => s.slug === 'oxford-62')!;
       expect((await db.get('preferences', ACTIVE_STORE_ID_KEY))?.value).toBe(oxford.id);
+    });
+
+    it('restores the General Store along with the other seeded stores', async () => {
+      const { dbPromise, resetUserData, GENERAL_STORE_ID } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      // Drop the General Store entirely to prove reset re-seeds it.
+      await db.delete('stores', GENERAL_STORE_ID);
+      expect(await db.get('stores', GENERAL_STORE_ID)).toBeUndefined();
+
+      await resetUserData();
+
+      expect(await db.get('stores', GENERAL_STORE_ID)).toBeDefined();
+      expect(await db.getAllFromIndex('aisles', 'store_id', GENERAL_STORE_ID)).toHaveLength(21);
+      expect(
+        await db.getAllFromIndex('item_locations', 'store_id', GENERAL_STORE_ID),
+      ).toHaveLength(182);
     });
   });
 });

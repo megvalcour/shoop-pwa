@@ -1,7 +1,7 @@
 import type { DBSchema } from 'idb';
 
 export const DB_NAME = 'shoop';
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
 
 export interface Store {
   id: string;
