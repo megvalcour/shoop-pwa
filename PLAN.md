@@ -1,19 +1,15 @@
 ## Current Status
 
-feat: Recipe Import complete — Phase 5 shipped E2E coverage
-(`e2e/recipe-import.spec.ts`), full validation, build manifest check, and the
-Step 7.5 Cloudflare dashboard docs. Plan moved to
-`tasks/complete--recipe-import.md`.
+fix: Recipe-imported items now auto-categorize. Added a single auto-prime effect
+in `useItemClassification` that primes the matcher on mount when the active store
+has unlocated catalog items, so the import flow triggers classification without a
+manual add. Covered by extended unit tests and a new E2E case in
+`e2e/recipe-import.spec.ts`. Plan moved to
+`tasks/complete--recipe-import-categorization.md`.
 
 ## Active Task
 
-### Fix: Recipe-imported items don't auto-categorize
-
-Imported ingredients sit under "Uncategorized" until the user manually adds
-another item to the list, which is what triggers classification. Root cause:
-the matcher only primes on a deliberate `AddItemForm` blur/submit signal, which
-the import flow never produces. Fix auto-primes the matcher when the active
-store has unlocated items. Plan: `tasks/active--recipe-import-categorization.md`.
+_None — pick the next backlog item._
 
 ## Backlog
 

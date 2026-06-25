@@ -108,12 +108,27 @@ export function useItemClassification(): UseItemClassification {
     if (hasPrimed) prime();
   }, [hasPrimed, prime]);
 
+  // Auto-prime when the active store has unlocated catalog items, so items that
+  // arrived without a manual add-item signal (e.g. recipe import) get classified
+  // on mount. The existing deferred reclassify loop below — keyed on isReady
+  // flipping — then does the actual placement; no new classification logic.
+  // Preserves the "don't load the model for a fully-categorized list" optimization:
+  // a list with every item located never trips this (hasUnlocated is false).
+  const itemsReady = !!items;
+  useEffect(() => {
+    if (hasPrimed) return;
+    if (!activeStore || !itemsReady || !locationsReady) return;
+    const hasUnlocated = (items ?? []).some((item) => !locatedItemIds.has(item.id));
+    if (!hasUnlocated) return;
+    setHasPrimed(true);
+    prime();
+  }, [hasPrimed, activeStore, itemsReady, locationsReady, items, locatedItemIds, prime]);
+
   // When the model becomes ready (or the active store changes), classify any
   // catalog item lacking a location for the active store — the re-aisle premise:
   // a re-added existing item with no location at the new store must classify
   // there too. The write goes through the auto path, so an existing manual
   // location for that store is never overwritten.
-  const itemsReady = !!items;
   useEffect(() => {
     if (!isReady || !activeStore || !itemsReady || !locationsReady) return;
     const located = new Set((locations ?? []).map((l) => l.item_id));

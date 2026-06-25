@@ -239,6 +239,91 @@ describe('useItemClassification', () => {
     await waitFor(() => expect(storeActions.end).toHaveBeenCalledWith('i-bread'));
   });
 
+  it('auto-primes when the active store has an unlocated item, with no manual signal', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-bread', 'bread')], // unlocated at the active store
+      locations: [],
+    });
+    // Matcher not ready / not loading — only the auto-prime effect can fire here.
+    matcher.isReady = false;
+    matcher.status = 'idle';
+
+    const { queryClient } = makeRender();
+    await waitForLoaded(queryClient);
+
+    // Auto-prime fires for the active store without any blur/submit/add signal.
+    await waitFor(() => expect(matcher.prime).toHaveBeenCalledWith(STORE_ID));
+  });
+
+  it('auto-prime then matcher-ready classifies the unlocated item via the auto path', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-produce', '7')],
+      items: [item('i-bananas', 'bananas')], // unlocated → must auto-categorize
+      locations: [],
+    });
+    // Simulate the matcher already being ready: auto-prime fires AND the deferred
+    // reclassify loop (keyed on isReady) places the item — no manual add needed.
+    matcher.isReady = true;
+    matcher.status = 'ready';
+    matcher.classify.mockResolvedValue('a-produce');
+
+    const { queryClient } = makeRender();
+    await waitForLoaded(queryClient);
+
+    await waitFor(() => expect(matcher.prime).toHaveBeenCalledWith(STORE_ID));
+    await waitFor(async () => {
+      const rows = await (await dbPromise).getAllFromIndex('item_locations', 'item_id', 'i-bananas');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ store_id: STORE_ID, aisle_id: 'a-produce' });
+    });
+  });
+
+  it('does not auto-prime when every item is located (lazy-load preserved)', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-dairy', '1')],
+      items: [item('i-kefir', 'kefir')],
+      locations: [loc('i-kefir', 'a-dairy')], // fully categorized
+    });
+    matcher.isReady = false;
+    matcher.status = 'idle';
+
+    const { queryClient } = makeRender();
+    await waitForLoaded(queryClient);
+
+    // Give any effects a chance to run, then assert the model was never loaded.
+    await Promise.resolve();
+    expect(matcher.prime).not.toHaveBeenCalled();
+  });
+
+  it('auto-primes only once even as items/locations settle', async () => {
+    await seed({
+      stores: [store(STORE_ID, 'oxford-62')],
+      aisles: [aisle('a-produce', '7')],
+      items: [item('i-bananas', 'bananas')],
+      locations: [],
+    });
+    matcher.isReady = true;
+    matcher.status = 'ready';
+    matcher.classify.mockResolvedValue('a-produce');
+
+    const { queryClient } = makeRender();
+    await waitForLoaded(queryClient);
+
+    // After the item is placed it leaves the unlocated set; hasPrimed is latched
+    // so auto-prime never re-fires. prime() is still only ever called per the
+    // single auto-prime + idempotent keep-warm — not in a storm.
+    await waitFor(async () => {
+      const rows = await (await dbPromise).getAllFromIndex('item_locations', 'item_id', 'i-bananas');
+      expect(rows).toHaveLength(1);
+    });
+    // Every prime call targeted this store; no spurious re-prime against others.
+    for (const call of matcher.prime.mock.calls) expect(call[0]).toBe(STORE_ID);
+  });
+
   it('publishes the matcher status via setStatus', async () => {
     await seed({
       stores: [store(STORE_ID, 'oxford-62')],

@@ -1,7 +1,7 @@
 ---
 step: 8
 substep: 2
-status: active
+status: complete
 class: lightweight
 e2e_required: true
 ---
