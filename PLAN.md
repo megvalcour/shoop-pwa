@@ -1,30 +1,15 @@
 ## Current Status
 
-feat: Recipe Import Phase 4 — `/import` route + `RecipeImporter` organism +
-`ImportTargetPicker` molecule, Settings entry point (manual-paste fallback)
+feat: Recipe Import complete — Phase 5 shipped E2E coverage
+(`e2e/recipe-import.spec.ts`), full validation, build manifest check, and the
+Step 7.5 Cloudflare dashboard docs. Plan moved to
+`tasks/complete--recipe-import.md`.
 
 ## Active Task
 
 None.
 
 ## Backlog
-
-### Recipe Import · Phase 5 — E2E, validate & ship
-
-End-to-end coverage, full validation, and task close-out.
-
-- Plan: `tasks/active--recipe-import.md` (Steps 7, 8; note 7.5 is manual
-  dashboard config, not code).
-- Scope: `e2e/recipe-import.spec.ts` (navigate to `/import`, intercept and mock
-  `/api/import-recipe`, assert ingredients render, commit to a new list, land on
-  the list with items); run `npm run validate`, `npm run test:e2e`, and
-  `npm run build` (confirm `share_target` in emitted manifest); document the
-  Step 7.5 Cloudflare dashboard steps (`IMPORT_TOKEN`/`VITE_IMPORT_TOKEN`
-  binding, per-IP rate-limit rule) in `docs/releases.md`; on completion update
-  `PLAN.md` and rename the plan to `tasks/complete--recipe-import.md`.
-- Depends on: Phases 1–4.
-- Done when: CI green (validate + E2E); manifest check passes; task moved to
-  complete.
 
 ### Reconcile Diverged ADR (0008)
 
