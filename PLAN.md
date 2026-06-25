@@ -1,33 +1,13 @@
 ## Current Status
 
-feat: Recipe Import Phase 3 — client data hook (`useRecipeImport`) + ingredient
-normalizer (`normalizeIngredient`)
+feat: Recipe Import Phase 4 — `/import` route + `RecipeImporter` organism +
+`ImportTargetPicker` molecule, Settings entry point (manual-paste fallback)
 
 ## Active Task
 
 None.
 
 ## Backlog
-
-### Recipe Import · Phase 4 — Import screen & entry points
-
-The `/import` route, the `RecipeImporter` organism, the target picker, and a
-manual paste entry point so the feature works on iOS/desktop without share.
-
-- Plan: `tasks/active--recipe-import.md` (Steps 5–6)
-- Scope: add `{ path: 'import', element: <ImportRecipeRoute /> }` under
-  `AppShell` in `App.tsx`; `src/routes/ImportRecipeRoute.tsx` (derive URL from
-  `url` param, else first `https?://` token in `text`; manual-paste empty
-  state); `src/components/organisms/RecipeImporter.tsx` (loading/error/empty
-  states, ingredient checklist, target picker for New/Existing/Default list,
-  commit via existing `useCreateShoppingList` / `useAddListItem` / default-list
-  hooks then navigate); a manual "Import from recipe" entry point (NewListFab
-  menu or Settings). Reuse audit first: `Checkbox`, `Button`, `Input`,
-  `SelectionList`, `ItemEntryForm`/`EditableTitle`, shared modal/bottom-sheet
-  primitives.
-- Depends on: Phase 3 (hooks) and Phase 1 (share_target target route).
-- Done when: component/route unit tests green (hooks mocked); manual flow
-  reaches a list with items; `npm run validate` green.
 
 ### Recipe Import · Phase 5 — E2E, validate & ship
 

@@ -85,6 +85,17 @@ export default function SettingsRoute() {
       </section>
 
       <section className="px-4 pt-6">
+        <h2 className="font-display font-bold text-text text-lg mb-3">Import</h2>
+        <NavLink
+          to="/import"
+          className="flex items-center justify-between px-4 py-3 bg-surface rounded-xl text-text"
+        >
+          <span>Import from a recipe</span>
+          <FontAwesomeIcon icon={faChevronRight} className="text-text-muted text-sm" />
+        </NavLink>
+      </section>
+
+      <section className="px-4 pt-6">
         <h2 className="font-display font-bold text-text text-lg mb-3">About</h2>
         <AppVersionPanel
           version={APP_VERSION}
