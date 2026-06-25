@@ -17,10 +17,6 @@ the existing entry by one step instead of creating a second row. Works on the
 default list, shopping lists, and the recipe-import flow (dedup only). Plan:
 `tasks/active--item-quantities-dedup.md`.
 
-> Note: `tasks/complete--grocery-item-quantities.md` is an earlier cut of this
-> feature that was **never implemented** (code-verified) and is superseded by the
-> active plan above.
-
 ## Backlog
 
 ### Reconcile Diverged ADR (0008)

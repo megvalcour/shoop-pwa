@@ -12,17 +12,16 @@
 > parsed quantity/unit** (e.g. "2 cups flour" → qty 2, unit "cups") is broken out
 > to its own backlog task — see _Out of scope / Follow-ups_.
 
-## Background: a stale "complete" plan
+## Background: a stale "complete" plan (removed)
 
-`tasks/complete--grocery-item-quantities.md` describes an earlier cut of the
-quantity-editing feature, but it was **never implemented** (code-verified:
-`ListItem` has no `unit`, there is no `QuantitySheet`, no `formatQuantity`, no
-update mutation, and `ListItemRow` still renders static `×{quantity}`). Its
-assumptions are also stale (it says `DB_VERSION` is `4`; it is now `5`). That
-plan also explicitly listed *duplicate-add aggregation* as **out of scope** —
-which is precisely the behavior this task adds. This plan supersedes it. The
-old file should be renamed `tasks/backlog--grocery-item-quantities.md` (the name
-PLAN.md already points at) or removed; do not treat it as done.
+An earlier cut of the quantity-editing feature lived at
+`tasks/complete--grocery-item-quantities.md`, but it was **never implemented**
+(code-verified: `ListItem` has no `unit`, there is no `QuantitySheet`, no
+`formatQuantity`, no update mutation, and `ListItemRow` still renders static
+`×{quantity}`). Its assumptions were also stale (it said `DB_VERSION` was `4`;
+it is now `5`), and it explicitly listed *duplicate-add aggregation* as out of
+scope — precisely the behavior this task adds. That misleading file has been
+removed; this plan supersedes it.
 
 ## Problem
 
@@ -267,7 +266,6 @@ preserve `notes`.
 | `src/components/organisms/ShoppingListBuilder.tsx` | wire `useUpdateListItem`; pass `unit`/`onQuantityChange`. |
 | `src/components/organisms/DefaultListEditor.tsx` | wire `useUpdateDefaultListItem`; track edited entry; render sheet. |
 | `CLAUDE.md` | data-model: `list_items` gains `unit`. |
-| `tasks/complete--grocery-item-quantities.md` | rename to `backlog--…` or remove — never implemented, superseded by this plan. |
 
 ## Tests
 
