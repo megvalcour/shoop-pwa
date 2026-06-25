@@ -1,9 +1,9 @@
 ---
-step: 7
+step: 8
 substep: 1
-status: validating
+status: complete
 class: lightweight
-e2e_required: false
+e2e_required: true
 clarifications: |
   Phase 1 scope: ADR-0019 + share_target manifest only. No UI, no logic.
 ---

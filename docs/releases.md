@@ -32,6 +32,48 @@ In the GitHub repository go to **Settings → Secrets and variables → Actions*
 | `CLOUDFLARE_API_TOKEN`   | Token created in step 2                   |
 | `CLOUDFLARE_ACCOUNT_ID`  | Found in the Cloudflare dashboard sidebar |
 
+### 4. Recipe import — Pages Function setup (ADR-0019)
+
+Recipe import (`/import`) calls a Cloudflare Pages Function at
+`/api/import-recipe` (source: `functions/api/import-recipe.ts`). Pages picks up
+the `functions/` directory automatically — no extra build or `wrangler` config,
+and no `compatibility_date` is required. Two manual dashboard steps are needed to
+turn the feature on and protect the endpoint. These are deliberately **not**
+committed (the token is environment config, not a source secret), so they live
+here rather than in the repo.
+
+**a) Bind the shared import token.** The function rejects calls whose
+`X-Shoop-Import` header doesn't match the `IMPORT_TOKEN` env var, and the client
+sends that header from the build-time `VITE_IMPORT_TOKEN`. Both must hold the same
+value. This is **defense-in-depth #2** from ADR-0019 — it ships in the client
+bundle, so it is not a true secret; its job is only to drop drive-by scanners that
+probe the bare path.
+
+1. In the Cloudflare Pages project (**Workers & Pages → shoop-pwa → Settings →
+   Variables and Secrets**), add `IMPORT_TOKEN` for **both** Production and
+   Preview environments. Use a long random string (e.g. `openssl rand -hex 24`).
+2. Set the same value as `VITE_IMPORT_TOKEN` in the **build** environment so the
+   client and function agree. (Locally, copy `.env.example` to `.env.local` and
+   set `VITE_IMPORT_TOKEN` there — never commit it.) If the var is absent the
+   function returns `401`, which the UI surfaces as "Recipe import isn't set up
+   on this build yet."
+
+**b) Add a per-IP rate-limit rule.** This is **defense-in-depth #3** — the
+function fetches arbitrary URLs, so cap any single abuser well under the free
+plan's daily request quota.
+
+1. In the dashboard, open **Security → WAF → Rate limiting rules** (zone- or
+   Pages-scoped) → **Create rule**.
+2. Match requests where the URI path equals `/api/import-recipe`.
+3. Scope the counter **by client IP**, set a low threshold (≈ 20 requests / min),
+   and set the action to **Block** (or **Managed Challenge**).
+
+> The function is stateless, holds no secrets, and never touches IndexedDB, so
+> even a full compromise leaks nothing — the abuse ceiling is "import is
+> unavailable until the daily quota resets at 00:00 UTC," not a surprise bill
+> (the free plan hard-stops at quota with no overage billing). See ADR-0019 for
+> the full threat model.
+
 ---
 
 ## How Deploys Work
