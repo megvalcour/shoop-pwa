@@ -1,16 +1,6 @@
 ## Current Status
 
-feat: Item quantities + duplicate-add increment. Items now carry an integer
-quantity (stepper, min 1) plus an optional free-text unit, edited via a
-`QuantitySheet` molecule on both shopping lists and the default list and
-persisted through new optimistic update mutations. Adding an item whose name
-already exists (case-insensitive exact match) now increments the existing
-entry's quantity instead of creating a duplicate row — on manual add and recipe
-import alike. `ListItem` gained a `unit` field (`DB_VERSION` 5 → 6 with an
-append-only backfill); list seeding carries `unit` forward from the default.
-Covered by extended unit tests, a new `formatQuantity`/`QuantitySheet` suite, and
-two new E2E cases in `e2e/shopping-lists.spec.ts`. Plan moved to
-`tasks/complete--item-quantities-dedup.md`.
+docs: overhaul README with overview, live demo, features, quick start, badges, and links to docs/releases.md and ADRs. Plan moved to `tasks/complete--readme-overhaul.md`.
 
 ## Backlog
 
@@ -21,10 +11,6 @@ One accepted ADR has drifted from the codebase. A new superseding ADR is needed 
 - **ADR-0008 (design tokens / visual identity)** — The token _mechanism_ (CSS custom properties in Tailwind v4 `@theme`) still holds, but the documented identity is wrong. Title says "warm jewel-tone"; current `src/index.css` uses blue `--color-primary: #084887` (ADR: green `#1B3A2D`), `--color-accent: #F58A07` (ADR: `#D4783A`), and `Nunito` for both display and body fonts (ADR: Playfair Display + DM Sans). New ADR should record the current palette/typography and supersede 0008's identity table.
 
 Lower-priority stale _notes_ (no new ADR required; fix in place if/when touched): ADR-0005 references nonexistent `WeeklyListBuilder` (now `ShoppingListBuilder`); ADR-0011 references `oxford-62-aliases.json` (now `src/services/aisleAliases.ts`); ADR-0012's note "`useActiveStore` returns `stores[0]`, multi-store deferred" is superseded by ADR-0015 (Store Switcher now exists).
-
-### Documentation Audit
-
-- Update the readme to align with the current project. Include links to other documents as needed (such as releases.md)
 
 ### Recipe Import Quantities
 
