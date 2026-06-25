@@ -1,28 +1,13 @@
 ## Current Status
 
-feat: Recipe Import Phase 2 — serverless fetch/parse function (`/api/import-recipe`)
+feat: Recipe Import Phase 3 — client data hook (`useRecipeImport`) + ingredient
+normalizer (`normalizeIngredient`)
 
 ## Active Task
 
 None.
 
 ## Backlog
-
-### Recipe Import · Phase 3 — Client data hook + ingredient normalization
-
-The TanStack Query hook that calls the function, plus the pure normalizer that
-cleans raw ingredient strings into addable item names.
-
-- Plan: `tasks/active--recipe-import.md` (Steps 3–4)
-- Scope: `src/hooks/useRecipeImport.ts` (`useQuery` enabled only on a valid URL;
-  sends the `X-Shoop-Import` token from `VITE_IMPORT_TOKEN`; maps 400/401/422/502
-  to typed error states); `src/lib/normalizeIngredient.ts` (strip leading
-  quantity incl. unicode fractions/ranges, strip leading unit token, strip
-  trailing prep clauses, conservative raw-string fallback); document
-  `VITE_IMPORT_TOKEN` in `.env.example` (empty value); unit tests for both.
-- Depends on: Phase 2 (endpoint JSON contract).
-- Done when: `useRecipeImport` + `normalizeIngredient` unit tests green
-  (fetch mocked); `npm run validate` green.
 
 ### Recipe Import · Phase 4 — Import screen & entry points
 
