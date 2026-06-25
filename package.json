@@ -11,7 +11,6 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "verify:version": "node scripts/check-version-db-alignment.mjs",
     "validate": "npm run typecheck && npm run lint && npm run test",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
