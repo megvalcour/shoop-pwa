@@ -4,17 +4,95 @@ ci: Adds E2E testing to the CI/CD pipeline.
 
 ## Active Task
 
-### Recipe Import — Add to Grocery Lists from a Recipe
+### Recipe Import · Phase 1 — ADR + Share Target registration
 
-Register the PWA as a Web Share Target and add a manual import entry point.
-A first-party Cloudflare Pages Function fetches the shared recipe URL, extracts
-schema.org `Recipe` JSON-LD, and an import screen lets the user pick which
-ingredients to add and which list to add them to.
+Foundation for the Recipe Import feature: record the new server-side execution
+surface as an ADR and register the PWA as a Web Share Target. No user-facing
+import behavior yet.
 
-- Plan: `tasks/active--recipe-import.md`
-- New ADR-0019 required (first-party serverless fetch proxy).
+- Plan: `tasks/active--recipe-import.md` (Steps 0–1)
+- Scope: write `docs/adrs/0019-serverless-fetch-proxy-for-recipe-import.md`
+  (Accepted; threat model + why cheap defense-in-depth suffices); add the
+  `share_target` block to the `VitePWA.manifest` in `vite.config.ts`; route the
+  Android `text`-vs-`url` extraction note into the plan for Phase 4.
+- Done when: ADR committed; `npm run build` emits `share_target` in the
+  generated `manifest.webmanifest`; `npm run validate` green.
+
+> Full feature decomposed into 5 linear phases (Phase 1 active; Phases 2–5 at
+> the top of the backlog). All phases share the single master plan
+> `tasks/active--recipe-import.md`; each phase cites the step range it covers.
 
 ## Backlog
+
+### Recipe Import · Phase 2 — Serverless fetch/parse function
+
+Cloudflare Pages Function that fetches a recipe URL and extracts ingredients,
+with the parser isolated as a pure, network-free module.
+
+- Plan: `tasks/active--recipe-import.md` (Step 2)
+- Scope: `functions/api/import-recipe.ts` (thin handler: URL validation +
+  SSRF/private-IP guards, `X-Shoop-Import` token check against `IMPORT_TOKEN`,
+  `fetch` with UA + ~8s `AbortController` timeout + ~2 MB size cap + capped
+  redirects, typed status codes 400/401/422/502); pure
+  `functions/_lib/parseRecipeJsonLd.ts` `(html) => ParsedRecipe`; parser unit
+  tests covering the `recipeIngredient` array, legacy `ingredients`, `@graph`
+  wrapper, `@type`-as-array, multiple `ld+json` blocks, and no-recipe pages.
+- Depends on: Phase 1 (ADR records this surface).
+- Done when: parser unit tests green; handler returns
+  `{ title, ingredients, sourceUrl }` for fixtures; `npm run validate` green.
+
+### Recipe Import · Phase 3 — Client data hook + ingredient normalization
+
+The TanStack Query hook that calls the function, plus the pure normalizer that
+cleans raw ingredient strings into addable item names.
+
+- Plan: `tasks/active--recipe-import.md` (Steps 3–4)
+- Scope: `src/hooks/useRecipeImport.ts` (`useQuery` enabled only on a valid URL;
+  sends the `X-Shoop-Import` token from `VITE_IMPORT_TOKEN`; maps 400/401/422/502
+  to typed error states); `src/lib/normalizeIngredient.ts` (strip leading
+  quantity incl. unicode fractions/ranges, strip leading unit token, strip
+  trailing prep clauses, conservative raw-string fallback); document
+  `VITE_IMPORT_TOKEN` in `.env.example` (empty value); unit tests for both.
+- Depends on: Phase 2 (endpoint JSON contract).
+- Done when: `useRecipeImport` + `normalizeIngredient` unit tests green
+  (fetch mocked); `npm run validate` green.
+
+### Recipe Import · Phase 4 — Import screen & entry points
+
+The `/import` route, the `RecipeImporter` organism, the target picker, and a
+manual paste entry point so the feature works on iOS/desktop without share.
+
+- Plan: `tasks/active--recipe-import.md` (Steps 5–6)
+- Scope: add `{ path: 'import', element: <ImportRecipeRoute /> }` under
+  `AppShell` in `App.tsx`; `src/routes/ImportRecipeRoute.tsx` (derive URL from
+  `url` param, else first `https?://` token in `text`; manual-paste empty
+  state); `src/components/organisms/RecipeImporter.tsx` (loading/error/empty
+  states, ingredient checklist, target picker for New/Existing/Default list,
+  commit via existing `useCreateShoppingList` / `useAddListItem` / default-list
+  hooks then navigate); a manual "Import from recipe" entry point (NewListFab
+  menu or Settings). Reuse audit first: `Checkbox`, `Button`, `Input`,
+  `SelectionList`, `ItemEntryForm`/`EditableTitle`, shared modal/bottom-sheet
+  primitives.
+- Depends on: Phase 3 (hooks) and Phase 1 (share_target target route).
+- Done when: component/route unit tests green (hooks mocked); manual flow
+  reaches a list with items; `npm run validate` green.
+
+### Recipe Import · Phase 5 — E2E, validate & ship
+
+End-to-end coverage, full validation, and task close-out.
+
+- Plan: `tasks/active--recipe-import.md` (Steps 7, 8; note 7.5 is manual
+  dashboard config, not code).
+- Scope: `e2e/recipe-import.spec.ts` (navigate to `/import`, intercept and mock
+  `/api/import-recipe`, assert ingredients render, commit to a new list, land on
+  the list with items); run `npm run validate`, `npm run test:e2e`, and
+  `npm run build` (confirm `share_target` in emitted manifest); document the
+  Step 7.5 Cloudflare dashboard steps (`IMPORT_TOKEN`/`VITE_IMPORT_TOKEN`
+  binding, per-IP rate-limit rule) in `docs/releases.md`; on completion update
+  `PLAN.md` and rename the plan to `tasks/complete--recipe-import.md`.
+- Depends on: Phases 1–4.
+- Done when: CI green (validate + E2E); manifest check passes; task moved to
+  complete.
 
 ### Reconcile Diverged ADR (0008)
 
