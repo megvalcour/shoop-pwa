@@ -7,7 +7,13 @@ Step 7.5 Cloudflare dashboard docs. Plan moved to
 
 ## Active Task
 
-None.
+### Fix: Recipe-imported items don't auto-categorize
+
+Imported ingredients sit under "Uncategorized" until the user manually adds
+another item to the list, which is what triggers classification. Root cause:
+the matcher only primes on a deliberate `AddItemForm` blur/submit signal, which
+the import flow never produces. Fix auto-primes the matcher when the active
+store has unlocated items. Plan: `tasks/active--recipe-import-categorization.md`.
 
 ## Backlog
 
