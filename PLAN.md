@@ -1,29 +1,12 @@
 ## Current Status
 
-feat: Recipe Import Phase 1 — ADR-0019 + Web Share Target manifest
+feat: Recipe Import Phase 2 — serverless fetch/parse function (`/api/import-recipe`)
 
 ## Active Task
 
 None.
 
 ## Backlog
-
-### Recipe Import · Phase 2 — Serverless fetch/parse function
-
-Cloudflare Pages Function that fetches a recipe URL and extracts ingredients,
-with the parser isolated as a pure, network-free module.
-
-- Plan: `tasks/active--recipe-import.md` (Step 2)
-- Scope: `functions/api/import-recipe.ts` (thin handler: URL validation +
-  SSRF/private-IP guards, `X-Shoop-Import` token check against `IMPORT_TOKEN`,
-  `fetch` with UA + ~8s `AbortController` timeout + ~2 MB size cap + capped
-  redirects, typed status codes 400/401/422/502); pure
-  `functions/_lib/parseRecipeJsonLd.ts` `(html) => ParsedRecipe`; parser unit
-  tests covering the `recipeIngredient` array, legacy `ingredients`, `@graph`
-  wrapper, `@type`-as-array, multiple `ld+json` blocks, and no-recipe pages.
-- Depends on: Phase 1 (ADR records this surface).
-- Done when: parser unit tests green; handler returns
-  `{ title, ingredients, sourceUrl }` for fixtures; `npm run validate` green.
 
 ### Recipe Import · Phase 3 — Client data hook + ingredient normalization
 

@@ -68,7 +68,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['src/**/*.test.ts?(x)', 'scripts/**/*.test.ts?(x)'],
+    include: ['src/**/*.test.ts?(x)', 'scripts/**/*.test.ts?(x)', 'functions/**/*.test.ts?(x)'],
     setupFiles: ['./src/test-setup.ts'],
     alias: {
       // The virtual module only exists during dev/build; alias it to a stub so
