@@ -122,7 +122,7 @@ Cloudflare Pages retains all previous deployments. To roll back:
 
 ---
 
-## Versioning (ADR-0016)
+## Versioning (ADR-0017)
 
 Versioning is automated by [semantic-release](https://semantic-release.gitbook.io/),
 driven by the conventional commits already used in this repo. There is no manual
@@ -131,41 +131,34 @@ commits merged to `main`, decides the next version, tags it, generates release
 notes, and commits the bumped `package.json`/`package-lock.json` back to `main`
 with a `[skip ci]` trailer so the release commit does not retrigger the pipeline.
 
-### The invariant: `minor(appVersion) === DB_VERSION`
+### App semver and DB_VERSION are independent
 
-The semver **minor** component is pinned to `DB_VERSION` (the IndexedDB schema
-version in `src/db/schema.ts`). This makes the Settings → About panel meaningful:
-a user on `v1.5.2` is on **DB schema 5, patch 2 on top of it**. The patch
-component increments freely between schema migrations without disturbing the rule.
+App semver and `DB_VERSION` version independently — they answer different questions
+and obey different rules (see [ADR-0017](adrs/0017-decouple-semver-from-db-version.md)):
 
-The invariant is enforced by `scripts/check-version-db-alignment.mjs`, which runs:
+- **App semver** is a product-facing signal derived automatically by semantic-release
+  from conventional commits. It communicates user-visible change.
+- **`DB_VERSION`** is a private monotonic integer owned by `src/db/schema.ts`. Its
+  only job is to trigger the right `upgrade()` migration path in IndexedDB. It is
+  incremented by hand, in the same PR that adds the new migration case, and it never
+  resets.
 
-- locally via `npm run verify:version` (also folded into `npm run validate`), and
-- in CI as the **"Assert semver minor equals DB_VERSION"** step in the `validate`
-  job, before `npm run validate` — so drift fails the build before deploy.
+Both numbers are displayed in the Settings → About panel so users can report them
+for support.
 
 ### Commit type → version bump
 
-| Commit type               | semver bump | DB_VERSION changes?                     |
-| ------------------------- | ----------- | --------------------------------------- |
-| `fix:` / `fix(scope):`    | patch       | no                                      |
-| `feat:` / `feat(scope):`  | minor       | yes, if `schema.ts` is touched          |
-| `feat(db):`               | minor       | yes (canonical schema-migration signal) |
-| `BREAKING CHANGE:` footer | major       | manual coordination required            |
+| Commit type               | semver bump | `DB_VERSION` changes?                              |
+| ------------------------- | ----------- | -------------------------------------------------- |
+| `fix:` / `fix(scope):`    | patch       | no                                                 |
+| `feat:` / `feat(scope):`  | minor       | only if a migration is also added in the same PR   |
+| `feat(db):`               | minor       | yes (canonical scope for schema migrations)        |
+| `BREAKING CHANGE:` footer | major       | no — `DB_VERSION` never resets on a product major  |
 
-**Schema migrations:** any PR that increments `DB_VERSION` in `schema.ts` **must**
-include at least one `feat:` commit — use `feat(db):` as the canonical scope.
-semantic-release bumps the minor from `N` to `N+1`, and the alignment check
-confirms `minor(new version) === new DB_VERSION`. If you forget the `feat:` prefix,
-semantic-release emits only a patch and the invariant check fails CI, catching it.
-
-**Deliberate major bump:** a true major (large user-facing redesign) is rare and
-handled manually — the release manager resets `minor` to `0` and sets `DB_VERSION`
-to match via a migration in `schema.ts`/`idbClient.ts`, keeping the invariant.
-
-### Reading a version
-
-`v1.5.2` → **DB schema 5**, second patch release on top of that schema.
+**Schema migrations:** any PR that increments `DB_VERSION` in `schema.ts` must
+include at least one `feat:` commit (use `feat(db):` as the canonical scope). The
+CI `validate` job enforces this as a visibility floor — if `DB_VERSION` changed but
+no `feat`-level commit is present, the build fails before deploy.
 
 ### Pipeline ordering
 

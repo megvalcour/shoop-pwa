@@ -74,7 +74,6 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run test` | Vitest unit tests |
 | `npm run test:e2e` | Playwright end-to-end tests |
 | `npm run format:check` | Prettier formatting check |
-| `npm run verify:version` | Assert semver minor matches DB schema version |
 
 > `npm run validate` does **not** run the Playwright suite. Run `test:e2e` separately to confirm UI and offline behavior.
 
