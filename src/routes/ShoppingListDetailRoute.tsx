@@ -39,7 +39,7 @@ export default function ShoppingListDetailRoute() {
       <EditableTitle
         value={list.name}
         onSave={(name) => renameList.mutate({ id, name })}
-        className="font-body text-base font-medium text-text-muted mb-4 text-left"
+        className="font-body text-base font-medium text-text-muted mb-3 text-left"
       />
       <AddItemForm listId={id} />
       <ShoppingListBuilder listId={id} />
