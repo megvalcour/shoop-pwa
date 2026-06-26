@@ -1,6 +1,6 @@
 ## Current Status
 
-- docs:
+- docs: Updates readme with streamlined feature list, workflow and release conventions.
 
 ## Backlog
 
