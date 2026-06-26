@@ -44,7 +44,7 @@ clarifications: |
 
 ## Step 1 — Orient & Resume
 
-1. Read `CLAUDE.md` to load project conventions.
+1. Read `AGENTS.md` to load project conventions.
 2. Read `PLAN.md` to understand current project status.
 3. Check `tasks/` for any existing `active--*.md` file.
     - **If an active task exists:** Surface it, ask the user if you should resume it. If approved, read the frontmatter to determine exactly which `step` and `substep` was last completed, and which `class` applies. Resume execution at the next logical substep, skipping any gates the class does not require.
@@ -81,7 +81,7 @@ _For Lightweight tasks, these questions may be brief or skipped entirely if scop
 
 ## Step 4 — Write the Plan
 
-Using the user's answers and `CLAUDE.md`:
+Using the user's answers and `AGENTS.md`:
 
 1. Identify any ADRs that constrain this feature. List them at the top of the plan under **Relevant ADRs**.
 2. Use Context7 MCP to pull up-to-date docs **only for the specific library modules** you will touch. Do not re-fetch docs for libraries already loaded earlier in this session.
@@ -120,7 +120,7 @@ Using the user's answers and `CLAUDE.md`:
 
 1. Execute the steps in `tasks/active--<feature-name>.md` in exact order.
 2. **After completing each checkbox**, immediately update the file: check it off, and update frontmatter `substep` to match. Do not batch these writes.
-3. Follow all `CLAUDE.md` conventions strictly.
+3. Follow all `AGENTS.md` conventions strictly.
 4. If any migrations were added, pause and ask the user to run them before proceeding.
 5. Once all implementation checkboxes are done, update frontmatter: `step: 6`, `status: validating`. Append to plan body: `**Status**: Implementation done. Ready for validation.`
 6. Ask "Implementation complete. Are you ready to validate?"
