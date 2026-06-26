@@ -1,12 +1,6 @@
 ## Current Status
 
-No active task. Pick the next item from the backlog below.
-
-Previously: built-in "General Store" — a store seeded with generic grocery
-sections for shopping anywhere not yet loaded; appears under Your Stores, is
-switchable, reorderable, re-aisles lists, and uses a Font Awesome (carrot) logo.
-`tasks/complete--general-store.md`. Before that: docs README overhaul,
-`tasks/complete--readme-overhaul.md`.
+- docs:
 
 ## Backlog
 

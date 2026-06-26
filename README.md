@@ -9,9 +9,15 @@
 
 # Shoop
 
-A personal progressive web app for managing a weekly grocery shopping list — organized by store aisle, works fully offline, and lives on your home screen.
+Shoop is a personal progressive web app for smart creation, organization, and management of your shopping lists. It leverages browser storage and serverless functions to make a lightning-fast user experience that works online and off.
 
-Shoop is built for one person and one phone. There is no account, no server, and no sync — all data is stored locally in IndexedDB. Add items, check them off as you shop, and import recipes to populate your list automatically.
+Features include:
+
+- Auto-sort your items into aisles for easier shopping (leverages a tiny, in-browser LLM via `@huggingface/transformers`)
+- Share recipes online to Shoop to auto-add ingredients into your next shopping list.
+- Multi-store suport - switch between stores and your list carries over.
+- Sort store aisles and departments so your list mimics how you personally walk to store.
+- Autopopulate lists with default items to capture those things you buy every time.
 
 ---
 
@@ -26,9 +32,8 @@ The app is installable as a PWA: in Chrome/Safari, open the link and choose "Add
 ## Quick Start
 
 **Prerequisites**
-- Node.js 18 or later
-- npm 9 or later
-- Git
+
+- Node.js v20
 
 **1. Clone the repository**
 
@@ -51,29 +56,39 @@ cp .env.example .env.local
 
 The only variable required for local development is `VITE_IMPORT_TOKEN`. You can leave it empty to disable recipe import, or set it to any string to enable the feature locally. See [`docs/releases.md`](docs/releases.md) for production setup details.
 
+## Git Workflow
+
+Development happens directly on `main` or via short-lived feature branches.
+
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — every subject is `type: description` (e.g. `feat: add multi-store toggle`). The type drives automated versioning: `feat` cuts a minor release, `fix` cuts a patch, and a `BREAKING CHANGE` footer cuts a major.
+
+## Releases
+
+**Production deployment** runs automatically: merges to `main` trigger GitHub Actions, which uses `semantic-release` to derive a semver version from Conventional Commits, tags the release, and deploys to Cloudflare Pages.
+
+See [`docs/releases.md`](docs/releases.md) for the full pipeline details.
+
 **4. Start the dev server**
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
 ---
 
 ## Available Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start the Vite dev server with HMR |
-| `npm run build` | Typecheck + production build |
-| `npm run preview` | Serve the production build locally |
-| `npm run validate` | Typecheck + lint + unit tests (one shot) |
-| `npm run typecheck` | TypeScript type checking only |
-| `npm run lint` | ESLint |
-| `npm run test` | Vitest unit tests |
-| `npm run test:e2e` | Playwright end-to-end tests |
-| `npm run format:check` | Prettier formatting check |
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `npm run dev`          | Start the Vite dev server with HMR       |
+| `npm run build`        | Typecheck + production build             |
+| `npm run preview`      | Serve the production build locally       |
+| `npm run validate`     | Typecheck + lint + unit tests (one shot) |
+| `npm run typecheck`    | TypeScript type checking only            |
+| `npm run lint`         | ESLint                                   |
+| `npm run test`         | Vitest unit tests                        |
+| `npm run test:e2e`     | Playwright end-to-end tests              |
+| `npm run format:check` | Prettier formatting check                |
 
 > `npm run validate` does **not** run the Playwright suite. Run `test:e2e` separately to confirm UI and offline behavior.
 
@@ -81,48 +96,12 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Documentation
 
-| Doc | Purpose |
-|---|---|
-| [`docs/releases.md`](docs/releases.md) | CI/CD pipeline, deployment, versioning, and semantic-release setup |
-| [`docs/adrs/`](docs/adrs/) | Architecture Decision Records — the why behind every major technical choice |
-| [`docs/prd/`](docs/prd/) | Original product requirements |
-| [`PLAN.md`](PLAN.md) | Current development status and backlog |
-
----
-
-## Features
-
-### Default List
-Maintain a standing list of items you buy regularly. Items are grouped by aisle automatically. Add new items by typing a description — the in-browser AI (HuggingFace `all-MiniLM-L6-v2` via WASM) classifies the item into the right aisle without any network call.
-
-### Shopping Lists
-Create on-demand shopping lists with a single tap. Seed a new list from your default list in one action, then add one-off items on the fly. Each list is independent — start a new one each trip without disturbing the last.
-
-### Smart Aisle Matching
-Semantic embedding model runs fully in-browser via WebAssembly. No API key, no network required after the model is cached. Layered matching (aliases → embeddings) keeps common items snappy.
-
-### AI-Powered Recipe Import
-Paste a recipe URL and Shoop extracts the ingredient list, classifies each item into an aisle, and adds everything to your active shopping list. Duplicate items increment quantity rather than creating a second row.
-
-### Item Quantities & Units
-Every item carries an integer quantity and an optional free-text unit (e.g. "2 cups"). A quantity stepper is available on both the default list and shopping lists. Adding a duplicate item — manually or via recipe import — increments the existing entry instead of creating a duplicate.
-
-### Multi-Store Support
-Switch between stores from the navigation bar. Each store has its own aisle layout. New stores can be added or configured from Settings. Items are scoped to their store.
-
-### Manual Aisle Override
-When the AI gets it wrong, override the aisle assignment inline. Drag-and-drop reordering is also available to arrange aisles to match how you actually walk the store.
-
-### Shopping View
-Items are displayed in aisle order — the order you encounter them in the store. Tap an item to check it off instantly (optimistic update, no spinner). Checked items collapse. Everything persists locally.
-
-### PWA Lifecycle
-Installable on iOS and Android. Service worker precaches all static assets and the HuggingFace model weights so the app functions identically online or off. Background updates are delivered silently.
-
-### Settings
-- Manage stores (add, rename, delete)
-- Reset the app to a clean state
-- View app version and DB schema version
+| Doc                                    | Purpose                                                                     |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| [`docs/releases.md`](docs/releases.md) | CI/CD pipeline, deployment, versioning, and semantic-release setup          |
+| [`docs/adrs/`](docs/adrs/)             | Architecture Decision Records — the why behind every major technical choice |
+| [`docs/prd/`](docs/prd/)               | Original product requirements                                               |
+| [`PLAN.md`](PLAN.md)                   | Current development status and backlog                                      |
 
 ---
 
