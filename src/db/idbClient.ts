@@ -239,6 +239,18 @@ async function upgrade(
       for (const loc of generalSeed.item_locations) tx.objectStore('item_locations').add(loc);
     }
   }
+
+  if (oldVersion < 8) {
+    // Update the General Store subtitle from "Common grocery layout" to
+    // "Any ol' store" on existing installs. This is a non-breaking data fixup
+    // (no schema change). Fresh installs pick up the updated address from the
+    // seed JSON directly and skip this via the empty-stores guard in seedDatabase.
+    const storesStore = tx.objectStore('stores');
+    const general = await storesStore.get(GENERAL_STORE_ID);
+    if (general) {
+      await storesStore.put({ ...general, address: 'Any ol\' store' });
+    }
+  }
 }
 
 async function seedDatabase(db: IDBPDatabase<ShoopDB>): Promise<void> {

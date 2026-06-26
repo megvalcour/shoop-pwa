@@ -9,7 +9,12 @@ export function useStores() {
     queryKey: QUERY_KEY,
     queryFn: async () => {
       const db = await dbPromise;
-      return db.getAll('stores');
+      const stores = await db.getAll('stores');
+      return stores.sort((a, b) => {
+        if (a.slug === 'general') return 1;
+        if (b.slug === 'general') return -1;
+        return 0;
+      });
     },
   });
 }
