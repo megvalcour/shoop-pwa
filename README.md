@@ -1,6 +1,6 @@
 [![Version](https://img.shields.io/github/v/release/megvalcour/shoop-pwa?sort=semver&style=flat-square&label=version&color=084887)](https://github.com/megvalcour/shoop-pwa/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/megvalcour/shoop-pwa/deploy.yaml?branch=main&style=flat-square&label=CI)](https://github.com/megvalcour/shoop-pwa/actions/workflows/deploy.yaml)
-![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/megvalcour/__COVERAGE_GIST_ID__/raw/shoop-coverage.json&style=flat-square)
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/megvalcour/2774b806c9efd2fd5dad92f904017621/raw/shoop-coverage.json&style=flat-square)
 ![React](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/react?style=flat-square&logo=react&logoColor=white&label=React&color=61dafb)
 ![TypeScript](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/dev/typescript?style=flat-square&logo=typescript&logoColor=white&label=TypeScript&color=3178c6)
 ![Vite](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/dev/vite?style=flat-square&logo=vite&logoColor=white&label=Vite&color=646cff)
