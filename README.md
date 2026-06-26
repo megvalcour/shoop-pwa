@@ -1,11 +1,10 @@
-![Version](https://img.shields.io/badge/version-1.15.0-084887?style=flat-square)
-![PWA](https://img.shields.io/badge/PWA-ready-5a0fc8?style=flat-square&logo=pwa&logoColor=white)
-![Offline First](https://img.shields.io/badge/offline-first-22c55e?style=flat-square)
-![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-7-646cff?style=flat-square&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06b6d4?style=flat-square&logo=tailwindcss&logoColor=white)
-![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare_Pages-deployed-f38020?style=flat-square&logo=cloudflare&logoColor=white)
+[![Version](https://img.shields.io/github/v/release/megvalcour/shoop-pwa?sort=semver&style=flat-square&label=version&color=084887)](https://github.com/megvalcour/shoop-pwa/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/megvalcour/shoop-pwa/deploy.yaml?branch=main&style=flat-square&label=CI)](https://github.com/megvalcour/shoop-pwa/actions/workflows/deploy.yaml)
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/megvalcour/2774b806c9efd2fd5dad92f904017621/raw/shoop-coverage.json&style=flat-square)
+![React](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/react?style=flat-square&logo=react&logoColor=white&label=React&color=61dafb)
+![TypeScript](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/dev/typescript?style=flat-square&logo=typescript&logoColor=white&label=TypeScript&color=3178c6)
+![Vite](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/dev/vite?style=flat-square&logo=vite&logoColor=white&label=Vite&color=646cff)
+![Tailwind CSS](https://img.shields.io/github/package-json/dependency-version/megvalcour/shoop-pwa/tailwindcss?style=flat-square&logo=tailwindcss&logoColor=white&label=Tailwind%20CSS&color=06b6d4)
 
 # Shoop
 
