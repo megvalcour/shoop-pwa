@@ -1,7 +1,7 @@
 ---
-step: 5
-substep: 3
-status: plan_review
+step: 6
+substep: 6
+status: validating
 class: lightweight
 e2e_required: false
 clarifications: |
@@ -30,13 +30,13 @@ clarifications: |
 
 ## Implementation Checklist
 
-- [ ] **1. Update seed JSON** — In `src/assets/aisles/general.json`, change `"address": "Common grocery layout"` → `"address": "Any ol' store"`.
+- [x] **1. Update seed JSON** — In `src/assets/aisles/general.json`, change `"address": "Common grocery layout"` → `"address": "Any ol' store"`.
 
-- [ ] **2. Sort General Store last in `useStores`** — In `src/hooks/useStores.ts`, after `db.getAll('stores')`, sort so any store with `slug === 'general'` sorts to the end. All other stores retain their relative order.
+- [x] **2. Sort General Store last in `useStores`** — In `src/hooks/useStores.ts`, after `db.getAll('stores')`, sort so any store with `slug === 'general'` sorts to the end. All other stores retain their relative order.
 
-- [ ] **3. Add DB migration** — In `src/db/idbClient.ts`, bump `DB_VERSION` by 1 and add a new `if (oldVersion < N)` case inside `upgrade()` that finds the General Store by its known UUID and updates its `address` to `"Any ol' store"`. This fixes existing installations. (Confirm with user that this is a non-breaking change before making the `feat:` commit.)
+- [x] **3. Add DB migration** — In `src/db/idbClient.ts`, bump `DB_VERSION` by 1 and add a new `if (oldVersion < N)` case inside `upgrade()` that finds the General Store by its known UUID and updates its `address` to `"Any ol' store"`. This fixes existing installations. (Confirm with user that this is a non-breaking change before making the `feat:` commit.)
 
-- [ ] **4. Smoke test** — Verify in the running app that:
+- [x] **4. Smoke test** — Verify in the running app that:
   - Settings → store list shows General Store last.
   - Store Switcher sheet shows General Store last.
   - General Store subtitle reads "Any ol' store" in both places.
@@ -54,3 +54,5 @@ clarifications: |
 - **Implementation note**: The v8 migration should use the `GENERAL_STORE_ID` constant already exported from `idbClient.ts` (used in the v7 case) rather than an inline UUID string.
 
 **Review**: Approved by fresh session. Ready to implement.
+
+**Status**: Implementation done. Ready for validation.
