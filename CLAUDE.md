@@ -114,8 +114,8 @@ Canonical TypeScript interfaces for these shapes live in `src/db/schema.ts`.
 
 ## Commit Conventions
 
-- **All commits MUST follow [Conventional Commits](https://www.conventionalcommits.org/).** Every commit subject is `type(scope): description`, where `type` is one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, or `revert`. Use `!` after the type/scope (or a `BREAKING CHANGE:` footer) for breaking changes. `semantic-release` derives the version bump from these messages, so a non-conventional subject ships no release.
-- **Schema migrations must be `feat`-level.** When a commit bumps `DB_VERSION`, it MUST be a `feat(db): …` commit (or otherwise carry a `feat`-level commit in the merge range). CI enforces this (ADR-0017): a `DB_VERSION` bump with no `feat:` commit in the range fails the build so a migration can never ship as a silent patch.
+- **All commits MUST follow [Conventional Commits](https://www.conventionalcommits.org/).** Every commit subject is `type: description`, where `type` is one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, or `revert`. Use `!` after the type (or a `BREAKING CHANGE:` footer) for breaking changes. `semantic-release` derives the version bump from these messages, so a non-conventional subject ships no release.
+- **Schema migrations must be `feat`-level.** When a commit bumps `DB_VERSION`, it MUST be a `feat: …` commit; ask the user if this is a breaking change prior to committing. CI enforces this (ADR-0017): a `DB_VERSION` bump with no `feat:` commit in the range fails the build so a migration can never ship as a silent patch.
 
 ## Coding Conventions
 
