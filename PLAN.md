@@ -1,6 +1,10 @@
+## Active Task
+
+- general-store-reorder: Move General Store to bottom of store list; change subtitle to "Any ol' store".
+
 ## Current Status
 
-- docs: Updates readme with streamlined feature list, workflow and release conventions.
+- chore: Mark README badges automation task as complete.
 
 ## Backlog
 
