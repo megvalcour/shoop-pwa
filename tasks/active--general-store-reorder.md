@@ -1,7 +1,7 @@
 ---
-step: 4
-substep: 4
-status: planning
+step: 5
+substep: 3
+status: plan_review
 class: lightweight
 e2e_required: false
 clarifications: |
@@ -51,3 +51,6 @@ clarifications: |
 
 - The `DB_VERSION` bump is the only structurally non-trivial step. It is a non-breaking data fixup (no schema change, no object store or index modifications). Confirm with user before the `feat:` commit.
 - If the user clears their IndexedDB between now and deployment, the migration is moot — the fresh seed will already have the updated address.
+- **Implementation note**: The v8 migration should use the `GENERAL_STORE_ID` constant already exported from `idbClient.ts` (used in the v7 case) rather than an inline UUID string.
+
+**Review**: Approved by fresh session. Ready to implement.
