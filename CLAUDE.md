@@ -112,6 +112,11 @@ Canonical TypeScript interfaces for these shapes live in `src/db/schema.ts`.
 - If a task is ambiguous, ask for clarification before proceeding.
 - When editing components, check if existing **Atoms** or **Molecules** can be reused before creating new ones.
 
+## Commit Conventions
+
+- **All commits MUST follow [Conventional Commits](https://www.conventionalcommits.org/).** Every commit subject is `type(scope): description`, where `type` is one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, or `revert`. Use `!` after the type/scope (or a `BREAKING CHANGE:` footer) for breaking changes. `semantic-release` derives the version bump from these messages, so a non-conventional subject ships no release.
+- **Schema migrations must be `feat`-level.** When a commit bumps `DB_VERSION`, it MUST be a `feat(db): …` commit (or otherwise carry a `feat`-level commit in the merge range). CI enforces this (ADR-0017): a `DB_VERSION` bump with no `feat:` commit in the range fails the build so a migration can never ship as a silent patch.
+
 ## Coding Conventions
 
 - **Entity IDs:** Always generate with `crypto.randomUUID()`. All `id` fields across every object store are `string` (UUID v4). Never use auto-increment integers or any other ID scheme.
