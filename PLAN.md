@@ -1,3 +1,7 @@
+## Active Task
+
+- general-store-reorder: Move General Store to bottom of store list; change subtitle to "Any ol' store".
+
 ## Current Status
 
 - chore: Mark README badges automation task as complete.
