@@ -1,6 +1,6 @@
 ## Current Status
 
-- docs: Updates readme with streamlined feature list, workflow and release conventions.
+- chore: Mark README badges automation task as complete.
 
 ## Backlog
 
