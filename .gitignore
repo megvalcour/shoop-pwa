@@ -18,6 +18,9 @@ dev-dist
 /playwright-report/
 /playwright/.cache/
 
+# Vitest coverage output
+/coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

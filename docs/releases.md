@@ -87,14 +87,43 @@ plan's daily request quota.
 > (the free plan hard-stops at quota with no overage billing). See ADR-0019 for
 > the full threat model.
 
+### 5. Coverage badge — Gist setup
+
+The README test-coverage badge is rendered by shields.io from a **public Gist**
+that the CI `coverage` job rewrites on every push to `main`. The Gist is the
+public read surface (shields reads it anonymously), while CI writes to it with a
+scoped token — so the badge stays live even though it's driven by Actions. These
+steps are one-time and, like the Cloudflare token, are environment config rather
+than source secrets, so they live here.
+
+1. **Create the Gist.** Logged in as the repo owner, create a **public** Gist at
+   [gist.github.com](https://gist.github.com) with a single file named
+   `shoop-coverage.json` (any placeholder contents — CI overwrites it). Copy the
+   Gist **ID** from its URL (`https://gist.github.com/megvalcour/<GIST_ID>`).
+2. **Create a token.** Create a **classic** Personal Access Token with the single
+   `gist` scope (no repo access needed). In the repo go to **Settings → Secrets
+   and variables → Actions → Secrets** and add it as `GIST_SECRET`.
+3. **Expose the Gist ID to CI.** On the same page under **Variables**, add a repo
+   **variable** named `COVERAGE_GIST_ID` set to the Gist ID from step 1.
+4. **Point the README at the Gist.** Replace `__COVERAGE_GIST_ID__` in the
+   `README.md` coverage badge URL with the Gist ID.
+
+Until these are done the coverage badge shows "invalid"; every other badge
+(version, CI, tech stack) works with no setup because the repo is public and
+shields.io reads it directly. The `coverage` job runs in parallel and is **not**
+in any deploy job's `needs`, so a missing secret or a failed push can never block
+a release.
+
 ---
 
 ## How Deploys Work
 
-The `.github/workflows/deploy.yaml` pipeline runs on every push to `main` with four sequential jobs:
+The `.github/workflows/deploy.yaml` pipeline runs on every push to `main`. Four
+jobs form the sequential deploy chain, plus a parallel `coverage` job:
 
 ```
 validate → e2e-tests → release → build-and-deploy
+coverage  (parallel, non-gating)
 ```
 
 | Job                | What it does                                                                                       |
@@ -103,6 +132,7 @@ validate → e2e-tests → release → build-and-deploy
 | `e2e-tests`        | Runs the full Playwright suite against a local dev server; uploads HTML report as a build artifact |
 | `release`          | Runs semantic-release: tags the version, bumps `package.json`, generates release notes             |
 | `build-and-deploy` | Runs `npm run build`, then deploys `dist/` to Cloudflare Pages via Wrangler                        |
+| `coverage`         | Runs `vitest --coverage` and pushes the line % to the badge Gist (see setup step 5); not in the deploy chain |
 
 A deploy only lands if **both** `validate` and `e2e-tests` pass. A failure in either gate blocks the version tag and leaves the current production deployment untouched.
 

@@ -70,6 +70,14 @@ export default defineConfig({
     environment: 'happy-dom',
     include: ['src/**/*.test.ts?(x)', 'scripts/**/*.test.ts?(x)', 'functions/**/*.test.ts?(x)'],
     setupFiles: ['./src/test-setup.ts'],
+    // Only active when run with `--coverage`. The CI `coverage` job reads
+    // coverage/coverage-summary.json and publishes total.lines.pct to a
+    // gist-backed shields.io badge. @vitest/coverage-v8 is already a devDep.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary'],
+      reportsDirectory: './coverage',
+    },
     alias: {
       // The virtual module only exists during dev/build; alias it to a stub so
       // it resolves under Vitest (individual tests vi.mock it for behaviour).

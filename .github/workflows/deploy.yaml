@@ -39,6 +39,38 @@ jobs:
           fi
       - run: npm run validate
 
+  coverage:
+    name: Publish Coverage Badge
+    runs-on: ubuntu-latest
+    # Intentionally not in any deploy job's `needs`: a flaky badge push must
+    # never block a release. Skips cleanly on forks where the secret is absent.
+    if: github.repository == 'megvalcour/shoop-pwa'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Generate coverage
+        run: npx vitest run --coverage
+      - name: Extract line coverage %
+        id: cov
+        run: |
+          PCT=$(node -p "Math.round(require('./coverage/coverage-summary.json').total.lines.pct)")
+          echo "pct=$PCT" >> "$GITHUB_OUTPUT"
+      - name: Push coverage badge to gist
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: ${{ vars.COVERAGE_GIST_ID }}
+          filename: shoop-coverage.json
+          label: coverage
+          message: ${{ steps.cov.outputs.pct }}%
+          valColorRange: ${{ steps.cov.outputs.pct }}
+          minColorRange: 50
+          maxColorRange: 90
+
   e2e-tests:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
