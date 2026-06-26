@@ -18,7 +18,13 @@ const FALLBACK_ICON_BY_SLUG: Record<string, IconDefinition> = {
 };
 
 export default function StoreLogo({ slug, name, sizeClassName = 'h-9 w-9' }: Props) {
-  const [errored, setErrored] = useState(false);
+  // Track which slug failed to load rather than a bare boolean: StoreHeader stays
+  // mounted for the whole session, so a transient load failure (or switching to a
+  // logoless store like General) would otherwise latch the fallback permanently —
+  // even after switching back to a store that has a PNG. Keying on the slug lets a
+  // slug change re-attempt the image instead of inheriting a stale error.
+  const [erroredSlug, setErroredSlug] = useState<string | null>(null);
+  const errored = erroredSlug === slug;
 
   if (errored) {
     const icon = FALLBACK_ICON_BY_SLUG[slug] ?? faStore;
@@ -37,7 +43,7 @@ export default function StoreLogo({ slug, name, sizeClassName = 'h-9 w-9' }: Pro
     <img
       src={`/store-logos/${slug}.png`}
       alt={name}
-      onError={() => setErrored(true)}
+      onError={() => setErroredSlug(slug)}
       className={`${sizeClassName} rounded-full bg-white object-contain p-1 shadow-md`}
     />
   );

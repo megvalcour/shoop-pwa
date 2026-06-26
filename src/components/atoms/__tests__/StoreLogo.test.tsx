@@ -50,4 +50,18 @@ describe('StoreLogo', () => {
     const badge = screen.getByRole('img', { name: 'General Store' });
     expect(badge.querySelector('[data-icon="carrot"]')).toBeInTheDocument();
   });
+
+  it('re-attempts the image when the slug changes after an error', () => {
+    // StoreHeader stays mounted across store switches: an error for one store
+    // must not latch the fallback for the next store's logo.
+    const { rerender } = render(<StoreLogo slug="general" name="General Store" />);
+    fireEvent.error(screen.getByRole('img', { name: 'General Store' }));
+    expect(
+      screen.getByRole('img', { name: 'General Store' }).querySelector('[data-icon="carrot"]'),
+    ).toBeInTheDocument();
+
+    rerender(<StoreLogo slug="oxford-62" name="Oxford Market Basket #62" />);
+    const img = screen.getByRole('img', { name: 'Oxford Market Basket #62' });
+    expect(img).toHaveAttribute('src', '/store-logos/oxford-62.png');
+  });
 });
