@@ -85,7 +85,7 @@ describe('DefaultListEditor', () => {
     const input = screen.getByPlaceholderText('Add a default item…') as HTMLInputElement;
     fireEvent.change(input, { target: { value: '  Eggs  ' } });
     fireEvent.submit(input.closest('form')!);
-    expect(mockAdd).toHaveBeenCalledWith('Eggs');
+    expect(mockAdd).toHaveBeenCalledWith({ name: 'Eggs' });
     expect(input.value).toBe('');
   });
 

@@ -95,7 +95,11 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
     try {
       if (target.kind === 'default') {
         for (const ingredient of selected) {
-          await addDefaultItem.mutateAsync(ingredient.name);
+          await addDefaultItem.mutateAsync({
+            name: ingredient.name,
+            quantity: ingredient.quantity,
+            unit: ingredient.unit,
+          });
         }
         navigate('/default-list');
         return;
@@ -111,7 +115,12 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
       }
 
       for (const ingredient of selected) {
-        await addListItem.mutateAsync({ listId, name: ingredient.name });
+        await addListItem.mutateAsync({
+          listId,
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+        });
       }
       navigate(`/lists/${listId}`);
     } catch {
@@ -140,7 +149,10 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
             isSelected={(_, index) => checked.has(index)}
             renderLabel={(ingredient) => (
               <span className="flex flex-col">
-                <span>{ingredient.name}</span>
+                <span>
+                  {ingredient.quantity !== undefined && `${ingredient.quantity} · `}
+                  {ingredient.name}
+                </span>
                 {ingredient.raw !== ingredient.name && (
                   <span className="text-text-muted text-xs">{ingredient.raw}</span>
                 )}

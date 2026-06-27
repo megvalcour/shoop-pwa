@@ -96,11 +96,12 @@ describe('RecipeImporter', () => {
     mockAddDefault.mockResolvedValue(undefined);
   });
 
-  it('renders normalized ingredients with their raw text', async () => {
+  it('renders normalized ingredients with the parsed amount and raw text', async () => {
     await setup({ data: SAMPLE });
-    expect(screen.getByText('flour')).toBeInTheDocument();
+    // Primary label prefixes the parsed quantity; the raw line stays beneath.
+    expect(screen.getByText('2 · Flour')).toBeInTheDocument();
     expect(screen.getByText('2 cups flour')).toBeInTheDocument();
-    expect(screen.getByText('salt')).toBeInTheDocument();
+    expect(screen.getByText('1 · Salt')).toBeInTheDocument();
   });
 
   it('commits checked ingredients to a new list named after the recipe', async () => {
@@ -111,19 +112,34 @@ describe('RecipeImporter', () => {
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(mockRename).toHaveBeenCalledWith({ id: 'list-1', name: 'Pasta Bake' });
     expect(mockAddListItem).toHaveBeenCalledTimes(2);
-    expect(mockAddListItem).toHaveBeenCalledWith({ listId: 'list-1', name: 'flour' });
-    expect(mockAddListItem).toHaveBeenCalledWith({ listId: 'list-1', name: 'salt' });
+    expect(mockAddListItem).toHaveBeenCalledWith({
+      listId: 'list-1',
+      name: 'Flour',
+      quantity: 2,
+      unit: 'cups',
+    });
+    expect(mockAddListItem).toHaveBeenCalledWith({
+      listId: 'list-1',
+      name: 'Salt',
+      quantity: 1,
+      unit: 'tsp',
+    });
   });
 
   it('omits unchecked ingredients from the commit', async () => {
     await setup({ data: SAMPLE });
-    fireEvent.click(screen.getByText('flour').closest('button')!);
+    fireEvent.click(screen.getByText('2 · Flour').closest('button')!);
 
     fireEvent.click(screen.getByRole('button', { name: /add 1 item/i }));
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/lists/list-1'));
     expect(mockAddListItem).toHaveBeenCalledTimes(1);
-    expect(mockAddListItem).toHaveBeenCalledWith({ listId: 'list-1', name: 'salt' });
+    expect(mockAddListItem).toHaveBeenCalledWith({
+      listId: 'list-1',
+      name: 'Salt',
+      quantity: 1,
+      unit: 'tsp',
+    });
   });
 
   it('adds to an existing list without creating one', async () => {
@@ -137,7 +153,12 @@ describe('RecipeImporter', () => {
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/lists/list-9'));
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockAddListItem).toHaveBeenCalledWith({ listId: 'list-9', name: 'flour' });
+    expect(mockAddListItem).toHaveBeenCalledWith({
+      listId: 'list-9',
+      name: 'Flour',
+      quantity: 2,
+      unit: 'cups',
+    });
   });
 
   it('adds to the default list and navigates there', async () => {
@@ -148,7 +169,7 @@ describe('RecipeImporter', () => {
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/default-list'));
     expect(mockAddDefault).toHaveBeenCalledTimes(2);
-    expect(mockAddDefault).toHaveBeenCalledWith('flour');
+    expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Flour', quantity: 2, unit: 'cups' });
     expect(mockCreate).not.toHaveBeenCalled();
   });
 

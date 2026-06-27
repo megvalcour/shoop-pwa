@@ -1,5 +1,5 @@
 ---
-status: active
+status: complete
 class: lightweight
 e2e_required: true
 supersedes_backlog: Recipe Import Quantities (tasks/backlog--recipe-import-quantities.md)

@@ -20,6 +20,9 @@ export function useListItems(listId: string) {
 interface AddListItemInput {
   listId: string;
   name: string;
+  /** Parsed amount carried through from recipe import; manual adds omit both. */
+  quantity?: number;
+  unit?: string;
 }
 
 interface AddListItemResult {
@@ -37,7 +40,7 @@ const inFlightAdds = new Set<string>();
 export function useAddListItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ listId, name }: AddListItemInput): Promise<AddListItemResult> => {
+    mutationFn: async ({ listId, name, quantity, unit }: AddListItemInput): Promise<AddListItemResult> => {
       const trimmed = name.trim();
       if (!trimmed) throw new Error('Item name cannot be empty');
 
@@ -49,7 +52,7 @@ export function useAddListItem() {
       }
       inFlightAdds.add(inFlightKey);
       try {
-        return await addListItem(listId, trimmed);
+        return await addListItem(listId, trimmed, quantity, unit);
       } finally {
         inFlightAdds.delete(inFlightKey);
       }
@@ -69,7 +72,12 @@ export function useAddListItem() {
   });
 }
 
-async function addListItem(listId: string, trimmed: string): Promise<AddListItemResult> {
+async function addListItem(
+  listId: string,
+  trimmed: string,
+  quantity?: number,
+  unit?: string,
+): Promise<AddListItemResult> {
   const db = await dbPromise;
 
   // Read phase — outside any transaction. idb does not keep transactions alive
@@ -82,13 +90,19 @@ async function addListItem(listId: string, trimmed: string): Promise<AddListItem
 
   const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-  // Duplicate add (case-insensitive exact name, via resolveItem): bump the
-  // existing row's quantity by one step instead of creating a second row.
+  // Duplicate add (case-insensitive exact name, via resolveItem): add the parsed
+  // amount (manual re-add with no parsed qty keeps the historical +1). Adopt an
+  // incoming unit only when none is set; never clobber a unit already on the row,
+  // even on a mismatch (summing across units is bounded but documented nonsense).
   const existing = allListItems.find(
     (li) => li.list_id === listId && li.item_id === itemId,
   );
   if (existing) {
-    await db.put('list_items', { ...existing, quantity: existing.quantity + 1 });
+    await db.put('list_items', {
+      ...existing,
+      quantity: existing.quantity + (quantity ?? 1),
+      unit: existing.unit === '' && unit ? unit : existing.unit,
+    });
     return { itemCreated: false, newItemId: '', incremented: true };
   }
 
@@ -96,8 +110,8 @@ async function addListItem(listId: string, trimmed: string): Promise<AddListItem
     id: crypto.randomUUID(),
     list_id: listId,
     item_id: itemId,
-    quantity: 1,
-    unit: '',
+    quantity: quantity ?? 1,
+    unit: unit ?? '',
     checked: false,
     added_from_default: false,
     created_at: Date.now(),

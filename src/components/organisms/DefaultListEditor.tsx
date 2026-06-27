@@ -34,7 +34,7 @@ export default function DefaultListEditor() {
     if (!name) return;
     setValue('');
     inputRef.current?.focus();
-    addItem.mutate(name);
+    addItem.mutate({ name });
   }
 
   function renderEntries() {
