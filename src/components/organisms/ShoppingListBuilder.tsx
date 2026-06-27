@@ -9,8 +9,8 @@ import { useAisles } from '@/hooks/useAisles';
 import { useActiveStore } from '@/hooks/useStores';
 import GroceryListItem from '@/components/molecules/GroceryListItem';
 import AisleGroup from '@/components/molecules/AisleGroup';
-import { groupListItemsByAisle } from '@/lib/groupListItemsByAisle';
-import { formatAisleLabel } from '@/lib/formatAisleLabel';
+import { groupListItemsByAisle } from '@/utils/groupListItemsByAisle';
+import { formatAisleLabel } from '@/utils/formatAisleLabel';
 import { useCategorizationStore } from '@/stores/useCategorizationStore';
 import type { Aisle, Item, ListItem } from '@/db/schema';
 

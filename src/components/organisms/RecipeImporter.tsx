@@ -8,10 +8,14 @@ import ImportTargetPicker from '@/components/molecules/ImportTargetPicker';
 import type { ImportTarget } from '@/components/molecules/ImportTargetPicker';
 import { useRecipeImport, isValidRecipeUrl } from '@/hooks/useRecipeImport';
 import type { RecipeImportErrorCode } from '@/hooks/useRecipeImport';
-import { useShoppingLists, useCreateShoppingList, useRenameShoppingList } from '@/hooks/useShoppingLists';
+import {
+  useShoppingLists,
+  useCreateShoppingList,
+  useRenameShoppingList,
+} from '@/hooks/useShoppingLists';
 import { useAddListItem } from '@/hooks/useListItems';
 import { useAddDefaultListItem } from '@/hooks/useDefaultList';
-import { normalizeIngredient } from '@/lib/normalizeIngredient';
+import { normalizeIngredient } from '@/utils/normalizeIngredient';
 
 export interface RecipeImporterProps {
   /** URL handed in by the Share Target / route; absent for manual paste. */
@@ -124,8 +128,8 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
         <header>
           <h1 className="font-display font-bold text-text text-xl">{title ?? 'Imported recipe'}</h1>
           <p className="text-text-muted text-sm">
-            {normalized.length} {normalized.length === 1 ? 'ingredient' : 'ingredients'} found. Uncheck
-            anything you don’t need.
+            {normalized.length} {normalized.length === 1 ? 'ingredient' : 'ingredients'} found.
+            Uncheck anything you don’t need.
           </p>
         </header>
 
@@ -166,9 +170,7 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
           disabled={committing || checkedCount === 0}
           onClick={() => void commit()}
         >
-          {committing
-            ? 'Adding…'
-            : `Add ${checkedCount} ${checkedCount === 1 ? 'item' : 'items'}`}
+          {committing ? 'Adding…' : `Add ${checkedCount} ${checkedCount === 1 ? 'item' : 'items'}`}
         </Button>
       </div>
     );

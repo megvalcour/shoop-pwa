@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIngredient } from '@/lib/normalizeIngredient';
+import { normalizeIngredient } from '@/utils/normalizeIngredient';
 
 describe('normalizeIngredient', () => {
   it('strips a leading integer quantity and unit', () => {

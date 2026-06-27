@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatQuantity } from '@/lib/formatQuantity';
+import { formatQuantity } from '@/utils/formatQuantity';
 
 describe('formatQuantity', () => {
   it('renders "N unit" when a unit is present', () => {

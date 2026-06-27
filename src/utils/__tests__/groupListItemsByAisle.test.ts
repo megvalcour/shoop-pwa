@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupListItemsByAisle } from '@/lib/groupListItemsByAisle';
+import { groupListItemsByAisle } from '@/utils/groupListItemsByAisle';
 import type { MatcherStatus } from '@/hooks/useAisleMatcher';
 import type { Aisle, ListItem } from '@/db/schema';
 

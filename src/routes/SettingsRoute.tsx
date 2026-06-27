@@ -12,7 +12,7 @@ import { useShoppingLists, useDeleteShoppingList } from '@/hooks/useShoppingList
 import { useStores } from '@/hooks/useStores';
 import { useResetData } from '@/hooks/useResetData';
 import { usePwaUpdate } from '@/hooks/usePwaUpdate';
-import { APP_VERSION } from '@/lib/appVersion';
+import { APP_VERSION } from '@/utils/appVersion';
 import { DB_VERSION } from '@/db/schema';
 import type { ShoppingList } from '@/db/schema';
 
@@ -29,7 +29,8 @@ export default function SettingsRoute() {
   function renderStoresContent() {
     if (storesPending) return <p className="text-text-muted text-sm">Loading…</p>;
     if (storesError) return <p className="text-destructive text-sm">Failed to load stores.</p>;
-    if (!stores || stores.length === 0) return <p className="text-text-muted text-sm">No stores yet.</p>;
+    if (!stores || stores.length === 0)
+      return <p className="text-text-muted text-sm">No stores yet.</p>;
     return (
       <div className="flex flex-col gap-3">
         {stores.map((store) => (
@@ -46,7 +47,8 @@ export default function SettingsRoute() {
   function renderListsContent() {
     if (isPending) return <p className="text-text-muted text-sm">Loading…</p>;
     if (isError) return <p className="text-destructive text-sm">Failed to load lists.</p>;
-    if (!lists || lists.length === 0) return <p className="text-text-muted text-sm">No lists yet.</p>;
+    if (!lists || lists.length === 0)
+      return <p className="text-text-muted text-sm">No lists yet.</p>;
     return (
       <div className="flex flex-col gap-3">
         {lists.map((list) => (

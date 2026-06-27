@@ -1,5 +1,5 @@
 import type { Aisle } from '@/db/schema';
-import { formatAisleLabel } from '@/lib/formatAisleLabel';
+import { formatAisleLabel } from '@/utils/formatAisleLabel';
 import BottomSheet from '@/components/molecules/BottomSheet';
 import SelectionList from '@/components/molecules/SelectionList';
 

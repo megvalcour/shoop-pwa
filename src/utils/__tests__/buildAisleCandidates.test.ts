@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildAisleCandidates } from '@/lib/buildAisleCandidates';
+import { buildAisleCandidates } from '@/utils/buildAisleCandidates';
 import type { Aisle, Item, ItemLocation } from '@/db/schema';
 
 function item(id: string, canonical_name: string): Item {

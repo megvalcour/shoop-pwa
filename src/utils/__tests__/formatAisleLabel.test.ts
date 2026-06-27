@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { formatAisleLabel } from '@/lib/formatAisleLabel';
+import { formatAisleLabel } from '@/utils/formatAisleLabel';
 
 describe('formatAisleLabel', () => {
   it('formats a numeric aisle as "Aisle N — Label"', () => {
-    expect(formatAisleLabel({ number: '1', label: 'Dairy & Eggs' })).toBe(
-      'Aisle 1 — Dairy & Eggs',
-    );
+    expect(formatAisleLabel({ number: '1', label: 'Dairy & Eggs' })).toBe('Aisle 1 — Dairy & Eggs');
   });
 
   it('returns the label only for a non-numeric number (named section)', () => {

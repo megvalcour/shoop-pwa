@@ -8,10 +8,6 @@ None.
 
 ## Backlog
 
-### Reconcile Lower-Priority Stale ADR Notes
-
-Stale _notes_ (no new ADR required; fix in place if/when touched): ADR-0005 references nonexistent `WeeklyListBuilder` (now `ShoppingListBuilder`); ADR-0011 references `oxford-62-aliases.json` (now `src/services/aisleAliases.ts`); ADR-0012's note "`useActiveStore` returns `stores[0]`, multi-store deferred" is superseded by ADR-0015 (Store Switcher now exists).
-
 ### Recipe Import Quantities
 
 - Carry a recipe ingredient's parsed quantity/unit (e.g. "2 cups flour" → qty 2,

@@ -1,7 +1,7 @@
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
-import { formatQuantity } from '@/lib/formatQuantity';
+import { formatQuantity } from '@/utils/formatQuantity';
 
 export interface ListItemRowProps {
   name: string;

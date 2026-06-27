@@ -3,7 +3,7 @@ import { useItems, useItemLocations, useUpsertItemLocation } from '@/hooks/useIt
 import { useAisles } from '@/hooks/useAisles';
 import { useActiveStore } from '@/hooks/useStores';
 import { useAisleMatcher } from '@/hooks/useAisleMatcher';
-import { buildAisleCandidates } from '@/lib/buildAisleCandidates';
+import { buildAisleCandidates } from '@/utils/buildAisleCandidates';
 import { useCategorizationStore } from '@/stores/useCategorizationStore';
 
 export interface UseItemClassification {
@@ -139,7 +139,12 @@ export function useItemClassification(): UseItemClassification {
       classify(item.name, aisles ?? [])
         .then((aisleId) => {
           if (aisleId)
-            upsertLocation.mutate({ itemId: item.id, storeId: activeStore.id, aisleId, auto: true });
+            upsertLocation.mutate({
+              itemId: item.id,
+              storeId: activeStore.id,
+              aisleId,
+              auto: true,
+            });
         })
         .finally(() => endTracked(item.id));
     }
