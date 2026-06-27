@@ -27,7 +27,9 @@ async function seedList(page: Parameters<Parameters<typeof test>[1]>[0]['page'])
 
   const listId = await page.evaluate(async (seedItems) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('shoop', 7);
+      // Open without a version so the helper attaches to whatever schema
+      // version the app just created; pinning a number breaks on DB_VERSION bumps.
+      const req = indexedDB.open('shoop');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });

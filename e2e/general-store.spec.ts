@@ -47,7 +47,9 @@ async function seedList(page: Page): Promise<string> {
 
   return page.evaluate(async (seedItems) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('shoop', 7);
+      // Open without a version so the helper attaches to whatever schema
+      // version the app just created; pinning a number breaks on DB_VERSION bumps.
+      const req = indexedDB.open('shoop');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
@@ -93,7 +95,7 @@ test.describe('General Store', () => {
 
     const main = page.getByRole('main');
     await expect(page.getByRole('heading', { name: 'General Store' })).toBeVisible();
-    await expect(main.getByText('Common grocery layout')).toBeVisible();
+    await expect(main.getByText("Any ol' store")).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Aisles' })).toBeVisible();
     await expect(main.getByText('Produce', { exact: true })).toBeVisible();
     await expect(main.getByText('Other', { exact: true })).toBeVisible();
