@@ -191,6 +191,42 @@ function stripLeadingUnit(s: string): { unit?: string; rest: string } {
 }
 
 /**
+ * Strip stranded alternate measurements that follow a `/` separator. Recipe sites
+ * that publish a US + metric dual amount emit it as a spaced slash clause
+ * ("1 cup / 180 grams flour"); after the *first* quantity + unit are consumed the
+ * remainder begins with the slash ("/ 180 grams flour"), stranding the alternate
+ * measure in the name. Drop the slash and reuse the quantity/unit strippers to
+ * consume the alternate `number [unit]`, looping for additional `/`-delimited
+ * measures, but never reducing the name to empty — a degenerate measures-only line
+ * keeps its remainder so the existing raw-string fallback can take over.
+ *
+ * Anchored to a *leading* slash only: a cleaned name never starts with `/`, and
+ * ascii fractions ("1/2") are already consumed by the quantity strip upstream, so
+ * this cannot shatter a fraction or corrupt a normal name.
+ */
+function stripAlternateMeasures(s: string): string {
+  let rest = s;
+  let slash = rest.match(/^\/\s*/);
+  while (slash) {
+    const candidate = rest.slice(slash[0].length);
+
+    // Only act on an actual alternate measure (a `/` followed by a number).
+    const { rest: afterQty } = stripLeadingQuantity(candidate);
+    if (afterQty === candidate) break;
+
+    const { rest: afterUnit } = stripLeadingUnit(afterQty.trim());
+    const next = afterUnit.trim();
+
+    // Never strip down to an empty name; leave the slash clause for the fallback.
+    if (next.length === 0) break;
+
+    rest = next;
+    slash = rest.match(/^\/\s*/);
+  }
+  return rest;
+}
+
+/**
  * Lift a single leading size descriptor out of the noun phrase, returning the
  * lower-cased descriptor plus the remainder. Only the leading run, only one
  * descriptor, and never when removing it would empty the name (a bare "large"
@@ -260,6 +296,10 @@ export function normalizeIngredient(raw: string): NormalizedIngredient {
 
   const { unit, rest: afterUnit } = stripLeadingUnit(rest);
   rest = afterUnit.trim();
+
+  // Drop a stranded slash-delimited alternate measure ("1 cup / 180 grams flour"
+  // leaves "/ 180 grams flour" here). The first measure stays as quantity/unit.
+  rest = stripAlternateMeasures(rest);
 
   // "1 can of tomatoes" → after the unit, drop the connective "of".
   rest = rest.replace(/^of\s+/i, '');

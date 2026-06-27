@@ -168,6 +168,48 @@ describe('normalizeIngredient', () => {
     expect(result.raw).toBe(', to taste');
   });
 
+  it('strips a slash-delimited alternate measure, keeping the first measure', () => {
+    const result = normalizeIngredient('1 cup / 180 grams flour');
+    expect(result.name).toBe('Flour');
+    expect(result.quantity).toBe(1);
+    expect(result.unit).toBe('cup');
+  });
+
+  it('strips a slash-delimited alternate measure with an abbreviated unit', () => {
+    const result = normalizeIngredient('2 cups / 240 g all-purpose flour');
+    expect(result.name).toBe('All-purpose flour');
+    expect(result.quantity).toBe(2);
+    expect(result.unit).toBe('cups');
+  });
+
+  it('keeps the first measure when the metric amount leads', () => {
+    const result = normalizeIngredient('180 grams / 1 cup flour');
+    expect(result.name).toBe('Flour');
+    expect(result.quantity).toBe(180);
+    expect(result.unit).toBe('grams');
+  });
+
+  it('strips a slash-delimited alternate measure after a container unit', () => {
+    const result = normalizeIngredient('1 stick / 113 g butter');
+    expect(result.name).toBe('Butter');
+    expect(result.quantity).toBe(1);
+    expect(result.unit).toBe('stick');
+  });
+
+  it('does not mistake an ascii fraction for a dual measure', () => {
+    const result = normalizeIngredient('1/2 cup sugar');
+    expect(result.name).toBe('Sugar');
+    expect(result.quantity).toBe(0.5);
+    expect(result.unit).toBe('cup');
+  });
+
+  it('leaves a name containing no slash untouched', () => {
+    const result = normalizeIngredient('2 cups whole milk');
+    expect(result.name).toBe('Whole milk');
+    expect(result.quantity).toBe(2);
+    expect(result.unit).toBe('cups');
+  });
+
   it('preserves proper nouns when sentence-casing the name', () => {
     const raw = '  ¾ cup grated Parmesan cheese, divided  ';
     const result = normalizeIngredient(raw);

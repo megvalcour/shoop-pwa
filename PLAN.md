@@ -4,6 +4,9 @@
 
 ## Current Status
 
+- fix: strip slash-delimited alternate measurements in recipe import so a
+  US + metric dual amount ("1 cup / 180 grams flour") imports as the bare noun
+  ("Flour") with the first measure kept as quantity/unit
 - feat: normalize recipe import items — sentence-case names, lift size
   descriptors into parentheticals, and carry the parsed quantity/unit into the
   saved row (absorbed the "Recipe Import Quantities" backlog item)
