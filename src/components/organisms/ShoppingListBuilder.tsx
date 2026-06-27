@@ -94,25 +94,32 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
   return (
     <div className="mt-4 flex flex-col gap-4">
       {categorizing.length > 0 && (
-        <AisleGroup header="Categorizing…" isSpecial>
+        <AisleGroup header="Categorizing…" variant="muted">
           {categorizing.map((li) => renderListItem(li, true))}
         </AisleGroup>
       )}
 
-      {buckets.map(({ aisle, listItems: lis }) => (
-        <AisleGroup key={aisle.id} header={formatAisleLabel(aisle)}>
-          {lis.map((li) => renderListItem(li))}
-        </AisleGroup>
-      ))}
+      {buckets.map(({ aisle, listItems: lis }) => {
+        const isNumeric = /^\d+$/.test(aisle.number ?? '');
+        return (
+          <AisleGroup
+            key={aisle.id}
+            marker={isNumeric ? aisle.number : undefined}
+            header={isNumeric ? aisle.label : formatAisleLabel(aisle)}
+          >
+            {lis.map((li) => renderListItem(li))}
+          </AisleGroup>
+        );
+      })}
 
       {uncategorized.length > 0 && (
-        <AisleGroup header="Uncategorized" isSpecial>
+        <AisleGroup header="Uncategorized" variant="muted">
           {uncategorized.map((li) => renderListItem(li))}
         </AisleGroup>
       )}
 
       {checked.length > 0 && (
-        <AisleGroup header="Done" isSpecial>
+        <AisleGroup header={`Done · ${checked.length}`} variant="done">
           {checked.map((li) => renderListItem(li))}
         </AisleGroup>
       )}

@@ -77,7 +77,7 @@ export default function BottomSheet({ title, onClose, children }: BottomSheetPro
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative bg-surface rounded-t-2xl max-h-[60vh] flex flex-col shadow-xl outline-none"
+        className="relative bg-surface rounded-t-2xl max-h-[60vh] flex flex-col shadow-float outline-none"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <span className="font-semibold text-text">{title}</span>

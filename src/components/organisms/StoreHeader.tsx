@@ -11,7 +11,7 @@ export default function StoreHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="bg-primary px-4 py-2 flex items-center min-h-13">
+    <header className="relative z-10 bg-primary px-4 py-2 flex items-center min-h-13 shadow-raised">
       {store && (
         <>
           <button
@@ -22,7 +22,9 @@ export default function StoreHeader() {
           >
             <StoreLogo slug={store.slug} name={store.name} />
             <span className="flex flex-col">
-              <span className="font-display font-bold text-primary-foreground">{store.name}</span>
+              <span className="font-display font-extrabold tracking-tight text-primary-foreground">
+                {store.name}
+              </span>
               <span className="text-primary-foreground/70 text-sm">{store.address}</span>
             </span>
           </button>

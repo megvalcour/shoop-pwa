@@ -385,10 +385,10 @@ describe('ShoppingListBuilder', () => {
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
 
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText(/^Done/)).toBeInTheDocument();
     expect(screen.getByText('Eggs')).toBeInTheDocument();
 
-    const doneHeader = screen.getByText('Done');
+    const doneHeader = screen.getByText(/^Done/);
     const milkEl = screen.getByText('Milk');
     // Done section appears after aisle groups in DOM
     expect(

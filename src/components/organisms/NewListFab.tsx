@@ -46,7 +46,7 @@ export default function NewListFab({ disabled = false }: NewListFabProps) {
         aria-label="New list"
         disabled={isCreating || disabled}
         onClick={handleFabClick}
-        className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-accent text-white shadow-lg flex items-center justify-center disabled:opacity-50"
+        className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-float flex items-center justify-center transition-transform active:scale-95 disabled:opacity-50"
       >
         <FontAwesomeIcon icon={faPlus} />
       </button>

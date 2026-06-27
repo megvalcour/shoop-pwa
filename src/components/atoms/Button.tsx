@@ -11,7 +11,7 @@ const variantShapeClasses: Record<
 > = {
   primary: {
     default:
-      'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50',
+      'rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-card transition-transform active:scale-[0.98] disabled:opacity-50',
     icon: 'p-1 bg-primary text-primary-foreground',
   },
   secondary: {
