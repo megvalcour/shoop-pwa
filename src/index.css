@@ -1,17 +1,26 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #084887;
-  --color-primary-foreground: #EEF2FF;
-  --color-accent: #F58A07;
-  --color-accent-secondary: #F9AB55;
-  --color-destructive: #E53E3E;
-  --color-surface: #FAFBFF;
-  --color-card: #FFFFFF;
-  --color-text: #0F172A;
-  --color-text-muted: #909CC2;
-  --color-border: #D4D9EE;
-  --color-background: #FAFBFF;
+  /* Monochrome-blue palette (ADR-0020). A single key blue expanded into a
+     tonal ramp; emphasis is carried by elevation, not a contrasting accent. */
+  --color-ink: #082B5C; /* deepest blue: display headings, station nodes */
+  --color-primary: #0B4DA2; /* primary chrome (app bar, nav), FAB, key actions */
+  --color-primary-foreground: #EAF2FF; /* text/icons on primary blue */
+  --color-accent: #6FA8FF; /* the one bright spark: active nav, reads on deep blue */
+  --color-tint: #DCE8FA; /* tonal surface tint: checked rows, filled nodes */
+  --color-destructive: #C0392B; /* delete / error only */
+  --color-surface: #EEF4FD; /* page background (elevation 0), cool haze */
+  --color-card: #FFFFFF; /* resting card (elevation 1) */
+  --color-text: #0E1726;
+  --color-text-muted: #51617E; /* ≥4.5:1 on white (WCAG AA) */
+  --color-border: #CBD8EF;
+  --color-background: #EEF4FD;
+
+  /* Material-style elevation: blue-tinted shadows (not neutral gray) so depth
+     reads as part of the palette. card → raised → float. */
+  --shadow-card: 0 1px 2px rgb(8 43 92 / 0.08);
+  --shadow-raised: 0 2px 8px rgb(8 43 92 / 0.12);
+  --shadow-float: 0 8px 24px rgb(8 43 92 / 0.18);
 
   --font-display: 'Nunito', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;

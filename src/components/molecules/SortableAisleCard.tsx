@@ -23,7 +23,7 @@ export default function SortableAisleCard({ aisle }: SortableAisleCardProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={isDragging ? 'relative z-10 rounded-lg opacity-90 shadow-lg' : undefined}
+      className={isDragging ? 'relative z-10 rounded-xl opacity-90 shadow-float' : undefined}
     >
       <AisleCard
         aisle={aisle}

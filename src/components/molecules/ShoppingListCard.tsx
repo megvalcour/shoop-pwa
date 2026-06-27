@@ -17,15 +17,15 @@ export default function ShoppingListCard({ list, onClick, onDelete }: ShoppingLi
   });
 
   return (
-    <div className="w-full px-4 py-3 bg-card rounded-lg shadow-sm flex items-center justify-between">
+    <div className="w-full px-4 py-3 bg-card rounded-xl shadow-card flex items-center justify-between">
       <button
         type="button"
         onClick={onClick}
         aria-label={list.name}
         className="flex-1 min-w-0 text-left flex flex-col gap-0.5 active:opacity-70"
       >
-        <span className="font-medium text-text truncate">{list.name}</span>
-        <span className="text-sm text-text-muted">{formatted}</span>
+        <span className="font-semibold text-text truncate">{list.name}</span>
+        <span className="text-sm tabular-nums text-text-muted">{formatted}</span>
       </button>
       {onDelete && (
         <Button

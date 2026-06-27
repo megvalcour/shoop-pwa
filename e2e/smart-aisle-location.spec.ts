@@ -72,10 +72,13 @@ test.describe('Smart Aisle Location', () => {
   test('aisle group headers render for pre-classified items', async ({ page }) => {
     await seedList(page);
 
-    await expect(page.getByText('Aisle 15 — Cleaning & Laundry')).toBeVisible();
+    // The aisle number now rides the spine node; the header (uppercase label)
+    // shows just the name. Scope to the header span — the same label also appears
+    // on each item's tappable aisle badge.
+    await expect(page.locator('span.uppercase', { hasText: 'Cleaning & Laundry' })).toBeVisible();
     await expect(page.getByText('Air Freshener')).toBeVisible();
 
-    await expect(page.getByText('Aisle 12 — Household Supplies')).toBeVisible();
+    await expect(page.locator('span.uppercase', { hasText: 'Household Supplies' })).toBeVisible();
     await expect(page.getByText('Aluminum Foil')).toBeVisible();
   });
 
@@ -85,7 +88,7 @@ test.describe('Smart Aisle Location', () => {
     // Check the first item
     await page.getByText(SEED_ITEMS[0].name).click();
 
-    await expect(page.getByText('Done')).toBeVisible();
+    await expect(page.getByText(/^Done/)).toBeVisible();
     // The checked item should still be visible, just in the Done section
     await expect(page.getByText(SEED_ITEMS[0].name)).toBeVisible();
   });
