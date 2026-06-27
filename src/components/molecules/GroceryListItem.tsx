@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
 import type { Aisle } from '@/db/schema';
 import AislePickerSheet from '@/components/molecules/AislePickerSheet';
 import QuantitySheet from '@/components/molecules/QuantitySheet';
 import Badge from '@/components/atoms/Badge';
+import Icon from '@/components/atoms/Icon';
 import Spinner from '@/components/atoms/Spinner';
 import ListItemRow from '@/components/molecules/ListItemRow';
 
@@ -60,15 +62,24 @@ export default function GroceryListItem({
     );
   } else if (aisleLabel) {
     badge = (
-      <Badge className="px-2.5 py-1" onClick={openPicker} aria-label={`Change aisle: ${aisleLabel}`}>
-        {aisleLabel}
+      <Badge
+        className="px-2.5 py-1"
+        onClick={openPicker}
+        aria-label={`Change aisle: ${aisleLabel}`}
+      >
+        <Icon icon={faRightLeft} />
       </Badge>
     );
   } else if (canPickAisle) {
     // Settled-uncategorized: a clearly actionable "needs your input" affordance,
     // visually distinct from the busy spinner.
     badge = (
-      <Badge variant="muted" className="px-2.5 py-1" onClick={openPicker} aria-label="Categorize item">
+      <Badge
+        variant="muted"
+        className="px-2.5 py-1"
+        onClick={openPicker}
+        aria-label="Categorize item"
+      >
         Categorize
       </Badge>
     );
