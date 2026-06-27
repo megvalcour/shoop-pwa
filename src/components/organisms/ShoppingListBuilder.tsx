@@ -105,7 +105,7 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
           <AisleGroup
             key={aisle.id}
             marker={isNumeric ? aisle.number : undefined}
-            header={isNumeric ? aisle.label : formatAisleLabel(aisle)}
+            header={formatAisleLabel(aisle)}
           >
             {lis.map((li) => renderListItem(li))}
           </AisleGroup>
