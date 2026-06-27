@@ -1,21 +1,20 @@
 ## Active Task
 
-None.
+### Recipe Import — Cleaner Ingredient Parsing
+
+- Improve recipe import so an entry like `3 medium tomatoes` lands as
+  `Tomatoes (medium)` with quantity 3: sentence-case correction, carry the
+  parsed quantity/unit into the saved row, and move a leading size descriptor
+  into a `(…)` parenthetical. The raw import line stays as small, subtle help
+  text under each row to guard against mistranslation. **Absorbs the former
+  "Recipe Import Quantities" backlog item.** Plan:
+  `tasks/active--recipe-import-parsing.md`.
 
 ## Current Status
 
 - feat: adopt monochrome-blue Material visual identity with aisle-spine signature (ADR-0020, supersedes ADR-0008)
 
 ## Backlog
-
-### Recipe Import Quantities
-
-- Carry a recipe ingredient's parsed quantity/unit (e.g. "2 cups flour" → qty 2,
-  unit "cups") into the added item. `normalizeIngredient` already parses these;
-  `RecipeImporter` currently discards them. Requires extending the add mutations
-  to accept an optional `{ quantity, unit }` and deciding merge semantics when the
-  added item is also a duplicate. Follow-up to the Item Quantities task. Plan:
-  `tasks/backlog--recipe-import-quantities.md`.
 
 ### Unit Test Audit
 
