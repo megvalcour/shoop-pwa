@@ -1,17 +1,12 @@
 ## Active Task
 
-### Recipe Import — Cleaner Ingredient Parsing
-
-- Improve recipe import so an entry like `3 medium tomatoes` lands as
-  `Tomatoes (medium)` with quantity 3: sentence-case correction, carry the
-  parsed quantity/unit into the saved row, and move a leading size descriptor
-  into a `(…)` parenthetical. The raw import line stays as small, subtle help
-  text under each row to guard against mistranslation. **Absorbs the former
-  "Recipe Import Quantities" backlog item.** Plan:
-  `tasks/active--recipe-import-parsing.md`.
+- _None — pick up the next backlog item._
 
 ## Current Status
 
+- feat: normalize recipe import items — sentence-case names, lift size
+  descriptors into parentheticals, and carry the parsed quantity/unit into the
+  saved row (absorbed the "Recipe Import Quantities" backlog item)
 - feat: adopt monochrome-blue Material visual identity with aisle-spine signature (ADR-0020, supersedes ADR-0008)
 
 ## Backlog

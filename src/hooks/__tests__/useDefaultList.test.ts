@@ -44,7 +44,7 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    await act(() => result.current.add.mutateAsync('Olive Oil'));
+    await act(() => result.current.add.mutateAsync({ name: 'Olive Oil' }));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
     const db = await dbPromise;
@@ -53,6 +53,21 @@ describe('useAddDefaultListItem', () => {
     const entry = result.current.list.data![0];
     expect(entry.item_id).toBe(item!.id);
     expect(entry.quantity).toBe(1);
+  });
+
+  it('seeds a parsed quantity and unit on a new entry', async () => {
+    const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.add.mutateAsync({ name: 'Flour', quantity: 2, unit: 'cups' }));
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+
+    expect(result.current.list.data![0]).toMatchObject({ quantity: 2, unit: 'cups' });
   });
 
   it('reuses an existing catalog item (same item_id)', async () => {
@@ -69,7 +84,7 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    await act(() => result.current.add.mutateAsync('milk'));
+    await act(() => result.current.add.mutateAsync({ name: 'milk' }));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
     expect(result.current.list.data![0].item_id).toBe('it-milk');
@@ -87,18 +102,61 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    await act(() => result.current.add.mutateAsync('Bread'));
+    await act(() => result.current.add.mutateAsync({ name: 'Bread' }));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
     let second: { incremented: boolean } | undefined;
     await act(async () => {
-      second = await result.current.add.mutateAsync('bread');
+      second = await result.current.add.mutateAsync({ name: 'bread' });
     });
 
     // Still one entry — dedupe by item_id — but its quantity went up by one.
     await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(2));
     expect(result.current.list.data).toHaveLength(1);
     expect(second?.incremented).toBe(true);
+  });
+
+  it('adds the parsed amount (not +1) when a duplicate carries a quantity', async () => {
+    const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.add.mutateAsync({ name: 'Rice', quantity: 2 }));
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+
+    await act(() => result.current.add.mutateAsync({ name: 'rice', quantity: 3 }));
+
+    // 2 + 3, not 2 + 1.
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(5));
+    expect(result.current.list.data).toHaveLength(1);
+  });
+
+  it('adopts an incoming unit on a duplicate only when none is set', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.add('items', { id: 'it-pep', name: 'Peppers', canonical_name: 'peppers' });
+    await db.add('default_list', { id: 'd-pep', item_id: 'it-pep', quantity: 1, unit: '', notes: '' });
+
+    vi.resetModules();
+    const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+
+    // Empty unit → adopt the incoming one.
+    await act(() => result.current.add.mutateAsync({ name: 'peppers', unit: 'cups' }));
+    await waitFor(async () => expect((await db.get('default_list', 'd-pep'))?.unit).toBe('cups'));
+
+    // Now a set unit must never be clobbered, even on a mismatch.
+    await act(() => result.current.add.mutateAsync({ name: 'peppers', unit: 'cloves' }));
+    expect((await db.get('default_list', 'd-pep'))?.unit).toBe('cups');
   });
 
   it('preserves unit and notes when incrementing an existing entry', async () => {
@@ -124,7 +182,7 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
-    await act(() => result.current.add.mutateAsync('ZORPFLOUR'));
+    await act(() => result.current.add.mutateAsync({ name: 'ZORPFLOUR' }));
 
     const entry = await db.get('default_list', 'd-zorp');
     expect(entry).toMatchObject({ quantity: 3, unit: 'cups', notes: 'sifted' });

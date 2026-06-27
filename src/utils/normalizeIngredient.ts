@@ -110,6 +110,15 @@ const UNITS = new Set([
 /** Ounce-unit tokens, used to recognise the two-word "fl oz". */
 const OUNCE_TOKENS = new Set(['oz', 'ounce', 'ounces']);
 
+/**
+ * Leading *size* descriptors that read better as a trailing parenthetical than as
+ * part of the noun ("medium tomatoes" → "tomatoes (medium)"). Deliberately size
+ * only — not prep/quality words — so integral names ("baby back ribs") are the
+ * one acceptable edge, not the rule. The two-token "extra large" / hyphenated
+ * "extra-large" form is handled separately and normalised to `extra-large`.
+ */
+const SIZE_DESCRIPTORS = new Set(['small', 'medium', 'large', 'jumbo', 'baby']);
+
 /** Round to 3 decimals so `1/3` reads as `0.333`, not float noise. */
 function round3(value: number): number {
   return Math.round(value * 1000) / 1000;
@@ -181,6 +190,46 @@ function stripLeadingUnit(s: string): { unit?: string; rest: string } {
   return { rest: s };
 }
 
+/**
+ * Lift a single leading size descriptor out of the noun phrase, returning the
+ * lower-cased descriptor plus the remainder. Only the leading run, only one
+ * descriptor, and never when removing it would empty the name (a bare "large"
+ * stays). The descriptor is returned in our own normalised casing, so the
+ * eventual parenthetical is always lower-cased regardless of source casing.
+ */
+function stripLeadingSize(s: string): { descriptor?: string; rest: string } {
+  const tokens = s.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return { rest: s };
+
+  const first = tokens[0].toLowerCase();
+
+  // Two-word "extra large" or hyphenated "extra-large", normalised to one token.
+  if (first === 'extra' && tokens[1] && tokens[1].toLowerCase() === 'large') {
+    if (tokens.length > 2) return { descriptor: 'extra-large', rest: tokens.slice(2).join(' ') };
+    return { rest: s }; // would empty the name — leave it intact
+  }
+  if (first === 'extra-large') {
+    if (tokens.length > 1) return { descriptor: 'extra-large', rest: tokens.slice(1).join(' ') };
+    return { rest: s };
+  }
+
+  // Only strip when a noun phrase remains, so a bare "large" never empties out.
+  if (SIZE_DESCRIPTORS.has(first) && tokens.length > 1) {
+    return { descriptor: first, rest: tokens.slice(1).join(' ') };
+  }
+
+  return { rest: s };
+}
+
+/**
+ * Sentence-case: uppercase the first alphabetic character, leave the rest as
+ * written so proper nouns survive ("grated Parmesan" → "Grated Parmesan"). The
+ * dedup canonical name is lower-cased downstream, so casing never breaks merges.
+ */
+function sentenceCase(s: string): string {
+  return s.replace(/[a-z]/i, (ch) => ch.toUpperCase());
+}
+
 export function normalizeIngredient(raw: string): NormalizedIngredient {
   let work = raw.trim();
 
@@ -202,18 +251,30 @@ export function normalizeIngredient(raw: string): NormalizedIngredient {
   // A leading article often precedes a unit ("a pinch of salt").
   rest = rest.replace(/^(?:an?)\s+/i, '');
 
+  // Lift a leading size descriptor into a trailing parenthetical. This runs
+  // *before* the unit strip so a descriptor that precedes a container unit
+  // ("large can of tomatoes") still resolves to the bare noun ("tomatoes
+  // (large)") rather than stranding "can of …" in the name.
+  const { descriptor, rest: afterSize } = stripLeadingSize(rest);
+  rest = afterSize.trim();
+
   const { unit, rest: afterUnit } = stripLeadingUnit(rest);
   rest = afterUnit.trim();
 
   // "1 can of tomatoes" → after the unit, drop the connective "of".
   rest = rest.replace(/^of\s+/i, '');
 
-  const name = rest.replace(/\s+/g, ' ').trim();
+  let name = rest.replace(/\s+/g, ' ').trim();
 
   // Conservative fallback: never return an empty name.
   if (name.length === 0) {
-    return { name: raw.trim(), raw };
+    return { name: sentenceCase(raw.trim()), raw };
   }
+
+  // Sentence-case the noun, then append the (already lower-cased) descriptor so
+  // it stays lower-cased: "Tomatoes (medium)".
+  name = sentenceCase(name);
+  if (descriptor) name = `${name} (${descriptor})`;
 
   return {
     name,

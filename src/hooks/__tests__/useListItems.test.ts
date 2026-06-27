@@ -116,6 +116,78 @@ describe('useAddListItem', () => {
     expect(res?.incremented).toBe(false);
   });
 
+  it('seeds a parsed quantity and unit on a new row', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() =>
+      result.current.add.mutateAsync({ listId: 'list-1', name: 'Tomatoes', quantity: 3, unit: 'cans' }),
+    );
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+    expect(result.current.list.data?.[0]).toMatchObject({ quantity: 3, unit: 'cans' });
+  });
+
+  it('adds the parsed amount (not +1) when a duplicate carries a quantity', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'Onion', quantity: 2 }));
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'onion', quantity: 3 }));
+
+    // 2 + 3, not 2 + 1.
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(5));
+    expect(result.current.list.data).toHaveLength(1);
+  });
+
+  it('adopts an incoming unit on a duplicate only when none is set', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    // New row with no unit, then a duplicate carrying a unit → adopt it.
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'Basil' }));
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'basil', unit: 'sprigs' }));
+    await waitFor(() => expect(result.current.list.data?.[0].unit).toBe('sprigs'));
+
+    // A set unit must never be clobbered, even on a mismatch.
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'basil', unit: 'cups' }));
+    await waitFor(() => expect(result.current.list.data?.[0].unit).toBe('sprigs'));
+  });
+
+  it('keeps the +1 increment for a manual re-add with no parsed quantity', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'Lemon', quantity: 4 }));
+    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'lemon' }));
+
+    // 4 + 1 (the manual re-add contributes the default step).
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(5));
+  });
+
   it('invalidates the list_items query so the list grows by 1', async () => {
     const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
     const wrapper = makeWrapper();

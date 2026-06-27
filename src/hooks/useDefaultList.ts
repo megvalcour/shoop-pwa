@@ -20,6 +20,13 @@ export function useDefaultList() {
   });
 }
 
+interface AddDefaultListItemInput {
+  name: string;
+  /** Parsed amount carried through from recipe import; manual adds omit both. */
+  quantity?: number;
+  unit?: string;
+}
+
 interface AddDefaultListItemResult {
   itemCreated: boolean;
   /** True when the add resolved to an existing entry whose quantity was bumped. */
@@ -29,7 +36,11 @@ interface AddDefaultListItemResult {
 export function useAddDefaultListItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (name: string): Promise<AddDefaultListItemResult> => {
+    mutationFn: async ({
+      name,
+      quantity,
+      unit,
+    }: AddDefaultListItemInput): Promise<AddDefaultListItemResult> => {
       const trimmed = name.trim();
       if (!trimmed) throw new Error('Item name cannot be empty');
 
@@ -43,20 +54,25 @@ export function useAddDefaultListItem() {
 
       const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-      // Duplicate add (case-insensitive exact name, via resolveItem): bump the
-      // existing entry's quantity by one step instead of adding a second row.
-      // Spread preserves the entry's unit and notes.
+      // Duplicate add (case-insensitive exact name, via resolveItem): add the
+      // parsed amount (manual re-add with no parsed qty keeps the historical +1).
+      // Adopt an incoming unit only when none is set; never clobber a set unit.
+      // Spread preserves the entry's notes.
       const existing = allEntries.find((e) => e.item_id === itemId);
       if (existing) {
-        await db.put('default_list', { ...existing, quantity: existing.quantity + 1 });
+        await db.put('default_list', {
+          ...existing,
+          quantity: existing.quantity + (quantity ?? 1),
+          unit: existing.unit === '' && unit ? unit : existing.unit,
+        });
         return { itemCreated: false, incremented: true };
       }
 
       const entry: DefaultListEntry = {
         id: crypto.randomUUID(),
         item_id: itemId,
-        quantity: 1,
-        unit: '',
+        quantity: quantity ?? 1,
+        unit: unit ?? '',
         notes: '',
       };
 
