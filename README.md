@@ -53,6 +53,12 @@ npm install
 cp .env.example .env.local
 ```
 
+**4. Start the dev server**
+
+```bash
+npm run dev
+```
+
 The only variable required for local development is `VITE_IMPORT_TOKEN`. You can leave it empty to disable recipe import, or set it to any string to enable the feature locally. See [`docs/releases.md`](docs/releases.md) for production setup details.
 
 ## Git Workflow
@@ -66,12 +72,6 @@ All commits must follow [Conventional Commits](https://www.conventionalcommits.o
 **Production deployment** runs automatically: merges to `main` trigger GitHub Actions, which uses `semantic-release` to derive a semver version from Conventional Commits, tags the release, and deploys to Cloudflare Pages.
 
 See [`docs/releases.md`](docs/releases.md) for the full pipeline details.
-
-**4. Start the dev server**
-
-```bash
-npm run dev
-```
 
 ---
 
