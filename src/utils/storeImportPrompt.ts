@@ -29,4 +29,4 @@ Rules:
 - Each aisle should include an "items" array of 10–20 common grocery items found in that aisle. These teach the app to file my items into the right aisle, so pick representative, everyday items.
 - Do not invent ids; the app generates its own.
 
-Tell me the name and location of the store, then produce the JSON.`;
+The store I want to add is: [replace this with the grocery store name and location, e.g. "Trader Joe's — Cambridge, MA"]`;
