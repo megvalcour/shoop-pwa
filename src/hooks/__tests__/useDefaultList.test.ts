@@ -137,28 +137,59 @@ describe('useAddDefaultListItem', () => {
     expect(result.current.list.data).toHaveLength(1);
   });
 
-  it('adopts an incoming unit on a duplicate only when none is set', async () => {
-    const { dbPromise } = await import('@/db/idbClient');
-    const db = await dbPromise;
-    await db.add('items', { id: 'it-pep', name: 'Peppers', canonical_name: 'peppers' });
-    await db.add('default_list', { id: 'd-pep', item_id: 'it-pep', quantity: 1, unit: '', notes: '' });
-
-    vi.resetModules();
+  it('lands a provided quantity on a new entry', async () => {
     const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
     const wrapper = makeWrapper();
     const { result } = renderHook(
       () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
       { wrapper },
     );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.add.mutateAsync({ name: 'Sugar', quantity: 4, unit: 'cups' }));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+    expect(result.current.list.data![0]).toMatchObject({ quantity: 4, unit: 'cups' });
+  });
 
-    // Empty unit → adopt the incoming one.
-    await act(() => result.current.add.mutateAsync({ name: 'peppers', unit: 'cups' }));
-    await waitFor(async () => expect((await db.get('default_list', 'd-pep'))?.unit).toBe('cups'));
+  it('sums quantities on a same-name same-unit resolve', async () => {
+    const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    // Now a set unit must never be clobbered, even on a mismatch.
-    await act(() => result.current.add.mutateAsync({ name: 'peppers', unit: 'cloves' }));
-    expect((await db.get('default_list', 'd-pep'))?.unit).toBe('cups');
+    await act(() => result.current.add.mutateAsync({ name: 'Peppers', quantity: 2, unit: 'cups' }));
+    await act(() => result.current.add.mutateAsync({ name: 'peppers', quantity: 3, unit: 'cups' }));
+
+    // Same item, same unit → one entry, summed quantity (2 + 3).
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(5));
+    expect(result.current.list.data).toHaveLength(1);
+  });
+
+  it('creates a second entry for the same item with a different unit', async () => {
+    const { dbPromise } = await import('@/db/idbClient');
+    const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+    const wrapper = makeWrapper();
+    const { result } = renderHook(
+      () => ({ list: useDefaultList(), add: useAddDefaultListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() => result.current.add.mutateAsync({ name: 'Flour', quantity: 2, unit: 'cups' }));
+    await act(() => result.current.add.mutateAsync({ name: 'flour', quantity: 1, unit: 'bag' }));
+
+    // Same catalog item, differing units → two distinct entries.
+    await waitFor(() => expect(result.current.list.data).toHaveLength(2));
+    const byUnit = Object.fromEntries(result.current.list.data!.map((e) => [e.unit, e.quantity]));
+    expect(byUnit).toEqual({ cups: 2, bag: 1 });
+
+    // Only one shared catalog item backs both entries.
+    const db = await dbPromise;
+    const flourItems = (await db.getAll('items')).filter((i) => i.canonical_name === 'flour');
+    expect(flourItems).toHaveLength(1);
   });
 
   it('preserves unit and notes when incrementing an existing entry', async () => {
@@ -184,7 +215,9 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
-    await act(() => result.current.add.mutateAsync({ name: 'ZORPFLOUR' }));
+    // Same item *and* unit → increments in place, preserving notes (dedup is on
+    // the (item_id, unit) pair now).
+    await act(() => result.current.add.mutateAsync({ name: 'ZORPFLOUR', unit: 'cups' }));
 
     const entry = await db.get('default_list', 'd-zorp');
     expect(entry).toMatchObject({ quantity: 3, unit: 'cups', notes: 'sifted' });

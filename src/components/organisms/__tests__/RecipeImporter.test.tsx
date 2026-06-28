@@ -113,33 +113,45 @@ describe('RecipeImporter', () => {
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(mockRename).toHaveBeenCalledWith({ id: 'list-1', name: 'Pasta Bake' });
     expect(mockAddListItem).toHaveBeenCalledTimes(2);
-    // No quantity carried through; unit defaults to undefined (control untouched).
+    // Untouched rows default to ×1 with no unit (ADR-0021).
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Flour',
+      quantity: 1,
       unit: undefined,
     });
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Salt',
+      quantity: 1,
       unit: undefined,
     });
   });
 
-  it('carries a unit set in the preview into the committed item', async () => {
+  it('carries a quantity and unit set in the preview into the committed item', async () => {
     await setup({ data: SAMPLE });
-    fireEvent.change(screen.getByLabelText('Unit for Flour'), { target: { value: 'cups' } });
+
+    // Tap the Flour quantity chip to open the shared QuantitySheet, bump the
+    // count, add a unit, and save.
+    fireEvent.click(screen.getByRole('button', { name: 'Quantity for Flour' }));
+    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.change(screen.getByLabelText('Unit'), { target: { value: 'cups' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
     fireEvent.click(screen.getByRole('button', { name: /add 2 items/i }));
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/lists/list-1'));
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Flour',
+      quantity: 2,
       unit: 'cups',
     });
+    // The untouched row still commits the default ×1, no unit.
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Salt',
+      quantity: 1,
       unit: undefined,
     });
   });
@@ -155,6 +167,7 @@ describe('RecipeImporter', () => {
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Salt',
+      quantity: 1,
       unit: undefined,
     });
   });
@@ -173,6 +186,7 @@ describe('RecipeImporter', () => {
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-9',
       name: 'Flour',
+      quantity: 1,
       unit: undefined,
     });
   });
@@ -185,7 +199,8 @@ describe('RecipeImporter', () => {
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/default-list'));
     expect(mockAddDefault).toHaveBeenCalledTimes(2);
-    expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Flour', unit: undefined });
+    expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Flour', quantity: 1, unit: undefined });
+    expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Salt', quantity: 1, unit: undefined });
     expect(mockCreate).not.toHaveBeenCalled();
   });
 

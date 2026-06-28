@@ -4,6 +4,13 @@
 
 ## Current Status
 
+- feat: recipe-import preview swaps the free-text unit input for the shared
+  `×N` quantity chip + `QuantitySheet` (stepper ≥1 plus optional unit, now
+  datalist-backed via a new `unitSuggestions` prop). Each row still defaults to
+  ×1/no-unit (ADR-0021); the chosen quantity/unit is carried into the committed
+  list/default-list item. `useAddListItem`/`useAddDefaultListItem` accept an
+  optional `quantity` and dedup on `(item_id, unit)` — same-unit re-adds sum,
+  differing-unit adds split into a second row over one shared catalog item.
 - refactor: replace the `bg-primary` aisle number placard with inline
   `Aisle N — Label` headers (it read like a count) — `AisleGroup` drops the
   `marker` prop/placard branch and `ShoppingListBuilder` passes

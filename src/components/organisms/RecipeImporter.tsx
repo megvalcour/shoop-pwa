@@ -4,6 +4,7 @@ import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Spinner from '@/components/atoms/Spinner';
 import SelectionList from '@/components/molecules/SelectionList';
+import QuantitySheet from '@/components/molecules/QuantitySheet';
 import ImportTargetPicker from '@/components/molecules/ImportTargetPicker';
 import type { ImportTarget } from '@/components/molecules/ImportTargetPicker';
 import { useRecipeImport, isValidRecipeUrl } from '@/hooks/useRecipeImport';
@@ -16,9 +17,7 @@ import {
 import { useAddListItem } from '@/hooks/useListItems';
 import { useAddDefaultListItem } from '@/hooks/useDefaultList';
 import { normalizeIngredient, UNIT_SUGGESTIONS } from '@/utils/normalizeIngredient';
-
-/** Datalist id for the shared per-row unit suggestions. */
-const UNIT_DATALIST_ID = 'recipe-import-units';
+import { formatQuantity } from '@/utils/formatQuantity';
 
 export interface RecipeImporterProps {
   /** URL handed in by the Share Target / route; absent for manual paste. */
@@ -61,11 +60,18 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
 
   // Everything checked by default; reset whenever a fresh recipe loads.
   const [checked, setChecked] = useState<Set<number>>(new Set());
-  // Optional per-row unit, indexed alongside `normalized`; '' means omit on commit.
+  // Per-row quantity/unit, indexed alongside `normalized`. Each row defaults to
+  // ×1 with no unit — exactly like a manual add (ADR-0021); the user can tap the
+  // chip to bump the count and/or add a unit. '' unit means omit on commit.
+  const [quantities, setQuantities] = useState<number[]>([]);
   const [units, setUnits] = useState<string[]>([]);
+  // Which row's QuantitySheet is open; null = closed.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   useEffect(() => {
     setChecked(new Set(normalized.map((_, index) => index)));
+    setQuantities(normalized.map(() => 1));
     setUnits(normalized.map(() => ''));
+    setEditingIndex(null);
   }, [normalized]);
 
   const [target, setTarget] = useState<ImportTarget>({ kind: 'new' });
@@ -86,6 +92,14 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
     });
   }
 
+  function setQuantity(index: number, value: number) {
+    setQuantities((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }
+
   function setUnit(index: number, value: string) {
     setUnits((prev) => {
       const next = [...prev];
@@ -102,7 +116,11 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
 
   async function commit() {
     const selected = normalized
-      .map((ingredient, index) => ({ ingredient, unit: units[index]?.trim() || undefined }))
+      .map((ingredient, index) => ({
+        ingredient,
+        quantity: quantities[index] ?? 1,
+        unit: units[index]?.trim() || undefined,
+      }))
       .filter((_, index) => checked.has(index));
     if (selected.length === 0) return;
 
@@ -110,8 +128,8 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
     setCommitError(false);
     try {
       if (target.kind === 'default') {
-        for (const { ingredient, unit } of selected) {
-          await addDefaultItem.mutateAsync({ name: ingredient.name, unit });
+        for (const { ingredient, quantity, unit } of selected) {
+          await addDefaultItem.mutateAsync({ name: ingredient.name, quantity, unit });
         }
         navigate('/default-list');
         return;
@@ -126,8 +144,8 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
         listId = target.listId;
       }
 
-      for (const { ingredient, unit } of selected) {
-        await addListItem.mutateAsync({ listId, name: ingredient.name, unit });
+      for (const { ingredient, quantity, unit } of selected) {
+        await addListItem.mutateAsync({ listId, name: ingredient.name, quantity, unit });
       }
       navigate(`/lists/${listId}`);
     } catch {
@@ -163,22 +181,29 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
               </span>
             )}
             renderAccessory={(_, index) => (
-              <Input
-                className="w-20 text-sm"
-                list={UNIT_DATALIST_ID}
-                placeholder="unit"
-                aria-label={`Unit for ${normalized[index].name}`}
-                value={units[index] ?? ''}
-                onChange={(event) => setUnit(index, event.target.value)}
-              />
+              <button
+                type="button"
+                className="text-sm font-bold tabular-nums text-text-muted underline decoration-dotted underline-offset-2"
+                onClick={() => setEditingIndex(index)}
+                aria-label={`Quantity for ${normalized[index].name}`}
+              >
+                {formatQuantity(quantities[index] ?? 1, units[index])}
+              </button>
             )}
             onSelect={(_, index) => toggle(index)}
           />
-          <datalist id={UNIT_DATALIST_ID}>
-            {UNIT_SUGGESTIONS.map((unit) => (
-              <option key={unit} value={unit} />
-            ))}
-          </datalist>
+          {editingIndex !== null && (
+            <QuantitySheet
+              quantity={quantities[editingIndex] ?? 1}
+              unit={units[editingIndex] ?? ''}
+              unitSuggestions={UNIT_SUGGESTIONS}
+              onSave={(q, u) => {
+                setQuantity(editingIndex, q);
+                setUnit(editingIndex, u);
+              }}
+              onClose={() => setEditingIndex(null)}
+            />
+          )}
         </section>
 
         <section className="flex flex-col gap-2">
