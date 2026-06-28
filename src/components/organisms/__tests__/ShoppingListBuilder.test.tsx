@@ -176,7 +176,7 @@ describe('ShoppingListBuilder', () => {
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
 
-    fireEvent.click(screen.getByRole('button', { name: /delete item/i }));
+    fireEvent.click(screen.getByRole('button', { name: /delete bread/i }));
 
     expect(mockMutate).toHaveBeenCalledWith({ id: 'li-1', listId: 'list-1' });
   });
@@ -197,9 +197,41 @@ describe('ShoppingListBuilder', () => {
 
     render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
 
-    fireEvent.click(screen.getByText('Milk').closest('li')!);
+    fireEvent.click(screen.getByText('Milk'));
 
     expect(mockToggleMutate).toHaveBeenCalledWith({ id: 'li-1', listId: 'list-1' });
+  });
+
+  it('numbered aisle header shows the bare aisle name (the placard carries the number)', async () => {
+    const mocks = await setup();
+    defaultMocks(mocks);
+
+    mocks.useAisles.mockReturnValue({
+      data: [AISLE_DAIRY],
+    } as unknown as ReturnType<typeof mocks.useAisles>);
+
+    mocks.useItemLocations.mockReturnValue({
+      data: [loc('item-1', 'aisle-1')],
+    } as unknown as ReturnType<typeof mocks.useItemLocations>);
+
+    mocks.useListItems.mockReturnValue({
+      data: [{ id: 'li-1', list_id: 'list-1', item_id: 'item-1', quantity: 1, checked: false, added_from_default: false }],
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof mocks.useListItems>);
+
+    mocks.useItems.mockReturnValue({
+      data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk' }],
+    } as unknown as ReturnType<typeof mocks.useItems>);
+
+    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+
+    // The header reads as the bare name; the redundant "Aisle 1 —" prefix is gone.
+    const header = screen.getByText('Dairy & Eggs');
+    expect(header.className).toContain('uppercase');
+    expect(screen.queryByText(/Aisle 1 —/)).toBeNull();
+    // The number lives on the placard tile instead.
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
   it('changing an aisle upserts an item_location for the active store', async () => {

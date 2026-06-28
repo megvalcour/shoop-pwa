@@ -72,7 +72,7 @@ test.describe('Smart Aisle Location', () => {
   test('aisle group headers render for pre-classified items', async ({ page }) => {
     await seedList(page);
 
-    // The aisle number now rides the spine node; the header (uppercase label)
+    // The aisle number now rides the placard tile; the header (uppercase label)
     // shows just the name. Scope to the header span — the same label also appears
     // on each item's tappable aisle badge.
     await expect(page.locator('span.uppercase', { hasText: 'Cleaning & Laundry' })).toBeVisible();

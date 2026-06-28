@@ -4,6 +4,22 @@
 
 ## Current Status
 
+- refactor: replace the aisle spine with calm aisle-placard headers and
+  de-emphasize the per-row aisle-swap badge — `AisleGroup` drops the vertical
+  rail + 26px numbered node (and the `pl-9` indent) for a single filled
+  `bg-primary` placard tile carrying the aisle number in the sticky header;
+  `ShoppingListBuilder` passes the bare aisle name for numbered aisles so the
+  redundant "Aisle N —" prefix is gone (`formatAisleLabel` untouched for pickers
+  and non-numeric sections).
+- feat: swipe-to-delete shopping list rows — new hand-rolled `SwipeableRow`
+  molecule (Pointer Events, axis-locked, tap-vs-drag suppression, no new
+  dependency) reveals a `bg-destructive` delete affordance; the persistent red
+  trash button is removed from the in-motion list (kept in `DefaultListEditor`
+  via `ListItemRow`'s unchanged optional button path). The revealed delete is a
+  real focusable `<button>` for keyboard/screen-reader users.
+- docs: add ADR-0022 (aisle-placard signature) superseding ADR-0020's signature
+  section only — palette/typography/elevation remain in force; documents the
+  placard signature and swipe-to-delete interaction. Cites ADR-0005.
 - feat: drop quantity/unit extraction from recipe import (ADR-0021) —
   `normalizeIngredient` now returns a clean name only, greedily discarding the whole
   leading measure run (slash/glued/"or" dual measures collapse into one path before
