@@ -1,4 +1,4 @@
-# Pair a tokenize-once deterministic ingredient parser with a user-editable import preview
+# Drop quantity/unit parsing from recipe import; produce a clean name only and let the user set units in the preview
 
 ## Status
 
@@ -12,9 +12,10 @@ and each targeted fix only covers the one variant it was written for.
 
 ## The Solution
 
-Replace the incrementally-patched regex pipeline in `normalizeIngredient` with a
-single structural tokenize-once parser, and make the import preview rows editable
-so any residual mis-parse is a one-tap correction rather than a bad catalog row.
+Stop extracting quantity and unit from ingredient strings entirely: normalize each
+line to a clean sentence-cased name (descriptors lifted to parentheticals, raw line
+shown beneath as today), default quantity to ×1 like any manual item add, and let
+the user optionally set a unit in the import preview before committing.
 
 ## Context
 
@@ -110,52 +111,73 @@ trailing conversion) is a fresh edge case. This is unbounded whack-a-mole.
    view. Low risk, fully offline, no dependency. Weak as a *sole* fix (every
    import would need hand-cleanup), strong as a backstop.
 
-**Selected: Option 2 + Option 6** — the tokenize-once parser as the primary fix,
-with editable preview rows as the correctness backstop.
+7. **Drop quantity/unit extraction entirely; clean name only, units set by the
+   user.** Stop trying to *capture* a quantity and unit from the string at all.
+   Keep the name-cleaning passes (strip the leading measure run, lift size
+   descriptors to parentheticals, sentence-case), but treat the leading measures
+   as noise to discard rather than data to preserve — so there is no "which
+   measure do we keep" decision to get wrong. Imported items land at the default
+   quantity ×1, exactly like a manually-added item, and the import preview offers
+   an optional unit control per row (and the raw line stays beneath). No parse of
+   quantity from the entry. Fully offline, no dependency, and *less* code than
+   today (deletes the carry-through plumbing and the brittle
+   `stripAlternateMeasures`).
+
+**Selected: Option 7** — drop quantity/unit extraction; produce a clean name only
+and let the user set units in the preview.
 
 ## Rationale
 
-The decisive factor is that this is a **single-user, offline-first PWA** where the
-user is present at import time and the raw line is already on screen. That reframes
-the goal: we do not need a parser that is *always* right (an impossible bar against
-the long tail of recipe punctuation) — we need one that is *usually* right and a UI
-where the rare miss costs one tap.
+The decisive realization is that **the entire long tail of measure punctuation —
+including the dual-measure bug — lives exclusively in the quantity/unit
+*extraction* path.** The prior fixes were hard because they had to preserve the
+*first* measure as a field while discarding the alternate; that "keep one, drop the
+rest" decision is what `stripAlternateMeasures` got wrong on the no-space variant.
+Remove the requirement to capture any measure and the bug class evaporates: there
+is no measure to mis-assign.
 
-- **Option 2 kills the bug class, not the bug.** Splitting on the measure
-  separator structurally — before unit lookup, whitespace-independent — handles
-  `cups/70`, `cup / 180`, `100g/3.5oz`, and `… or …` in one branch, ending the
-  per-variant patching that defeated the last two attempts. It preserves every
-  property that made the current approach attractive (pure, offline,
-  deterministic, dependency-free, conservative raw fallback).
+- **It deletes the problem instead of out-parsing it.** Name cleaning still removes
+  the leading measure run, but greedily — it discards `2 cups/70 grams`,
+  `1 cup / 180 grams`, `100g/3.5oz`, `1 to 2 large`, and any other leading
+  number/unit/slash run wholesale, because nothing downstream depends on which
+  token was the "real" amount. This is strictly simpler and more robust than any
+  parser that has to reconstruct the amount.
 
-- **Option 6 makes parsing quality a UX nicety instead of a correctness
-  requirement.** With editable rows, even a future un-handled format is a visible,
-  one-tap fix rather than a silent bad row — so we are no longer one weird recipe
-  away from the next bug report. This is the safety net the previous two
-  regex-only fixes lacked.
+- **Recipe amounts are the wrong unit for a grocery list anyway.** A recipe says
+  "2 cups flour"; you buy flour by the bag. Carrying recipe quantities into a
+  shopping list is low value and often misleading, so defaulting every imported
+  item to ×1 — identical to how every other item is added — is not a regression,
+  it is the correct grocery-list semantics. The user adjusts the few items where a
+  count matters, with the raw recipe line right there for reference.
 
-- **AI (Option 4) is rejected on fit, not ambition.** The in-stack model is for
-  semantic similarity; ingredient field-extraction is a lexical/structural task.
-  Solving it with a generative or NER model means a heavy second model,
-  non-determinism, and latency, to do worse than a small parser on a deterministic
-  problem. The existing embedding model continues to own the part it is good at —
-  aisle placement of the resulting item (ADR-0011/0015).
+- **It fits a single-user, offline-first PWA.** The user is present at import time;
+  an optional per-row unit control is a light touch on the handful of items that
+  warrant it, and it reuses the same unit vocabulary the app already uses for
+  manual adds. No AI, no dependency, smaller surface area than the status quo.
 
-- **A library (Option 3) stays the fallback if Option 2 proves insufficient.** If
-  the in-house tokenizer accrues its own long tail, adopting a maintained parser
-  is the next step — but it needs `package.json` sign-off and a wrapper to keep
-  the conservative raw fallback, so it is not the opening move.
+- **The richer options are rejected as overbuilt for the goal.** A tokenize-once
+  parser (Option 2) or a library (Option 3) still does the expensive thing —
+  faithfully reconstructing an amount we have now decided we do not want to store.
+  AI extraction (Option 4) is doubly wrong: the in-stack model does semantic
+  similarity, not field extraction, and we would be adding a heavy, non-
+  deterministic model to compute a number we intend to throw away. The embedding
+  model keeps the job it is good at — aisle placement of the resulting item
+  (ADR-0011/0015).
 
 ## Notes
 
-- Scope guard for implementation: the structural measure-split must not shatter
-  ascii fractions (`1/2 cup`) — those are a *quantity*, consumed before the
-  measure-separator branch, exactly as today.
-- Editable rows are additive to `RecipeImporter.tsx`; the parsed `{name, quantity,
-  unit}` simply becomes editable local state before `commit()` rather than being
-  read straight from `normalized`. No persistence/DB change, no `DB_VERSION` bump.
+- Scope guard for implementation: greedily stripping the leading measure run must
+  still stop at the noun (never empty the name — keep the existing conservative
+  raw-string fallback), and must not consume a leading word that is part of the
+  name itself. The `NormalizedIngredient.quantity`/`unit` fields can be dropped, or
+  retained as always-undefined, depending on call-site churn.
+- `RecipeImporter.tsx` gains an optional per-row unit control and stops passing a
+  parsed quantity into `commit()`; `addListItem`/`addDefaultItem` already default
+  the quantity, so the call simplifies to `{ name, unit? }`. No persistence/DB
+  change, no `DB_VERSION` bump.
 - Keep `normalizeIngredient` pure and exhaustively unit-tested; the existing test
-  file is the regression harness. Add the failing cases above as fixtures so they
+  file is the regression harness. Add the failing cases above as fixtures asserting
+  the cleaned *name* only (no quantity/unit assertions), so the dual-measure forms
   can never silently regress.
 - This record supersedes nothing; it constrains future work on
   `normalizeIngredient` and the import preview, and complements ADR-0019 (import

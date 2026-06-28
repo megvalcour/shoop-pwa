@@ -7,9 +7,10 @@
 - docs: propose ADR-0021 on recipe ingredient normalization approach — weighs the
   current regex pipeline (which mis-parses no-space dual measures like
   "2 cups/70 grams chocolate chips") against a tokenize-once parser, a parser
-  library, in-browser AI extraction, server-side parsing, and editable preview
-  rows; recommends a tokenize-once parser plus a user-editable import preview.
-  Proposed, awaiting review/acceptance.
+  library, in-browser AI extraction, server-side parsing, editable preview rows,
+  and dropping quantity/unit extraction entirely; recommends dropping extraction:
+  clean name only, default to ×1, user sets units in the preview. Proposed,
+  awaiting review/acceptance.
 - fix: strip slash-delimited alternate measurements in recipe import so a
   US + metric dual amount ("1 cup / 180 grams flour") imports as the bare noun
   ("Flour") with the first measure kept as quantity/unit
