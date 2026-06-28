@@ -3,20 +3,20 @@ import type { Page } from './support/offlineModel';
 
 // A representative recipe payload mirroring the `/api/import-recipe` 200 contract
 // ({ title, ingredients: string[], sourceUrl }). Ingredients are raw strings as
-// they arrive from JSON-LD; `normalizeIngredient` strips the leading quantity and
-// unit, sentence-cases the name, and lifts a leading size descriptor into a
-// parenthetical (e.g. "3 large eggs" → "Eggs (large)" with quantity 3).
+// they arrive from JSON-LD; `normalizeIngredient` discards the leading measure
+// run entirely (no quantity/unit capture, ADR-0021), sentence-cases the name, and
+// lifts a leading size descriptor into a parenthetical (e.g. "3 large eggs" →
+// "Eggs (large)"). Imported items land at the default ×1 like any manual add.
 const RECIPE = {
   title: 'Chocolate Chip Cookies',
   ingredients: ['2 cups all-purpose flour', '1 tsp baking soda', '3 large eggs'],
   sourceUrl: 'https://example.com/recipe',
 };
 
-// Cleaned catalog names that land on the list after normalization.
+// Cleaned catalog names that land on the list after normalization. On the review
+// screen these are also the row labels (no quantity prefix), with the raw line
+// beneath as the mistranslation guard.
 const LIST_NAMES = ['All-purpose flour', 'Baking soda', 'Eggs (large)'];
-
-// On the review screen each row's primary label prefixes the parsed quantity.
-const REVIEW_LABELS = ['2 · All-purpose flour', '1 · Baking soda', '3 · Eggs (large)'];
 
 const RECIPE_URL = 'https://example.com/recipe';
 
@@ -48,14 +48,18 @@ test.describe('Recipe Import', () => {
     await page.goto(`/import?url=${encodeURIComponent(RECIPE_URL)}`);
 
     // Parsed ingredients render as a checklist, all checked by default. Each row
-    // shows the parsed quantity prefix and a cleaned name; the raw line stays
-    // beneath as the mistranslation guard.
+    // shows the cleaned name (no quantity prefix); the raw line stays beneath as
+    // the mistranslation guard.
     await expect(page.getByRole('heading', { name: 'Chocolate Chip Cookies' })).toBeVisible();
-    for (const label of REVIEW_LABELS) {
-      await expect(page.getByText(label, { exact: true })).toBeVisible();
+    for (const name of LIST_NAMES) {
+      await expect(page.getByText(name, { exact: true })).toBeVisible();
     }
     // The size-descriptor row reads "Eggs (large)" with its raw line beneath.
     await expect(page.getByText('3 large eggs', { exact: true })).toBeVisible();
+
+    // Set a unit on the eggs row to prove the optional per-row unit control
+    // carries through to the committed item.
+    await page.getByLabel('Unit for Eggs (large)').fill('dozen');
 
     // Default target is "New list"; commit all three.
     const commit = page.getByRole('button', { name: /add 3 items/i });
@@ -67,18 +71,20 @@ test.describe('Recipe Import', () => {
     for (const name of LIST_NAMES) {
       await expect(page.getByText(name, { exact: true })).toBeVisible();
     }
-    // The parsed quantity carried through: "3 large eggs" lands as ×3.
-    await expect(page.getByText('×3', { exact: true })).toBeVisible();
+    // No quantity was captured: items land at the default ×1. The unit set on the
+    // eggs row shows as "1 dozen"; the others have no unit and read "×1".
+    await expect(page.getByText('1 dozen', { exact: true })).toBeVisible();
+    await expect(page.getByText('×1', { exact: true }).first()).toBeVisible();
   });
 
   test('unchecking an ingredient excludes it from the commit', async ({ page }) => {
     await mockImportEndpoint(page);
     await page.goto(`/import?url=${encodeURIComponent(RECIPE_URL)}`);
 
-    await expect(page.getByText('1 · Baking soda', { exact: true })).toBeVisible();
+    await expect(page.getByText('Baking soda', { exact: true })).toBeVisible();
 
     // Uncheck "Baking soda" — the commit count drops and it should not land on the list.
-    await page.getByText('1 · Baking soda', { exact: true }).click();
+    await page.getByText('Baking soda', { exact: true }).click();
 
     const commit = page.getByRole('button', { name: /add 2 items/i });
     await expect(commit).toBeVisible();
@@ -103,7 +109,7 @@ test.describe('Recipe Import', () => {
 
     // The same downstream importer renders the parsed ingredients.
     await expect(page.getByRole('heading', { name: 'Chocolate Chip Cookies' })).toBeVisible();
-    await expect(page.getByText('2 · All-purpose flour', { exact: true })).toBeVisible();
+    await expect(page.getByText('All-purpose flour', { exact: true })).toBeVisible();
   });
 
   test('shows a clear error when the page has no recipe', async ({ page }) => {

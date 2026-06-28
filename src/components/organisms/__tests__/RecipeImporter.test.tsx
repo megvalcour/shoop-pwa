@@ -96,12 +96,13 @@ describe('RecipeImporter', () => {
     mockAddDefault.mockResolvedValue(undefined);
   });
 
-  it('renders normalized ingredients with the parsed amount and raw text', async () => {
+  it('renders normalized ingredient names with the raw text beneath', async () => {
     await setup({ data: SAMPLE });
-    // Primary label prefixes the parsed quantity; the raw line stays beneath.
-    expect(screen.getByText('2 · Flour')).toBeInTheDocument();
+    // The cleaned name is the primary label; the raw line stays beneath as the
+    // mistranslation guard. No quantity is parsed or shown (ADR-0021).
+    expect(screen.getByText('Flour')).toBeInTheDocument();
     expect(screen.getByText('2 cups flour')).toBeInTheDocument();
-    expect(screen.getByText('1 · Salt')).toBeInTheDocument();
+    expect(screen.getByText('Salt')).toBeInTheDocument();
   });
 
   it('commits checked ingredients to a new list named after the recipe', async () => {
@@ -112,23 +113,40 @@ describe('RecipeImporter', () => {
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(mockRename).toHaveBeenCalledWith({ id: 'list-1', name: 'Pasta Bake' });
     expect(mockAddListItem).toHaveBeenCalledTimes(2);
+    // No quantity carried through; unit defaults to undefined (control untouched).
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Flour',
-      quantity: 2,
+      unit: undefined,
+    });
+    expect(mockAddListItem).toHaveBeenCalledWith({
+      listId: 'list-1',
+      name: 'Salt',
+      unit: undefined,
+    });
+  });
+
+  it('carries a unit set in the preview into the committed item', async () => {
+    await setup({ data: SAMPLE });
+    fireEvent.change(screen.getByLabelText('Unit for Flour'), { target: { value: 'cups' } });
+    fireEvent.click(screen.getByRole('button', { name: /add 2 items/i }));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/lists/list-1'));
+    expect(mockAddListItem).toHaveBeenCalledWith({
+      listId: 'list-1',
+      name: 'Flour',
       unit: 'cups',
     });
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Salt',
-      quantity: 1,
-      unit: 'tsp',
+      unit: undefined,
     });
   });
 
   it('omits unchecked ingredients from the commit', async () => {
     await setup({ data: SAMPLE });
-    fireEvent.click(screen.getByText('2 · Flour').closest('button')!);
+    fireEvent.click(screen.getByText('Flour').closest('button')!);
 
     fireEvent.click(screen.getByRole('button', { name: /add 1 item/i }));
 
@@ -137,8 +155,7 @@ describe('RecipeImporter', () => {
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-1',
       name: 'Salt',
-      quantity: 1,
-      unit: 'tsp',
+      unit: undefined,
     });
   });
 
@@ -156,8 +173,7 @@ describe('RecipeImporter', () => {
     expect(mockAddListItem).toHaveBeenCalledWith({
       listId: 'list-9',
       name: 'Flour',
-      quantity: 2,
-      unit: 'cups',
+      unit: undefined,
     });
   });
 
@@ -169,7 +185,7 @@ describe('RecipeImporter', () => {
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/default-list'));
     expect(mockAddDefault).toHaveBeenCalledTimes(2);
-    expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Flour', quantity: 2, unit: 'cups' });
+    expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Flour', unit: undefined });
     expect(mockCreate).not.toHaveBeenCalled();
   });
 

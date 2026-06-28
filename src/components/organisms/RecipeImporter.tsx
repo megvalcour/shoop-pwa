@@ -15,7 +15,10 @@ import {
 } from '@/hooks/useShoppingLists';
 import { useAddListItem } from '@/hooks/useListItems';
 import { useAddDefaultListItem } from '@/hooks/useDefaultList';
-import { normalizeIngredient } from '@/utils/normalizeIngredient';
+import { normalizeIngredient, UNIT_SUGGESTIONS } from '@/utils/normalizeIngredient';
+
+/** Datalist id for the shared per-row unit suggestions. */
+const UNIT_DATALIST_ID = 'recipe-import-units';
 
 export interface RecipeImporterProps {
   /** URL handed in by the Share Target / route; absent for manual paste. */
@@ -58,8 +61,11 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
 
   // Everything checked by default; reset whenever a fresh recipe loads.
   const [checked, setChecked] = useState<Set<number>>(new Set());
+  // Optional per-row unit, indexed alongside `normalized`; '' means omit on commit.
+  const [units, setUnits] = useState<string[]>([]);
   useEffect(() => {
     setChecked(new Set(normalized.map((_, index) => index)));
+    setUnits(normalized.map(() => ''));
   }, [normalized]);
 
   const [target, setTarget] = useState<ImportTarget>({ kind: 'new' });
@@ -80,6 +86,14 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
     });
   }
 
+  function setUnit(index: number, value: string) {
+    setUnits((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }
+
   function submitPaste(event: React.FormEvent) {
     event.preventDefault();
     const trimmed = pasteValue.trim();
@@ -87,19 +101,17 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
   }
 
   async function commit() {
-    const selected = normalized.filter((_, index) => checked.has(index));
+    const selected = normalized
+      .map((ingredient, index) => ({ ingredient, unit: units[index]?.trim() || undefined }))
+      .filter((_, index) => checked.has(index));
     if (selected.length === 0) return;
 
     setCommitting(true);
     setCommitError(false);
     try {
       if (target.kind === 'default') {
-        for (const ingredient of selected) {
-          await addDefaultItem.mutateAsync({
-            name: ingredient.name,
-            quantity: ingredient.quantity,
-            unit: ingredient.unit,
-          });
+        for (const { ingredient, unit } of selected) {
+          await addDefaultItem.mutateAsync({ name: ingredient.name, unit });
         }
         navigate('/default-list');
         return;
@@ -114,13 +126,8 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
         listId = target.listId;
       }
 
-      for (const ingredient of selected) {
-        await addListItem.mutateAsync({
-          listId,
-          name: ingredient.name,
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
-        });
+      for (const { ingredient, unit } of selected) {
+        await addListItem.mutateAsync({ listId, name: ingredient.name, unit });
       }
       navigate(`/lists/${listId}`);
     } catch {
@@ -149,17 +156,29 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
             isSelected={(_, index) => checked.has(index)}
             renderLabel={(ingredient) => (
               <span className="flex flex-col">
-                <span>
-                  {ingredient.quantity !== undefined && `${ingredient.quantity} · `}
-                  {ingredient.name}
-                </span>
+                <span>{ingredient.name}</span>
                 {ingredient.raw !== ingredient.name && (
                   <span className="text-text-muted text-xs">{ingredient.raw}</span>
                 )}
               </span>
             )}
+            renderAccessory={(_, index) => (
+              <Input
+                className="w-20 text-sm"
+                list={UNIT_DATALIST_ID}
+                placeholder="unit"
+                aria-label={`Unit for ${normalized[index].name}`}
+                value={units[index] ?? ''}
+                onChange={(event) => setUnit(index, event.target.value)}
+              />
+            )}
             onSelect={(_, index) => toggle(index)}
           />
+          <datalist id={UNIT_DATALIST_ID}>
+            {UNIT_SUGGESTIONS.map((unit) => (
+              <option key={unit} value={unit} />
+            ))}
+          </datalist>
         </section>
 
         <section className="flex flex-col gap-2">

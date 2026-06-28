@@ -1,26 +1,24 @@
 ## Active Task
 
-- **Normalize recipe imports — drop quantity/unit extraction (ADR-0021).** Plan in
-  `tasks/active--recipe-import-normalization.md`. `normalizeIngredient` produces a
-  clean name only (greedily discarding the whole leading measure run, killing the
-  dual-measure mis-parse class), imported items default to ×1, and the import preview
-  gains an optional per-row unit control. Accepts ADR-0021.
+- _None._ Pick up the next backlog item when directed.
 
 ## Current Status
 
+- feat: drop quantity/unit extraction from recipe import (ADR-0021) —
+  `normalizeIngredient` now returns a clean name only, greedily discarding the whole
+  leading measure run (slash/glued/"or" dual measures collapse into one path before
+  unit lookup, deleting the dual-measure mis-parse class). Imported items land at the
+  default ×1 like any manual add, and the import preview gains an optional per-row
+  unit control. Accepts ADR-0021.
 - docs: propose ADR-0021 on recipe ingredient normalization approach — weighs the
   current regex pipeline (which mis-parses no-space dual measures like
   "2 cups/70 grams chocolate chips") against a tokenize-once parser, a parser
   library, in-browser AI extraction, server-side parsing, editable preview rows,
   and dropping quantity/unit extraction entirely; recommends dropping extraction:
-  clean name only, default to ×1, user sets units in the preview. Proposed,
-  awaiting review/acceptance.
+  clean name only, default to ×1, user sets units in the preview.
 - fix: strip slash-delimited alternate measurements in recipe import so a
   US + metric dual amount ("1 cup / 180 grams flour") imports as the bare noun
   ("Flour") with the first measure kept as quantity/unit
-- feat: normalize recipe import items — sentence-case names, lift size
-  descriptors into parentheticals, and carry the parsed quantity/unit into the
-  saved row (absorbed the "Recipe Import Quantities" backlog item)
 - feat: adopt monochrome-blue Material visual identity with aisle-spine signature (ADR-0020, supersedes ADR-0008)
 
 ## Backlog
