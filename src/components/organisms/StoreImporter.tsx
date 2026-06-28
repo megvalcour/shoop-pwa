@@ -78,8 +78,8 @@ export default function StoreImporter() {
         <p className="text-text-muted text-sm mt-1">
           Custom stores are built from a JSON file describing your store&rsquo;s aisles and a few
           example items in each. The example items teach Shoop where to file your groceries when you
-          shop there. Ask an AI assistant to generate it with the prompt below, then upload or paste
-          the result.
+          shop there. Copy the prompt below, fill in the name and location of your grocery store at
+          the bottom, then send it to an AI assistant. Upload or paste the result here.
         </p>
       </header>
 
