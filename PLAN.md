@@ -1,6 +1,10 @@
 ## Active Task
 
-- _None — pick up the next backlog item._
+- **Normalize recipe imports — drop quantity/unit extraction (ADR-0021).** Plan in
+  `tasks/active--recipe-import-normalization.md`. `normalizeIngredient` produces a
+  clean name only (greedily discarding the whole leading measure run, killing the
+  dual-measure mis-parse class), imported items default to ×1, and the import preview
+  gains an optional per-row unit control. Accepts ADR-0021.
 
 ## Current Status
 
