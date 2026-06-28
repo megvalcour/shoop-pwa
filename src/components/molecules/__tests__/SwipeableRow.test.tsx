@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import SwipeableRow from '@/components/molecules/SwipeableRow';
 
 function renderRow(onDelete = vi.fn(), onToggle = vi.fn()) {
-  render(
+  const { container } = render(
     <ul>
       <SwipeableRow onDelete={onDelete} deleteLabel="Delete Milk">
         <div onClick={onToggle}>Milk</div>
@@ -12,7 +12,8 @@ function renderRow(onDelete = vi.fn(), onToggle = vi.fn()) {
   );
   const content = screen.getByText('Milk');
   const foreground = content.parentElement as HTMLElement;
-  return { onDelete, onToggle, content, foreground };
+  const redLayer = container.querySelector('.bg-destructive') as HTMLElement;
+  return { onDelete, onToggle, content, foreground, redLayer };
 }
 
 const down = { clientX: 200, clientY: 100, pointerId: 1, pointerType: 'touch' };
@@ -61,5 +62,24 @@ describe('SwipeableRow', () => {
   it('animates the foreground only under motion-safe (respects reduced motion)', () => {
     const { foreground } = renderRow();
     expect(foreground.className).toContain('motion-safe:transition-transform');
+  });
+
+  it('hides the destructive layer at rest and reveals it once a drag begins', () => {
+    const { redLayer, foreground } = renderRow();
+    // Full-bleed red layer, transparent until a swipe is in progress.
+    expect(redLayer.className).toContain('inset-0');
+    expect(redLayer.className).toContain('opacity-0');
+    expect(redLayer.className).not.toContain('opacity-100');
+
+    fireEvent.pointerDown(foreground, down);
+    fireEvent.pointerMove(foreground, { ...down, clientX: 150 }); // 50px left → a drag
+    expect(redLayer.className).toContain('opacity-100');
+  });
+
+  it('reveals the destructive layer when the fallback delete button is focused', () => {
+    const { redLayer } = renderRow();
+    expect(redLayer.className).toContain('opacity-0');
+    fireEvent.focus(screen.getByRole('button', { name: /delete milk/i }));
+    expect(redLayer.className).toContain('opacity-100');
   });
 });
