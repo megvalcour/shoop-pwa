@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Superseded by ADR-0022 (signature only)
+
+The aisle-spine *Signature* below is replaced by ADR-0022's aisle placards. The
+palette, typography, and elevation tokens in this ADR remain in force.
 
 ## The Problem
 

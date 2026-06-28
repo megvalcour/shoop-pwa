@@ -7,6 +7,7 @@ import Badge from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import Spinner from '@/components/atoms/Spinner';
 import ListItemRow from '@/components/molecules/ListItemRow';
+import SwipeableRow from '@/components/molecules/SwipeableRow';
 
 interface GroceryListItemProps {
   name: string;
@@ -61,9 +62,12 @@ export default function GroceryListItem({
       </Badge>
     );
   } else if (aisleLabel) {
+    // De-emphasized: a quiet, muted swap affordance so it stops competing for
+    // attention on every row mid-shop (the placard header carries wayfinding).
     badge = (
       <Badge
-        className="px-2.5 py-1"
+        variant="muted"
+        className="px-1.5 py-0.5 text-[10px]"
         onClick={openPicker}
         aria-label={`Change aisle: ${aisleLabel}`}
       >
@@ -85,20 +89,32 @@ export default function GroceryListItem({
     );
   }
 
+  const row = (
+    <ListItemRow
+      as="div"
+      name={name}
+      quantity={quantity}
+      unit={unit}
+      checked={checked}
+      onToggle={onToggle}
+      // No persistent trash button in the in-motion list: deletion is the
+      // swipe gesture (with an accessible button) on SwipeableRow instead.
+      // Quantity is meaningful on done items too, so it stays editable
+      // regardless of checked state (unlike the aisle badge).
+      onQuantityClick={onQuantityChange ? () => setQtySheetOpen(true) : undefined}
+      badge={badge}
+    />
+  );
+
   return (
     <>
-      <ListItemRow
-        name={name}
-        quantity={quantity}
-        unit={unit}
-        checked={checked}
-        onToggle={onToggle}
-        onDelete={onDelete}
-        // Quantity is meaningful on done items too, so it stays editable
-        // regardless of checked state (unlike the aisle badge).
-        onQuantityClick={onQuantityChange ? () => setQtySheetOpen(true) : undefined}
-        badge={badge}
-      />
+      {onDelete ? (
+        <SwipeableRow onDelete={onDelete} deleteLabel={`Delete ${name}`}>
+          {row}
+        </SwipeableRow>
+      ) : (
+        <li className="relative">{row}</li>
+      )}
       {sheetOpen && aisles && onAisleChange && (
         <AislePickerSheet
           aisles={aisles}

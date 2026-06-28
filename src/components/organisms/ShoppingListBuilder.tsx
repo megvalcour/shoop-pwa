@@ -104,8 +104,10 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
         return (
           <AisleGroup
             key={aisle.id}
+            // The placard carries the number for numbered aisles, so the header
+            // text is just the name; non-numeric sections keep the full label.
             marker={isNumeric ? aisle.number : undefined}
-            header={formatAisleLabel(aisle)}
+            header={isNumeric ? aisle.label : formatAisleLabel(aisle)}
           >
             {lis.map((li) => renderListItem(li))}
           </AisleGroup>
