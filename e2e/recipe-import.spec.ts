@@ -57,9 +57,12 @@ test.describe('Recipe Import', () => {
     // The size-descriptor row reads "Eggs (large)" with its raw line beneath.
     await expect(page.getByText('3 large eggs', { exact: true })).toBeVisible();
 
-    // Set a unit on the eggs row to prove the optional per-row unit control
-    // carries through to the committed item.
-    await page.getByLabel('Unit for Eggs (large)').fill('dozen');
+    // Tap the eggs quantity chip to open the shared QuantitySheet and set a unit,
+    // proving the per-row quantity/unit control carries through to the committed
+    // item. The quantity stays at the default ×1.
+    await page.getByRole('button', { name: 'Quantity for Eggs (large)' }).click();
+    await page.getByLabel('Unit').fill('dozen');
+    await page.getByRole('button', { name: /save/i }).click();
 
     // Default target is "New list"; commit all three.
     const commit = page.getByRole('button', { name: /add 3 items/i });

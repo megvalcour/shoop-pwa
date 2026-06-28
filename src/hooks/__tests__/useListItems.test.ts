@@ -132,7 +132,7 @@ describe('useAddListItem', () => {
     expect(result.current.list.data?.[0]).toMatchObject({ quantity: 1, unit: 'cans' });
   });
 
-  it('adopts an incoming unit on a duplicate only when none is set', async () => {
+  it('lands a provided quantity on a new row', async () => {
     const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
     const wrapper = makeWrapper();
 
@@ -142,14 +142,63 @@ describe('useAddListItem', () => {
     );
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    // New row with no unit, then a duplicate carrying a unit → adopt it.
-    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'Basil' }));
-    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'basil', unit: 'sprigs' }));
-    await waitFor(() => expect(result.current.list.data?.[0].unit).toBe('sprigs'));
+    await act(() =>
+      result.current.add.mutateAsync({ listId: 'list-1', name: 'Flour', quantity: 3, unit: 'cups' }),
+    );
+    await waitFor(() => expect(result.current.list.data).toHaveLength(1));
+    expect(result.current.list.data?.[0]).toMatchObject({ quantity: 3, unit: 'cups' });
+  });
 
-    // A set unit must never be clobbered, even on a mismatch.
-    await act(() => result.current.add.mutateAsync({ listId: 'list-1', name: 'basil', unit: 'cups' }));
-    await waitFor(() => expect(result.current.list.data?.[0].unit).toBe('sprigs'));
+  it('sums quantities on a same-name same-unit resolve', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() =>
+      result.current.add.mutateAsync({ listId: 'list-1', name: 'Flour', quantity: 2, unit: 'cups' }),
+    );
+    await act(() =>
+      result.current.add.mutateAsync({ listId: 'list-1', name: 'flour', quantity: 3, unit: 'cups' }),
+    );
+
+    // Same item, same unit → one row, summed quantity (2 + 3).
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(5));
+    expect(result.current.list.data).toHaveLength(1);
+  });
+
+  it('creates a second row for the same item with a different unit', async () => {
+    const { useListItems, useAddListItem } = await import('@/hooks/useListItems');
+    const { dbPromise } = await import('@/db/idbClient');
+    const wrapper = makeWrapper();
+
+    const { result } = renderHook(
+      () => ({ list: useListItems('list-1'), add: useAddListItem() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    await act(() =>
+      result.current.add.mutateAsync({ listId: 'list-1', name: 'Flour', quantity: 2, unit: 'cups' }),
+    );
+    await act(() =>
+      result.current.add.mutateAsync({ listId: 'list-1', name: 'flour', quantity: 1, unit: 'bag' }),
+    );
+
+    // Same catalog item, differing units → two distinct list rows.
+    await waitFor(() => expect(result.current.list.data).toHaveLength(2));
+    const byUnit = Object.fromEntries(result.current.list.data!.map((li) => [li.unit, li.quantity]));
+    expect(byUnit).toEqual({ cups: 2, bag: 1 });
+
+    // Only one shared catalog item backs both rows.
+    const db = await dbPromise;
+    const flourItems = (await db.getAll('items')).filter((i) => i.canonical_name === 'flour');
+    expect(flourItems).toHaveLength(1);
+    expect(result.current.list.data!.every((li) => li.item_id === flourItems[0].id)).toBe(true);
   });
 
   it('accumulates +1 per re-add of the same item', async () => {

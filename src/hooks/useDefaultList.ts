@@ -24,6 +24,11 @@ interface AddDefaultListItemInput {
   name: string;
   /** Optional unit set in the recipe-import preview; manual adds omit it. */
   unit?: string;
+  /**
+   * Optional quantity chosen in the recipe-import preview; manual adds omit it
+   * and fall back to the default step of 1.
+   */
+  quantity?: number;
 }
 
 interface AddDefaultListItemResult {
@@ -38,9 +43,14 @@ export function useAddDefaultListItem() {
     mutationFn: async ({
       name,
       unit,
+      quantity,
     }: AddDefaultListItemInput): Promise<AddDefaultListItemResult> => {
       const trimmed = name.trim();
       if (!trimmed) throw new Error('Item name cannot be empty');
+
+      // The stepper guarantees an integer ≥ 1; guard the persistence layer too so
+      // a non-positive/NaN quantity can never land on an entry.
+      const step = Number.isFinite(quantity) ? Math.max(1, Math.trunc(quantity!)) : 1;
 
       const db = await dbPromise;
       // Read phase — outside any transaction (idb does not hold a transaction
@@ -52,15 +62,17 @@ export function useAddDefaultListItem() {
 
       const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-      // Duplicate add (case-insensitive exact name, via resolveItem): bump the
-      // count by one, exactly like a manual re-add. Adopt an incoming unit only
-      // when none is set; never clobber a set unit. Spread preserves the notes.
-      const existing = allEntries.find((e) => e.item_id === itemId);
+      // Duplicate add: dedup on (item_id, unit), so the same catalog item with a
+      // *different* unit falls through to a new entry. On a same-unit match, sum
+      // the quantities (the manual path is always unitless, so two manual re-adds
+      // match `'' === ''` and bump by the default step of 1). Spread preserves notes.
+      const existing = allEntries.find(
+        (e) => e.item_id === itemId && e.unit === (unit ?? ''),
+      );
       if (existing) {
         await db.put('default_list', {
           ...existing,
-          quantity: existing.quantity + 1,
-          unit: existing.unit === '' && unit ? unit : existing.unit,
+          quantity: existing.quantity + step,
         });
         return { itemCreated: false, incremented: true };
       }
@@ -68,7 +80,7 @@ export function useAddDefaultListItem() {
       const entry: DefaultListEntry = {
         id: crypto.randomUUID(),
         item_id: itemId,
-        quantity: 1,
+        quantity: step,
         unit: unit ?? '',
         notes: '',
       };

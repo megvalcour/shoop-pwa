@@ -22,6 +22,11 @@ interface AddListItemInput {
   name: string;
   /** Optional unit set in the recipe-import preview; manual adds omit it. */
   unit?: string;
+  /**
+   * Optional quantity chosen in the recipe-import preview; manual adds omit it
+   * and fall back to the default step of 1.
+   */
+  quantity?: number;
 }
 
 interface AddListItemResult {
@@ -39,7 +44,12 @@ const inFlightAdds = new Set<string>();
 export function useAddListItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ listId, name, unit }: AddListItemInput): Promise<AddListItemResult> => {
+    mutationFn: async ({
+      listId,
+      name,
+      unit,
+      quantity,
+    }: AddListItemInput): Promise<AddListItemResult> => {
       const trimmed = name.trim();
       if (!trimmed) throw new Error('Item name cannot be empty');
 
@@ -51,7 +61,7 @@ export function useAddListItem() {
       }
       inFlightAdds.add(inFlightKey);
       try {
-        return await addListItem(listId, trimmed, unit);
+        return await addListItem(listId, trimmed, unit, quantity);
       } finally {
         inFlightAdds.delete(inFlightKey);
       }
@@ -75,8 +85,13 @@ async function addListItem(
   listId: string,
   trimmed: string,
   unit?: string,
+  quantity?: number,
 ): Promise<AddListItemResult> {
   const db = await dbPromise;
+
+  // The stepper guarantees an integer ≥ 1; guard the persistence layer too so a
+  // non-positive/NaN quantity can never land on a row.
+  const step = Number.isFinite(quantity) ? Math.max(1, Math.trunc(quantity!)) : 1;
 
   // Read phase — outside any transaction. idb does not keep transactions alive
   // across await boundaries, so reads and writes must be separate operations.
@@ -88,18 +103,17 @@ async function addListItem(
 
   const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-  // Duplicate add (case-insensitive exact name, via resolveItem): bump the count
-  // by one, exactly like a manual re-add. Adopt an incoming unit only when none
-  // is set; never clobber a unit already on the row, even on a mismatch (summing
-  // across units is bounded but documented nonsense).
+  // Duplicate add: dedup on (item_id, unit), so the same catalog item with a
+  // *different* unit falls through to a new row. On a same-unit match, sum the
+  // quantities (the manual path is always unitless, so two manual re-adds match
+  // `'' === ''` and bump by the default step of 1 — unchanged behaviour).
   const existing = allListItems.find(
-    (li) => li.list_id === listId && li.item_id === itemId,
+    (li) => li.list_id === listId && li.item_id === itemId && li.unit === (unit ?? ''),
   );
   if (existing) {
     await db.put('list_items', {
       ...existing,
-      quantity: existing.quantity + 1,
-      unit: existing.unit === '' && unit ? unit : existing.unit,
+      quantity: existing.quantity + step,
     });
     return { itemCreated: false, newItemId: '', incremented: true };
   }
@@ -108,7 +122,7 @@ async function addListItem(
     id: crypto.randomUUID(),
     list_id: listId,
     item_id: itemId,
-    quantity: 1,
+    quantity: step,
     unit: unit ?? '',
     checked: false,
     added_from_default: false,

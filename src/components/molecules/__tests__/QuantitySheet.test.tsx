@@ -40,4 +40,30 @@ describe('QuantitySheet', () => {
     expect(screen.getByText('4')).toBeInTheDocument();
     expect(screen.getByLabelText('Unit')).toHaveValue('oz');
   });
+
+  it('renders unit suggestions and wires the input to the datalist', () => {
+    render(
+      <QuantitySheet
+        quantity={1}
+        unit=""
+        onSave={vi.fn()}
+        onClose={vi.fn()}
+        unitSuggestions={['cup', 'gram']}
+      />,
+    );
+
+    const input = screen.getByLabelText('Unit');
+    const listId = input.getAttribute('list');
+    expect(listId).toBeTruthy();
+
+    const datalist = document.getElementById(listId!);
+    expect(datalist?.tagName).toBe('DATALIST');
+    const values = Array.from(datalist!.querySelectorAll('option')).map((o) => o.value);
+    expect(values).toEqual(['cup', 'gram']);
+  });
+
+  it('omits the datalist wiring when no suggestions are given', () => {
+    render(<QuantitySheet quantity={1} unit="" onSave={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByLabelText('Unit')).not.toHaveAttribute('list');
+  });
 });

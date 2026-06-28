@@ -5,11 +5,20 @@ import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
 import Input from '@/components/atoms/Input';
 
+/** Datalist id wiring the unit input to its suggestions when provided. */
+const UNIT_DATALIST_ID = 'quantity-sheet-units';
+
 export interface QuantitySheetProps {
   quantity: number;
   unit: string;
   onSave: (quantity: number, unit: string) => void;
   onClose: () => void;
+  /**
+   * Optional curated unit hints. When supplied, the unit input is backed by a
+   * `<datalist>` of these values (used by the recipe-import preview); other
+   * callers omit it for a plain free-text field.
+   */
+  unitSuggestions?: readonly string[];
 }
 
 /**
@@ -17,7 +26,13 @@ export interface QuantitySheetProps {
  * optional free-text unit. Mirrors AislePickerSheet: wraps BottomSheet and is
  * driven purely by callbacks — mutations are wired in the organisms.
  */
-export default function QuantitySheet({ quantity, unit, onSave, onClose }: QuantitySheetProps) {
+export default function QuantitySheet({
+  quantity,
+  unit,
+  onSave,
+  onClose,
+  unitSuggestions,
+}: QuantitySheetProps) {
   const [draftQuantity, setDraftQuantity] = useState(quantity);
   const [draftUnit, setDraftUnit] = useState(unit);
 
@@ -60,7 +75,15 @@ export default function QuantitySheet({ quantity, unit, onSave, onClose }: Quant
           value={draftUnit}
           onChange={(e) => setDraftUnit(e.target.value)}
           placeholder="unit (optional)"
+          list={unitSuggestions ? UNIT_DATALIST_ID : undefined}
         />
+        {unitSuggestions && (
+          <datalist id={UNIT_DATALIST_ID}>
+            {unitSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+        )}
 
         <Button variant="primary" onClick={handleSave}>
           Save
