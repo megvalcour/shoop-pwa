@@ -1,6 +1,9 @@
 ## Active Task
 
-- _None._ Pick up the next backlog item when directed.
+- **Custom Store via JSON Upload** — add a user's own store from an AI-generated
+  JSON file (upload or paste), reachable from Settings beneath the store list,
+  via a new `/stores/new` page with a "Copy prompt" button. Full plan in
+  `tasks/active--custom-store-json-upload.md`.
 
 ## Current Status
 
