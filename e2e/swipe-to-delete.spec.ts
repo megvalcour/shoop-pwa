@@ -16,6 +16,13 @@ test.describe('Swipe to delete', () => {
     await page.getByRole('button', { name: /^add$/i }).click();
     await expect(input).toBeEnabled();
     await expect(page.getByText(name)).toBeVisible();
+    // A freshly-added row first renders under "Categorizing…", then the
+    // background classifier re-buckets it into another aisle group — which
+    // remounts the SwipeableRow. A gesture driven before that settle is lost to
+    // the mid-drag remount (the same remount hazard noted in
+    // shopping-lists.spec.ts). The classifier is offline in e2e, so the row
+    // settles into "Uncategorized" with a "Categorize" affordance; wait for it.
+    await expect(page.getByRole('button', { name: /categorize item/i })).toBeVisible();
   }
 
   test('swiping a row left past the threshold removes it', async ({ page }) => {
