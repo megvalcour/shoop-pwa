@@ -99,20 +99,11 @@ export default function ShoppingListBuilder({ listId }: ShoppingListBuilderProps
         </AisleGroup>
       )}
 
-      {buckets.map(({ aisle, listItems: lis }) => {
-        const isNumeric = /^\d+$/.test(aisle.number ?? '');
-        return (
-          <AisleGroup
-            key={aisle.id}
-            // The placard carries the number for numbered aisles, so the header
-            // text is just the name; non-numeric sections keep the full label.
-            marker={isNumeric ? aisle.number : undefined}
-            header={isNumeric ? aisle.label : formatAisleLabel(aisle)}
-          >
-            {lis.map((li) => renderListItem(li))}
-          </AisleGroup>
-        );
-      })}
+      {buckets.map(({ aisle, listItems: lis }) => (
+        <AisleGroup key={aisle.id} header={formatAisleLabel(aisle)}>
+          {lis.map((li) => renderListItem(li))}
+        </AisleGroup>
+      ))}
 
       {uncategorized.length > 0 && (
         <AisleGroup header="Uncategorized" variant="muted">
