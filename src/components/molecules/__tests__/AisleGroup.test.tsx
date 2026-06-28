@@ -4,13 +4,13 @@ import AisleGroup from '@/components/molecules/AisleGroup';
 
 describe('AisleGroup', () => {
   it('renders the pre-formatted header', () => {
-    render(<AisleGroup header="Dairy & Eggs" marker="1"><li>Milk</li></AisleGroup>);
-    expect(screen.getByText('Dairy & Eggs')).toBeInTheDocument();
+    render(<AisleGroup header="Aisle 1 — Dairy & Eggs"><li>Milk</li></AisleGroup>);
+    expect(screen.getByText('Aisle 1 — Dairy & Eggs')).toBeInTheDocument();
   });
 
   it('renders children inside a list', () => {
     render(
-      <AisleGroup header="Bread" marker="21">
+      <AisleGroup header="Aisle 21 — Bread">
         <li>Hot dog rolls</li>
         <li>White bread</li>
       </AisleGroup>,
@@ -19,12 +19,16 @@ describe('AisleGroup', () => {
     expect(screen.getByText('White bread')).toBeInTheDocument();
   });
 
-  it('renders an aisle placard carrying the marker number for a numbered aisle', () => {
-    render(<AisleGroup header="Produce" marker="3"><li>Apples</li></AisleGroup>);
-    expect(screen.getByText('3')).toBeInTheDocument();
+  it('heads a numbered aisle inline with no filled number placard (ADR-0023)', () => {
+    const { container } = render(
+      <AisleGroup header="Aisle 3 — Produce"><li>Apples</li></AisleGroup>,
+    );
+    // The number lives in the inline label, not a filled bg-primary tile.
+    expect(screen.getByText('Aisle 3 — Produce')).toBeInTheDocument();
+    expect(container.querySelector('.bg-primary')).toBeNull();
   });
 
-  it('renders no placard when there is no marker (named section)', () => {
+  it('renders no placard for a named section', () => {
     const { container } = render(
       <AisleGroup header="Uncategorized" variant="muted"><li>Mystery</li></AisleGroup>,
     );

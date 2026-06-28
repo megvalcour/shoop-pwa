@@ -202,7 +202,7 @@ describe('ShoppingListBuilder', () => {
     expect(mockToggleMutate).toHaveBeenCalledWith({ id: 'li-1', listId: 'list-1' });
   });
 
-  it('numbered aisle header shows the bare aisle name (the placard carries the number)', async () => {
+  it('numbered aisle renders an inline "Aisle N — Label" header and no placard (ADR-0023)', async () => {
     const mocks = await setup();
     defaultMocks(mocks);
 
@@ -224,14 +224,15 @@ describe('ShoppingListBuilder', () => {
       data: [{ id: 'item-1', name: 'Milk', canonical_name: 'milk' }],
     } as unknown as ReturnType<typeof mocks.useItems>);
 
-    render(<mocks.ShoppingListBuilder listId="list-1" />, { wrapper: makeWrapper() });
+    const { container } = render(<mocks.ShoppingListBuilder listId="list-1" />, {
+      wrapper: makeWrapper(),
+    });
 
-    // The header reads as the bare name; the redundant "Aisle 1 —" prefix is gone.
-    const header = screen.getByText('Dairy & Eggs');
+    // The header carries the number inline via formatAisleLabel.
+    const header = screen.getByText('Aisle 1 — Dairy & Eggs');
     expect(header.className).toContain('uppercase');
-    expect(screen.queryByText(/Aisle 1 —/)).toBeNull();
-    // The number lives on the placard tile instead.
-    expect(screen.getByText('1')).toBeInTheDocument();
+    // No filled bg-primary number placard.
+    expect(container.querySelector('.bg-primary')).toBeNull();
   });
 
   it('changing an aisle upserts an item_location for the active store', async () => {

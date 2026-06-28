@@ -100,9 +100,16 @@ export default function SwipeableRow({
   const open = dx !== 0 || dragging;
 
   return (
-    <li className={`relative rounded-xl ${open ? 'overflow-hidden' : ''}`}>
-      {/* Delete affordance revealed beneath the row on a left-swipe. */}
-      <div className="absolute inset-y-0 right-0 flex">
+    <li className="relative overflow-hidden rounded-xl">
+      {/* Full-width destructive layer behind the row, shown only while a swipe
+          is in progress or the fallback button is focused (`open`). The button
+          stays mounted at all times for keyboard/SR users (ADR-0022); only the
+          red is gated, so focusing the button still reveals it. */}
+      <div
+        className={`absolute inset-0 flex items-center justify-end bg-destructive motion-safe:transition-opacity ${
+          open ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         <button
           type="button"
           aria-label={deleteLabel}
@@ -110,7 +117,7 @@ export default function SwipeableRow({
           onFocus={() => setDx(-REVEAL)}
           onBlur={() => setDx(0)}
           style={{ width: REVEAL }}
-          className="flex items-center justify-center bg-destructive text-primary-foreground motion-safe:transition-colors"
+          className="flex items-center justify-center self-stretch text-primary-foreground"
         >
           <Icon icon={faTrash} />
         </button>

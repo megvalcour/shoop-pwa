@@ -4,6 +4,18 @@
 
 ## Current Status
 
+- refactor: replace the `bg-primary` aisle number placard with inline
+  `Aisle N — Label` headers (it read like a count) — `AisleGroup` drops the
+  `marker` prop/placard branch and `ShoppingListBuilder` passes
+  `formatAisleLabel(aisle)` for every bucket (ADR-0023, supersedes ADR-0022's
+  signature section only).
+- fix: reveal the swipe-delete affordance only while swiping — `SwipeableRow`'s
+  destructive layer is now a full-bleed `bg-destructive` layer gated to
+  `opacity-100` only while the row is open (swipe in progress or fallback button
+  focused), with unconditional corner clipping so no red shows at rest.
+- docs: add ADR-0023 (inline aisle headers + swipe-reveal refinement),
+  superseding ADR-0022's signature section only; ADR-0022's swipe-to-delete
+  decision and ADR-0020's tokens remain in force.
 - refactor: replace the aisle spine with calm aisle-placard headers and
   de-emphasize the per-row aisle-swap badge — `AisleGroup` drops the vertical
   rail + 26px numbered node (and the `pl-9` indent) for a single filled
