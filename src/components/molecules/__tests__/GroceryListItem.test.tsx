@@ -18,15 +18,18 @@ describe('GroceryListItem', () => {
   it('clicking the row calls onToggle', () => {
     const onToggle = vi.fn();
     render(<GroceryListItem name="Milk" quantity={1} onToggle={onToggle} />);
-    fireEvent.click(screen.getByText('Milk').closest('li')!);
+    fireEvent.click(screen.getByText('Milk'));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('clicking the delete button does NOT call onToggle', () => {
+  it('exposes a swipe delete button (no persistent row trash button) in the shopping flow', () => {
     const onToggle = vi.fn();
     const onDelete = vi.fn();
     render(<GroceryListItem name="Milk" quantity={1} onToggle={onToggle} onDelete={onDelete} />);
-    fireEvent.click(screen.getByRole('button', { name: /delete item/i }));
+    // The ListItemRow trash button ("Delete item") is gone in the shopping flow;
+    // deletion is the item-specific swipe affordance instead.
+    expect(screen.queryByRole('button', { name: /^delete item$/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /delete milk/i }));
     expect(onToggle).not.toHaveBeenCalled();
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
@@ -56,7 +59,7 @@ describe('GroceryListItem', () => {
     expect(screen.queryByText('Choose aisle')).toBeNull();
 
     // The row itself still toggles.
-    fireEvent.click(screen.getByText('Kefir').closest('li')!);
+    fireEvent.click(screen.getByText('Kefir'));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
@@ -99,6 +102,21 @@ describe('GroceryListItem', () => {
     fireEvent.click(screen.getByRole('button', { name: /change aisle: dairy/i }));
     expect(onToggle).not.toHaveBeenCalled();
     expect(screen.getByText('Choose aisle')).toBeInTheDocument();
+  });
+
+  it('the aisle-swap badge is de-emphasized (muted, low-contrast)', () => {
+    render(
+      <GroceryListItem
+        name="Milk"
+        quantity={1}
+        aisleLabel="Dairy"
+        currentAisleId="a1"
+        aisles={aisles}
+        onAisleChange={vi.fn()}
+      />,
+    );
+    const badge = screen.getByRole('button', { name: /change aisle: dairy/i });
+    expect(badge.className).toContain('text-text-muted');
   });
 
   it('tapping the quantity opens QuantitySheet; saving calls onQuantityChange', () => {

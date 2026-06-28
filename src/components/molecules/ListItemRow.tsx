@@ -13,6 +13,12 @@ export interface ListItemRowProps {
   /** When set, the quantity becomes a tappable control that opens an editor. */
   onQuantityClick?: () => void;
   badge?: React.ReactNode;
+  /**
+   * Root element. Defaults to `'li'` for direct use inside a list; pass `'div'`
+   * when the row is wrapped by another list item (e.g. `SwipeableRow`) so the
+   * markup stays a single, valid `<li>`.
+   */
+  as?: 'li' | 'div';
 }
 
 export default function ListItemRow({
@@ -24,10 +30,11 @@ export default function ListItemRow({
   onDelete,
   onQuantityClick,
   badge,
+  as: Root = 'li',
 }: ListItemRowProps) {
   const quantityText = formatQuantity(quantity, unit);
   return (
-    <li
+    <Root
       className={`px-3 py-3 rounded-xl flex items-center justify-between motion-safe:transition-all motion-safe:duration-200 ${
         checked ? 'bg-tint/60 shadow-none' : 'bg-card shadow-card'
       } ${onToggle ? 'cursor-pointer select-none' : ''}`}
@@ -83,6 +90,6 @@ export default function ListItemRow({
           </Button>
         )}
       </div>
-    </li>
+    </Root>
   );
 }

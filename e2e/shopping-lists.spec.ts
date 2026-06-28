@@ -271,7 +271,11 @@ test.describe('AddItemForm', () => {
 
     await expect(page.getByText('Bananas')).toBeVisible();
 
-    await page.getByRole('button', { name: /delete item/i }).click();
+    // Deletion lives behind the swipe gesture, with the revealed control kept as
+    // a real focusable button (the accessible, non-gesture delete path).
+    const deleteButton = page.getByRole('button', { name: /delete bananas/i });
+    await deleteButton.focus();
+    await page.keyboard.press('Enter');
 
     await expect(page.getByText('Bananas')).not.toBeVisible();
     await expect(page.getByText(/no items yet/i)).toBeVisible();
