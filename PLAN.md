@@ -67,6 +67,15 @@
 
 ## Backlog
 
+### iOS App (Capacitor Shared-Pipeline Wrapper)
+
+- Wrap Shoop as an installable iOS app via a thin Capacitor shell over the same web
+  codebase (one repo → one `dist/` → `cap sync`), primarily to close the iOS
+  `share_target` gap with a native Share Extension funneling into the existing
+  `/import` flow. Multi-phase outline in `tasks/backlog--ios-capacitor-app.md`;
+  each phase to be promoted to `active--` and fully planned (with ADR review)
+  before implementation.
+
 ### Unit Test Audit
 
 - Review unit tests related to components (atoms, molecules, organisms). Ensure that tests do not rely heavily on mocks and that components are small, testable units.
