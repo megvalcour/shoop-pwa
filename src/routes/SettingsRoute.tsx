@@ -73,6 +73,13 @@ export default function SettingsRoute() {
       <section className="px-4 pt-6">
         <h2 className="font-display font-bold text-text text-lg mb-3">Your Stores</h2>
         {renderStoresContent()}
+        <NavLink
+          to="/stores/new"
+          className="flex items-center justify-between px-4 py-3 bg-surface rounded-xl text-text mt-3"
+        >
+          <span>Add a store</span>
+          <FontAwesomeIcon icon={faChevronRight} className="text-text-muted text-sm" />
+        </NavLink>
       </section>
 
       <section className="px-4 pt-6">

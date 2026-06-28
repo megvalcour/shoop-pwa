@@ -25,6 +25,7 @@ function renderSettingsRoute() {
       { path: '/settings', element: <SettingsRoute /> },
       { path: '/lists/:id', element: <div>List detail</div> },
       { path: '/default-list', element: <div>Default list</div> },
+      { path: '/stores/new', element: <div>Add store</div> },
       { path: '/stores/:id', element: <div>Store detail</div> },
     ],
     { initialEntries: ['/settings'] },
@@ -101,6 +102,17 @@ describe('SettingsRoute', () => {
     await user.click(entry);
     await waitFor(() => {
       expect(router.state.location.pathname).toBe(`/stores/${store.id}`);
+    });
+  });
+
+  it('Add a store link navigates to /stores/new', async () => {
+    const user = userEvent.setup();
+    const { router } = renderSettingsRoute();
+
+    const link = await screen.findByRole('link', { name: /add a store/i });
+    await user.click(link);
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/stores/new');
     });
   });
 

@@ -1,12 +1,18 @@
 ## Active Task
 
-- **Custom Store via JSON Upload** — add a user's own store from an AI-generated
-  JSON file (upload or paste), reachable from Settings beneath the store list,
-  via a new `/stores/new` page with a "Copy prompt" button. Full plan in
-  `tasks/active--custom-store-json-upload.md`.
+- None. Pick up the next backlog item when directed.
 
 ## Current Status
 
+- feat: add a custom store from an AI-generated JSON file (ADR-0024) — new
+  `/stores/new` page (reachable from Settings beneath the store list) with a
+  "Copy prompt" button, file-upload + paste both feeding one pure
+  `parseStoreImport` validator, a preview, and `useImportStore` which mints all
+  ids/a unique slug and writes the store + aisles + per-store `item_locations`
+  (riding ADR-0015) in one transaction. Items stay in the shared catalog;
+  representative items per aisle seed the matcher so real items bucket from day
+  one. No `DB_VERSION` bump (purely additive, IndexedDB-only); wiped by "Reset
+  all data" as documented.
 - feat: recipe-import preview swaps the free-text unit input for the shared
   `×N` quantity chip + `QuantitySheet` (stepper ≥1 plus optional unit, now
   datalist-backed via a new `unitSuggestions` prop). Each row still defaults to
