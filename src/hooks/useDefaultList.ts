@@ -22,8 +22,7 @@ export function useDefaultList() {
 
 interface AddDefaultListItemInput {
   name: string;
-  /** Parsed amount carried through from recipe import; manual adds omit both. */
-  quantity?: number;
+  /** Optional unit set in the recipe-import preview; manual adds omit it. */
   unit?: string;
 }
 
@@ -38,7 +37,6 @@ export function useAddDefaultListItem() {
   return useMutation({
     mutationFn: async ({
       name,
-      quantity,
       unit,
     }: AddDefaultListItemInput): Promise<AddDefaultListItemResult> => {
       const trimmed = name.trim();
@@ -54,15 +52,14 @@ export function useAddDefaultListItem() {
 
       const { itemId, itemCreated, newItem } = resolveItem(allItems, trimmed);
 
-      // Duplicate add (case-insensitive exact name, via resolveItem): add the
-      // parsed amount (manual re-add with no parsed qty keeps the historical +1).
-      // Adopt an incoming unit only when none is set; never clobber a set unit.
-      // Spread preserves the entry's notes.
+      // Duplicate add (case-insensitive exact name, via resolveItem): bump the
+      // count by one, exactly like a manual re-add. Adopt an incoming unit only
+      // when none is set; never clobber a set unit. Spread preserves the notes.
       const existing = allEntries.find((e) => e.item_id === itemId);
       if (existing) {
         await db.put('default_list', {
           ...existing,
-          quantity: existing.quantity + (quantity ?? 1),
+          quantity: existing.quantity + 1,
           unit: existing.unit === '' && unit ? unit : existing.unit,
         });
         return { itemCreated: false, incremented: true };
@@ -71,7 +68,7 @@ export function useAddDefaultListItem() {
       const entry: DefaultListEntry = {
         id: crypto.randomUUID(),
         item_id: itemId,
-        quantity: quantity ?? 1,
+        quantity: 1,
         unit: unit ?? '',
         notes: '',
       };

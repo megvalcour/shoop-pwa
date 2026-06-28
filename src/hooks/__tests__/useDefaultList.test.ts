@@ -55,7 +55,7 @@ describe('useAddDefaultListItem', () => {
     expect(entry.quantity).toBe(1);
   });
 
-  it('seeds a parsed quantity and unit on a new entry', async () => {
+  it('seeds an optional unit on a new entry, defaulting the quantity to 1', async () => {
     const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
     const wrapper = makeWrapper();
     const { result } = renderHook(
@@ -64,10 +64,11 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    await act(() => result.current.add.mutateAsync({ name: 'Flour', quantity: 2, unit: 'cups' }));
+    // No quantity is captured (ADR-0021); a unit may still be supplied.
+    await act(() => result.current.add.mutateAsync({ name: 'Flour', unit: 'cups' }));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
-    expect(result.current.list.data![0]).toMatchObject({ quantity: 2, unit: 'cups' });
+    expect(result.current.list.data![0]).toMatchObject({ quantity: 1, unit: 'cups' });
   });
 
   it('reuses an existing catalog item (same item_id)', async () => {
@@ -116,7 +117,7 @@ describe('useAddDefaultListItem', () => {
     expect(second?.incremented).toBe(true);
   });
 
-  it('adds the parsed amount (not +1) when a duplicate carries a quantity', async () => {
+  it('accumulates +1 per re-add of the same item', async () => {
     const { useDefaultList, useAddDefaultListItem } = await import('@/hooks/useDefaultList');
     const wrapper = makeWrapper();
     const { result } = renderHook(
@@ -125,13 +126,14 @@ describe('useAddDefaultListItem', () => {
     );
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
 
-    await act(() => result.current.add.mutateAsync({ name: 'Rice', quantity: 2 }));
+    await act(() => result.current.add.mutateAsync({ name: 'Rice' }));
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
-    await act(() => result.current.add.mutateAsync({ name: 'rice', quantity: 3 }));
+    await act(() => result.current.add.mutateAsync({ name: 'rice' }));
+    await act(() => result.current.add.mutateAsync({ name: 'RICE' }));
 
-    // 2 + 3, not 2 + 1.
-    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(5));
+    // 1 + 1 + 1 — each add bumps the existing entry by the default step.
+    await waitFor(() => expect(result.current.list.data?.[0].quantity).toBe(3));
     expect(result.current.list.data).toHaveLength(1);
   });
 
