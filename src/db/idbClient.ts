@@ -37,7 +37,26 @@ const generalSeed = generalRaw as { store: Store; aisles: Aisle[]; item_location
 export const GENERAL_STORE_ID = generalSeed.store.id;
 
 /** The default active store on a fresh install. */
-const DEFAULT_ACTIVE_STORE_ID = oxfordSeed.store.id;
+export const DEFAULT_ACTIVE_STORE_ID = oxfordSeed.store.id;
+
+/**
+ * The stable seed ids of the three bundled stores, derived directly from the
+ * seed assets imported above (no separate flag column or asset). A store is
+ * user-authored — and therefore deletable — iff its id is NOT in this set.
+ * Deciding deletability by exclusion means every store imported before the
+ * delete feature shipped is deletable the moment this lands, with no migration
+ * or backfill (see tasks/delete-user-stores plan).
+ */
+export const BUILTIN_STORE_IDS: ReadonlySet<string> = new Set([
+  oxfordSeed.store.id,
+  bigYSeed.store.id,
+  generalSeed.store.id,
+]);
+
+/** Whether `id` belongs to a bundled store (Oxford / Big Y / General). */
+export function isBuiltInStore(id: string): boolean {
+  return BUILTIN_STORE_IDS.has(id);
+}
 
 interface SeedData {
   stores: Store[];
@@ -317,5 +336,45 @@ export async function resetUserData(): Promise<void> {
   for (const loc of seed.itemLocations) tx.objectStore('item_locations').add(loc);
   tx.objectStore('preferences').put({ key: ACTIVE_STORE_ID_KEY, value: DEFAULT_ACTIVE_STORE_ID });
 
+  await tx.done;
+}
+
+/**
+ * Deletes a user-authored store and everything it owns: the store row, its
+ * aisles, and its per-store `item_locations` (all index-scoped by `store_id`).
+ *
+ * The shared, store-agnostic `items` catalog is intentionally left in place —
+ * those rows may be referenced by the default list, shopping lists, or other
+ * stores' locations (Decision 1). If the deleted store is the active one, the
+ * `active_store_id` preference is reset to the default store so the persisted
+ * value never dangles (Decision 2).
+ *
+ * Bundled stores (Oxford / Big Y / General) are not deletable: this rejects on
+ * a built-in id, backstopping the UI which never offers the affordance.
+ */
+export async function deleteStore(storeId: string): Promise<void> {
+  if (isBuiltInStore(storeId)) {
+    throw new Error('Built-in stores cannot be deleted.');
+  }
+
+  const db = await dbPromise;
+
+  // Read phase — outside the tx (idb does not keep a transaction alive across
+  // awaits). Gather the rows this store owns and the current active pref.
+  const [aisleKeys, locationKeys, activePref] = await Promise.all([
+    db.getAllKeysFromIndex('aisles', 'store_id', storeId),
+    db.getAllKeysFromIndex('item_locations', 'store_id', storeId),
+    db.get('preferences', ACTIVE_STORE_ID_KEY),
+  ]);
+
+  // Write phase — queue every op synchronously across one transaction so it
+  // commits atomically (same idiom as resetUserData). `items` is excluded.
+  const tx = db.transaction(['stores', 'aisles', 'item_locations', 'preferences'], 'readwrite');
+  tx.objectStore('stores').delete(storeId);
+  for (const key of aisleKeys) tx.objectStore('aisles').delete(key);
+  for (const key of locationKeys) tx.objectStore('item_locations').delete(key);
+  if (activePref?.value === storeId) {
+    tx.objectStore('preferences').put({ key: ACTIVE_STORE_ID_KEY, value: DEFAULT_ACTIVE_STORE_ID });
+  }
   await tx.done;
 }

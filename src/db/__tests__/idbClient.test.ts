@@ -397,6 +397,110 @@ describe('idbClient', () => {
     expect(generals).toHaveLength(1);
   });
 
+  describe('deleteStore', () => {
+    // Add a user-authored store (non-built-in id) with two aisles, two of its
+    // own item_locations, plus one extra catalog item to prove the shared
+    // catalog is spared. Returns the user store id and pre-delete counts.
+    async function seedUserStore() {
+      const { dbPromise } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const storeId = crypto.randomUUID();
+      await db.add('stores', { id: storeId, name: 'My Store', address: '1 Way', slug: 'my-store' });
+      const aisleA = crypto.randomUUID();
+      const aisleB = crypto.randomUUID();
+      await db.add('aisles', { id: aisleA, store_id: storeId, number: '1', label: 'Produce', sort_order: 0 });
+      await db.add('aisles', { id: aisleB, store_id: storeId, number: '', label: 'Bakery', sort_order: 1 });
+      const [item] = await db.getAll('items');
+      await db.add('item_locations', {
+        id: crypto.randomUUID(),
+        item_id: item.id,
+        store_id: storeId,
+        aisle_id: aisleA,
+      });
+      await db.add('item_locations', {
+        id: crypto.randomUUID(),
+        item_id: item.id,
+        store_id: storeId,
+        aisle_id: aisleB,
+      });
+      return { db, storeId };
+    }
+
+    it('removes the store row, its aisles, and its item_locations', async () => {
+      const { dbPromise, deleteStore } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const { storeId } = await seedUserStore();
+
+      expect(await db.get('stores', storeId)).toBeDefined();
+      expect(await db.getAllFromIndex('aisles', 'store_id', storeId)).toHaveLength(2);
+      expect(await db.getAllFromIndex('item_locations', 'store_id', storeId)).toHaveLength(2);
+
+      await deleteStore(storeId);
+
+      expect(await db.get('stores', storeId)).toBeUndefined();
+      expect(await db.getAllFromIndex('aisles', 'store_id', storeId)).toHaveLength(0);
+      expect(await db.getAllFromIndex('item_locations', 'store_id', storeId)).toHaveLength(0);
+    });
+
+    it('spares the shared catalog and other stores', async () => {
+      const { dbPromise, deleteStore, GENERAL_STORE_ID } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const { storeId } = await seedUserStore();
+      const itemsBefore = await db.count('items');
+
+      await deleteStore(storeId);
+
+      expect(await db.count('items')).toBe(itemsBefore);
+      // The other bundled stores keep their aisles and locations.
+      expect(await db.getAllFromIndex('aisles', 'store_id', GENERAL_STORE_ID)).toHaveLength(21);
+      expect(
+        await db.getAllFromIndex('item_locations', 'store_id', GENERAL_STORE_ID),
+      ).toHaveLength(182);
+      expect(await db.count('stores')).toBe(3);
+    });
+
+    it('resets the active-store pref when deleting the active store', async () => {
+      const { dbPromise, deleteStore, ACTIVE_STORE_ID_KEY, DEFAULT_ACTIVE_STORE_ID } = await import(
+        '@/db/idbClient'
+      );
+      const db = await dbPromise;
+      const { storeId } = await seedUserStore();
+      await db.put('preferences', { key: ACTIVE_STORE_ID_KEY, value: storeId });
+
+      await deleteStore(storeId);
+
+      expect((await db.get('preferences', ACTIVE_STORE_ID_KEY))?.value).toBe(
+        DEFAULT_ACTIVE_STORE_ID,
+      );
+    });
+
+    it('leaves the active-store pref alone when deleting a non-active store', async () => {
+      const { dbPromise, deleteStore, ACTIVE_STORE_ID_KEY } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const { storeId } = await seedUserStore();
+      const bigY = (await db.getAll('stores')).find((s) => s.slug === 'big-y-worcester')!;
+      await db.put('preferences', { key: ACTIVE_STORE_ID_KEY, value: bigY.id });
+
+      await deleteStore(storeId);
+
+      expect((await db.get('preferences', ACTIVE_STORE_ID_KEY))?.value).toBe(bigY.id);
+    });
+
+    it('rejects a built-in store and mutates nothing', async () => {
+      const { dbPromise, deleteStore } = await import('@/db/idbClient');
+      const db = await dbPromise;
+      const oxford = (await db.getAll('stores')).find((s) => s.slug === 'oxford-62')!;
+      const storesBefore = await db.count('stores');
+      const aislesBefore = await db.count('aisles');
+
+      await expect(deleteStore(oxford.id)).rejects.toThrow();
+
+      expect(await db.count('stores')).toBe(storesBefore);
+      expect(await db.count('aisles')).toBe(aislesBefore);
+      expect(await db.get('stores', oxford.id)).toBeDefined();
+    });
+  });
+
   describe('resetUserData', () => {
     it('clears all user data stores', async () => {
       const { dbPromise, resetUserData } = await import('@/db/idbClient');

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import {
   DndContext,
   closestCenter,
@@ -18,19 +18,25 @@ import {
 import { useStores, useActiveStore } from '@/hooks/useStores';
 import { useSetActiveStoreId } from '@/hooks/usePreferences';
 import { useAisles, useReorderAisles } from '@/hooks/useAisles';
+import { useDeleteStore } from '@/hooks/useDeleteStore';
+import { isBuiltInStore } from '@/db/idbClient';
 import Badge from '@/components/atoms/Badge';
 import Button from '@/components/atoms/Button';
 import StoreLogo from '@/components/atoms/StoreLogo';
+import ConfirmDialog from '@/components/molecules/ConfirmDialog';
 import SortableAisleCard from '@/components/molecules/SortableAisleCard';
 import type { Aisle } from '@/db/schema';
 
 export default function StoreDetailRoute() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: stores, isPending, isError } = useStores();
   const { data: aisles, isPending: aislesPending } = useAisles(id);
   const reorderAisles = useReorderAisles();
   const { data: activeStore } = useActiveStore();
   const setActiveStoreId = useSetActiveStoreId();
+  const deleteStore = useDeleteStore();
+  const [confirming, setConfirming] = useState(false);
   const store = stores?.find((s) => s.id === id);
 
   // Mirror the fetched order locally so dragging feels instant and survives the
@@ -116,6 +122,34 @@ export default function StoreDetailRoute() {
       {renderAisles()}
       {reorderAisles.isError && (
         <p className="text-destructive text-sm mt-3">Couldn&rsquo;t save order.</p>
+      )}
+      {!isBuiltInStore(store.id) && (
+        <Button
+          variant="danger"
+          className="mt-8 self-start"
+          onClick={() => setConfirming(true)}
+        >
+          Delete store
+        </Button>
+      )}
+      {confirming && (
+        <ConfirmDialog
+          title="Delete this store?"
+          message={`${store.name} and its aisles will be permanently deleted. Your shopping lists and saved items aren’t affected. This can’t be undone.`}
+          confirmLabel="Delete"
+          destructive
+          isPending={deleteStore.isPending}
+          errorMessage={
+            deleteStore.isError ? 'Couldn’t delete the store. Please try again.' : undefined
+          }
+          onCancel={() => {
+            deleteStore.reset();
+            setConfirming(false);
+          }}
+          onConfirm={() =>
+            deleteStore.mutate(store.id, { onSuccess: () => navigate('/settings') })
+          }
+        />
       )}
     </div>
   );
