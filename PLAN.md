@@ -16,7 +16,7 @@
   `share_target` gap with a native Share Extension funneling into the existing
   `/import` flow. Multi-phase outline in `tasks/backlog--ios-capacitor-app.md`;
   each phase to be promoted to `active--` and fully planned (with ADR review)
-  before implementation.
+  before implementation. Step 0 has plan as well: `backlog--ios-phase0-decision-spikes.md`.
 
 ### Unit Test Audit
 
