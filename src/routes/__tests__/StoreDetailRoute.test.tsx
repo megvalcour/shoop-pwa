@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -22,7 +23,10 @@ const TEST_AISLES: Aisle[] = [
 function renderAt(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
-    [{ path: '/stores/:id', element: <StoreDetailRoute /> }],
+    [
+      { path: '/stores/:id', element: <StoreDetailRoute /> },
+      { path: '/settings', element: <div>Settings Page</div> },
+    ],
     { initialEntries: [path] },
   );
   return render(
@@ -72,5 +76,43 @@ describe('StoreDetailRoute', () => {
   it('renders "Store not found." for an unknown id', async () => {
     renderAt('/stores/does-not-exist');
     await waitFor(() => expect(screen.getByText('Store not found.')).toBeInTheDocument());
+  });
+
+  it('does not show a delete control for a built-in store', async () => {
+    const db = await dbPromise;
+    const oxford = (await db.getAll('stores')).find((s) => s.slug === 'oxford-62')!;
+    renderAt(`/stores/${oxford.id}`);
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Oxford Market Basket #62' })).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole('button', { name: 'Delete store' })).not.toBeInTheDocument();
+  });
+
+  it('shows a delete control for a user store and opens the confirm dialog without deleting', async () => {
+    const user = userEvent.setup();
+    renderAt('/stores/st-detail');
+    await waitFor(() => expect(screen.getByText('Test Mart')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: 'Delete store' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+
+    // Cancel closes the dialog and leaves the store in place.
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    const db = await dbPromise;
+    expect(await db.get('stores', 'st-detail')).toBeDefined();
+  });
+
+  it('deletes the store on confirm and navigates back to Settings', async () => {
+    const user = userEvent.setup();
+    renderAt('/stores/st-detail');
+    await waitFor(() => expect(screen.getByText('Test Mart')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: 'Delete store' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(screen.getByText('Settings Page')).toBeInTheDocument());
+    const db = await dbPromise;
+    expect(await db.get('stores', 'st-detail')).toBeUndefined();
   });
 });

@@ -5,7 +5,7 @@
 
 ## Current Status
 
-- feat: add a custom store from an AI-generated JSON file
+- feat: delete a user-added store (and its aisles + item_locations)
 
 ## Backlog
 
@@ -25,12 +25,6 @@
 ### E2E Audit
 
 - Audit existing E2E tests and harden/expand coverage.
-
-### Delete User-Added Stores
-
-- Let the user delete a store they added themselves (ADR-0024), removing the
-  store, its aisles, and its `item_locations`; bundled stores stay protected.
-  Full plan in `tasks/active--delete-user-stores.md`.
 
 ### Sharing
 
