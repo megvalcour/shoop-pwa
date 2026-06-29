@@ -1,11 +1,6 @@
-## Active Task
-
-- Fix Playwright/Chromium browser mismatch in web sessions — plan in
-  `tasks/active--playwright-chromium-mismatch.md`.
-
 ## Current Status
 
-- feat: delete a user-added store (and its aisles + item_locations)
+- fix: Playwright/Chromium browser mismatch in web sessions
 
 ## Backlog
 

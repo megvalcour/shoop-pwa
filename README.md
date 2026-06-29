@@ -104,6 +104,19 @@ See [`docs/releases.md`](docs/releases.md) for the full pipeline details.
 
 ---
 
+## E2E Tests in Non-standard Environments
+
+`npm run test:e2e` assumes Playwright can resolve a matching Chromium build. In environments where the pre-installed Chromium version doesn't match the pinned `@playwright/test` revision (e.g. Claude Code web sessions), set the env var below to point at the actual binary and Playwright will use it directly:
+
+```bash
+export PW_CHROMIUM_EXECUTABLE_PATH=/path/to/chrome
+npm run test:e2e
+```
+
+In Claude Code web sessions this is handled automatically by `.claude/hooks/session-start.sh`, which runs on session start and writes the correct path to the session environment. CI is unaffected — the var is unset there and Playwright falls back to its own browser resolution after `npx playwright install --with-deps chromium`.
+
+---
+
 ## License
 
 This is a private personal project. All rights reserved.
