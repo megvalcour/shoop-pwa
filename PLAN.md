@@ -26,6 +26,12 @@
 
 - Audit existing E2E tests and harden/expand coverage.
 
+### Delete User-Added Stores
+
+- Let the user delete a store they added themselves (ADR-0024), removing the
+  store, its aisles, and its `item_locations`; bundled stores stay protected.
+  Full plan in `tasks/active--delete-user-stores.md`.
+
 ### Sharing
 
 - Users can share their lists with another device/user; need a solution that works with our PWA/IndexedDB only storage tech stack.
