@@ -85,6 +85,20 @@ single-source way to gate delete:
 This rides the existing seed imports — no new asset, no flag column, no
 `DB_VERSION` bump.
 
+### Works retroactively on already-imported stores
+
+Because deletability is decided **by exclusion** (id not in `BUILTIN_STORE_IDS`)
+rather than by a flag written at import time, every store a user added *before*
+this feature ships is deletable the moment the code lands — no migration or
+backfill. A creation-time `isUserCreated` flag would have the opposite problem:
+pre-existing stores would lack it and stay undeletable. The rows a delete
+targets (aisles, `item_locations`) have always been written keyed by `store_id`,
+and those indexes have existed since schema v1/v3, so `deleteStore` finds an
+old store's rows the same way it finds a new one's. The only way a user store
+could be misclassified as built-in is if it carried one of the three bundled
+seed UUIDs — unreachable, since `useImportStore` mints its own UUID and ignores
+any id in the uploaded JSON (ADR-0024).
+
 ## Relevant ADRs
 
 - **ADR-0024 (user-authored stores):** this feature is the deliberate follow-on
