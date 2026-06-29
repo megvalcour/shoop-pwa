@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const chromiumPath = process.env.PW_CHROMIUM_EXECUTABLE_PATH;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -16,6 +18,7 @@ export default defineConfig({
       use: {
         ...devices['iPhone 14'],
         browserName: 'chromium',
+        ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
       },
     },
   ],
