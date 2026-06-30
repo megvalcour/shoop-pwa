@@ -26,6 +26,38 @@
   --font-body: 'Nunito', system-ui, sans-serif;
 }
 
+/* Section-scoped green sub-theme for the Eat tab (ADR-0028). The default
+   @theme above stays blue (ADR-0020); this block only redefines the
+   hue-carrying tokens for descendants of the shell root while it carries
+   data-theme="eat". It wins over the :root @theme values by cascade proximity
+   (the attribute is on a descendant of :root), so the chrome — StoreHeader,
+   bottom nav — and the page body all retheme with zero component changes.
+   WCAG AA verified on the key pairs (measured ratios):
+     --color-text-muted on --color-surface  → 5.85:1 (body text ≥4.5:1 ✓)
+     --color-primary-foreground on --color-primary → 4.87:1 (chrome labels ✓)
+     --color-accent on --color-primary (active nav) → 3.48:1, a deliberate
+       low-ratio "spark" matching the blue accent's intent (3.36:1) and not
+       regressing it; backed by a bg-accent/15 tint behind the label.
+   --color-destructive is intentionally NOT re-tinted (error red is global). */
+[data-theme='eat'] {
+  --color-ink: #0b3d24; /* deepest green: display headings */
+  --color-primary: #1b7a43; /* green chrome: app bar, nav, FAB */
+  --color-primary-foreground: #eaf7ee; /* text/icons on green chrome */
+  --color-accent: #88e3ab; /* bright spark: active nav, reads on green chrome */
+  --color-tint: #d6f0e0; /* tonal surface tint: checked rows, filled nodes */
+  --color-surface: #eef7f1; /* page background (elevation 0) */
+  --color-background: #eef7f1;
+  --color-card: #ffffff; /* resting card (elevation 1) — unchanged, kept explicit */
+  --color-text: #0e1f16;
+  --color-text-muted: #4a6555; /* ≥4.5:1 on surface (WCAG AA) */
+  --color-border: #c2e6d0;
+
+  /* Elevation re-tinted green to match the elevation-as-accent system (ADR-0020). */
+  --shadow-card: 0 1px 2px rgb(11 61 36 / 0.08);
+  --shadow-raised: 0 2px 8px rgb(11 61 36 / 0.12);
+  --shadow-float: 0 8px 24px rgb(11 61 36 / 0.18);
+}
+
 @font-face {
   font-family: 'Nunito';
   font-style: normal;
