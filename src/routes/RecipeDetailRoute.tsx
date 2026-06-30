@@ -6,6 +6,7 @@ import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
 import ConfirmDialog from '@/components/molecules/ConfirmDialog';
 import RecipeIngredientRow from '@/components/molecules/RecipeIngredientRow';
+import RecipeNutrition from '@/components/organisms/RecipeNutrition';
 import { useRecipe, useDeleteRecipe } from '@/hooks/useRecipes';
 
 /**
@@ -81,6 +82,8 @@ export default function RecipeDetailRoute() {
           <p className="text-text-muted text-sm">No ingredients on this recipe.</p>
         )}
       </section>
+
+      {ingredients.length > 0 && <RecipeNutrition recipeId={recipe.id} />}
 
       <div className="flex items-center gap-2">
         <Button variant="primary" onClick={() => navigate(`/eat/recipes/${recipe.id}/edit`)}>
