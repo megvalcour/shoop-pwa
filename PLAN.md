@@ -54,12 +54,12 @@
   still-unused store (`meal_plan_entries`) to assign saved recipes — with planned
   servings — to a fixed Mon–Sun grid, then scores each day's planned nutrition
   against the Phase 2 daily targets (plus a weekly avg-per-day summary) using the
-  Phase 4 per-serving rollups, visualized as green-themed % -of-target bars. No
+  Phase 4 per-serving rollups, visualized as green-themed % -of-target rings. No
   `DB_VERSION` bump (the v9 store already exists), no new network surface. Key
-  decisions (assumed pending user confirmation): day-of-week grid, flat
-  recipe-per-day (no meal slots), per-day-vs-daily-target scoring, bars over rings,
-  shopping-list lens deferred. ADR-0029 (weekly-plan model & scoring) to be drafted
-  at wrap-up.
+  decisions: rings chosen by the user; still-assumed-pending-confirmation are
+  day-of-week grid, flat recipe-per-day (no meal slots), per-day-vs-daily-target
+  scoring, and shopping-list lens deferred. ADR-0029 (weekly-plan model & scoring)
+  to be drafted at wrap-up.
 
 ## Backlog
 
