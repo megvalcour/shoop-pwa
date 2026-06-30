@@ -70,11 +70,18 @@
 
 ## Active
 
-- **Eat Tab — Phase 6 (offline/polish/a11y/E2E hardening) — NEXT, not yet planned:**
-  promote from the backlog outline and fully plan (with ADR review) before
-  implementation. Targets the Phase 0/5 carry-forwards: the Phase 6 accessibility
-  pass on the green ramp + scoring rings (ADR-0028), offline/PWA polish, and E2E
-  hardening.
+- **Eat Tab — Phase 6 (offline/polish/a11y/E2E hardening) — PLANNED, ready to
+  implement:** full plan in `tasks/active--eat-tab-phase-6.md`. The Eat epic's final
+  phase — no new feature/schema/network surface. Closes ADR-0028's deferred Phase 6
+  accessibility pass (full WCAG AA contrast inventory on the green ramp + scoring-ring
+  tones; reduced-motion + keyboard/focus sweep), audits empty/loading/error states
+  across all Eat screens, verifies offline end-to-end (data-layer in E2E; SW
+  asset-offline manually against `preview` — the E2E harness runs dev with the SW
+  off), and hardens the Playwright journey (tab+theme switch, profile→targets,
+  save/enrich/build-a-week/score). Two scope calls confirmed (2026-06-30): the
+  automated axe scan is DEFERRED to a new backlog item (no new dependency); a
+  route-driven `<meta name="theme-color">` swap is INCLUDED so the live browser chrome
+  greens on `/eat` (drafts ADR-0030).
 
 ## Backlog
 
