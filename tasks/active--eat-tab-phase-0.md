@@ -56,6 +56,25 @@ Ratify the three "Eat" architectural decisions as ADRs and validate (or kill) th
 
 ---
 
+## Execution status (2026-06-30)
+
+- **Part 1 — done.** Data layer + `normalizeIngredient` re-read; user confirmed
+  the future store-adding migration is **non-breaking / additive** (recorded in
+  ADR-0026).
+- **Part 2/3/4 — done.** ADR-0026 (data model), ADR-0027 (nutrition source),
+  ADR-0028 (section-scoped theme) drafted and set **Accepted**.
+- **Part 5 — Spike 1 (FDC match quality): harness built, live run blocked here.**
+  `scripts/spikes/eat-fdc/fdc-match.mjs` runs end-to-end, but this session's
+  egress policy denies `api.nal.usda.gov` (proxy `connect_rejected`; not routed
+  around, per the proxy README). One command from numbers wherever FDC is
+  reachable. Does **not** block the ADRs — rerank is a Phase 4 tuning detail with
+  a manual-pick fallback. See `scripts/spikes/eat-fdc/FINDINGS.md`.
+- **Part 6 — Spike 2 (quantity→grams): done.** Ran `unit-coverage.mjs`: of 87
+  unit tokens, ~15% mass (auto), ~41% volume (need density), ~44% count (need
+  per-piece grams). Confirms the `grams?` manual fallback. Findings recorded.
+- **Part 7 — done** except the Spike-1 numeric fill (pending a FDC-reachable
+  run). Open questions triaged into the ADRs / deferred to named phases.
+
 ## Implementation Steps
 
 ### Part 1 — Research & the one required confirmation
