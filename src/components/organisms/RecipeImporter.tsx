@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Spinner from '@/components/atoms/Spinner';
+import LabeledField from '@/components/molecules/LabeledField';
 import SelectionList from '@/components/molecules/SelectionList';
 import QuantitySheet from '@/components/molecules/QuantitySheet';
 import ImportTargetPicker from '@/components/molecules/ImportTargetPicker';
@@ -16,8 +17,13 @@ import {
 } from '@/hooks/useShoppingLists';
 import { useAddListItem } from '@/hooks/useListItems';
 import { useAddDefaultListItem } from '@/hooks/useDefaultList';
+import { useSaveRecipe } from '@/hooks/useRecipes';
 import { normalizeIngredient, UNIT_SUGGESTIONS } from '@/utils/normalizeIngredient';
+import { parseIngredientMeasure } from '@/utils/parseIngredientMeasure';
 import { formatQuantity } from '@/utils/formatQuantity';
+
+/** Default recipe yield offered on the "Save as recipe" path; user-editable. */
+const DEFAULT_SERVINGS = 4;
 
 export interface RecipeImporterProps {
   /** URL handed in by the Share Target / route; absent for manual paste. */
@@ -52,29 +58,52 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
   const renameList = useRenameShoppingList();
   const addListItem = useAddListItem();
   const addDefaultItem = useAddDefaultListItem();
+  const saveRecipe = useSaveRecipe();
 
   const normalized = useMemo(
     () => (query.data?.ingredients ?? []).map((raw) => normalizeIngredient(raw)),
     [query.data],
   );
+  // The recipe-scoped quantity/unit recovery (ADR-0021: a SEPARATE parser that
+  // reads what normalizeIngredient discards). Only consumed on the recipe target.
+  const measures = useMemo(
+    () => normalized.map((ingredient) => parseIngredientMeasure(ingredient.raw)),
+    [normalized],
+  );
+
+  const [target, setTarget] = useState<ImportTarget>({ kind: 'new' });
+  const [servings, setServings] = useState(String(DEFAULT_SERVINGS));
 
   // Everything checked by default; reset whenever a fresh recipe loads.
   const [checked, setChecked] = useState<Set<number>>(new Set());
-  // Per-row quantity/unit, indexed alongside `normalized`. Each row defaults to
-  // ×1 with no unit — exactly like a manual add (ADR-0021); the user can tap the
-  // chip to bump the count and/or add a unit. '' unit means omit on commit.
+  // Per-row quantity/unit, indexed alongside `normalized`. '' unit means omit on
+  // commit. Whenever a fresh recipe loads, everything re-checks.
   const [quantities, setQuantities] = useState<number[]>([]);
   const [units, setUnits] = useState<string[]>([]);
   // Which row's QuantitySheet is open; null = closed.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   useEffect(() => {
     setChecked(new Set(normalized.map((_, index) => index)));
-    setQuantities(normalized.map(() => 1));
-    setUnits(normalized.map(() => ''));
-    setEditingIndex(null);
   }, [normalized]);
 
-  const [target, setTarget] = useState<ImportTarget>({ kind: 'new' });
+  // Quantity/unit defaults are TARGET-aware: the "Save as recipe" path pre-fills
+  // each row from the parser, while the list/default paths keep defaulting to ×1
+  // with no unit (ADR-0021's shopping semantics are untouched). Toggling the
+  // target re-applies or clears the pre-fill, so a parsed value can never bleed
+  // into a list/default commit. Manual QuantitySheet edits persist until the
+  // target toggles or a new recipe loads.
+  const recipeTarget = target.kind === 'recipe';
+  useEffect(() => {
+    if (recipeTarget) {
+      setQuantities(measures.map((measure) => measure.quantity ?? 1));
+      setUnits(measures.map((measure) => measure.unit ?? ''));
+    } else {
+      setQuantities(measures.map(() => 1));
+      setUnits(measures.map(() => ''));
+    }
+    setEditingIndex(null);
+  }, [recipeTarget, measures]);
+
   const [committing, setCommitting] = useState(false);
   const [commitError, setCommitError] = useState(false);
 
@@ -82,6 +111,11 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
   const loading = hasValidUrl && query.isFetching && !query.data;
   const ready = query.isSuccess && query.data;
   const title = query.data?.title ?? null;
+
+  // Servings is only consumed on the recipe target. A blank/0/NaN entry is
+  // invalid there and blocks the commit; off the recipe target it is ignored.
+  const parsedServings = Number(servings);
+  const servingsValid = Number.isInteger(parsedServings) && parsedServings >= 1;
 
   function toggle(index: number) {
     setChecked((prev) => {
@@ -127,6 +161,22 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
     setCommitting(true);
     setCommitError(false);
     try {
+      if (target.kind === 'recipe') {
+        const recipe = await saveRecipe.mutateAsync({
+          title: title?.trim() || 'Imported recipe',
+          source_url: query.data?.sourceUrl,
+          servings: parsedServings,
+          ingredients: selected.map(({ ingredient, quantity, unit }) => ({
+            raw: ingredient.raw,
+            name: ingredient.name,
+            quantity,
+            unit: unit ?? '',
+          })),
+        });
+        navigate(`/eat/recipes/${recipe.id}`);
+        return;
+      }
+
       if (target.kind === 'default') {
         for (const { ingredient, quantity, unit } of selected) {
           await addDefaultItem.mutateAsync({ name: ingredient.name, quantity, unit });
@@ -214,19 +264,49 @@ export default function RecipeImporter({ initialUrl }: RecipeImporterProps) {
             newListLabel={title ? `New list · ${title}` : 'New list'}
             onChange={setTarget}
           />
+
+          {recipeTarget && (
+            <div className="pt-1">
+              <LabeledField
+                htmlFor="recipe-servings"
+                label="Servings"
+                error={servingsValid ? undefined : 'Enter a serving count of 1 or more'}
+              >
+                <Input
+                  id="recipe-servings"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={servings}
+                  onChange={(event) => setServings(event.target.value)}
+                  className="w-24"
+                />
+              </LabeledField>
+            </div>
+          )}
         </section>
 
         {commitError && (
-          <p className="text-destructive text-sm">Couldn’t add the items. Please try again.</p>
+          <p className="text-destructive text-sm">
+            {recipeTarget
+              ? 'Couldn’t save the recipe. Please try again.'
+              : 'Couldn’t add the items. Please try again.'}
+          </p>
         )}
 
         <Button
           variant="primary"
           className="w-full"
-          disabled={committing || checkedCount === 0}
+          disabled={committing || checkedCount === 0 || (recipeTarget && !servingsValid)}
           onClick={() => void commit()}
         >
-          {committing ? 'Adding…' : `Add ${checkedCount} ${checkedCount === 1 ? 'item' : 'items'}`}
+          {recipeTarget
+            ? committing
+              ? 'Saving…'
+              : 'Save recipe'
+            : committing
+              ? 'Adding…'
+              : `Add ${checkedCount} ${checkedCount === 1 ? 'item' : 'items'}`}
         </Button>
       </div>
     );

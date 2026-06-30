@@ -19,76 +19,20 @@
  * is always preserved for display/tooltip.
  */
 
+import {
+  LEADING_QUANTITY,
+  OUNCE_TOKENS,
+  UNITS,
+  cleanToken,
+  normalizeMeasureRegion,
+} from '@/utils/measureTokens';
+
 export interface NormalizedIngredient {
   /** Cleaned noun phrase suitable for `items.name`. */
   name: string;
   /** The original, untouched ingredient string. */
   raw: string;
 }
-
-/** Vulgar-fraction code points, kept as a character class for matching only. */
-const FRAC = `[½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅐⅛⅜⅝⅞⅑⅒]`;
-
-/**
- * A single numeric value, most-specific alternative first: mixed number
- * (`2 1/2`), ascii fraction (`1/2`), integer/decimal with a vulgar fraction
- * suffix (`2½`), a bare vulgar fraction (`½`), or a plain integer/decimal.
- * Used to *recognise and consume* a leading number — its value is never read.
- */
-const NUMBER_SRC = [
-  `\\d+\\s+\\d+\\s*\\/\\s*\\d+`,
-  `\\d+\\s*\\/\\s*\\d+`,
-  `\\d+(?:\\.\\d+)?\\s*${FRAC}`,
-  FRAC,
-  `\\d+(?:\\.\\d+)?`,
-].join('|');
-
-/** A range separator between two quantities: `1-2`, `1–2`, `1 to 2`. */
-const RANGE_SEP = `\\s*(?:-|–|—|~|to)\\s*`;
-
-/** Matches a leading quantity expression, optionally a range, at string start. */
-const LEADING_QUANTITY = new RegExp(`^(?:${NUMBER_SRC})(?:${RANGE_SEP}(?:${NUMBER_SRC}))?`);
-
-/**
- * Known measurement units (and their common plurals / abbreviations) that may
- * lead an ingredient after the quantity. Lower-cased, trailing periods stripped
- * before lookup. Container words (`can`, `package`, `jar`) are included because
- * recipes count by them ("1 can black beans").
- */
-const UNITS = new Set([
-  'cup', 'cups', 'c',
-  'tablespoon', 'tablespoons', 'tbsp', 'tbsps', 'tbs', 'tbl',
-  'teaspoon', 'teaspoons', 'tsp', 'tsps',
-  'ounce', 'ounces', 'oz',
-  'pound', 'pounds', 'lb', 'lbs',
-  'gram', 'grams', 'g',
-  'kilogram', 'kilograms', 'kg',
-  'milliliter', 'milliliters', 'millilitre', 'millilitres', 'ml',
-  'liter', 'liters', 'litre', 'litres', 'l',
-  'clove', 'cloves',
-  'can', 'cans',
-  'pinch', 'pinches',
-  'dash', 'dashes',
-  'package', 'packages', 'pkg', 'pkgs',
-  'stick', 'sticks',
-  'slice', 'slices',
-  'bunch', 'bunches',
-  'head', 'heads',
-  'sprig', 'sprigs',
-  'stalk', 'stalks',
-  'quart', 'quarts', 'qt',
-  'pint', 'pints', 'pt',
-  'gallon', 'gallons', 'gal',
-  'handful', 'handfuls',
-  'piece', 'pieces',
-  'jar', 'jars',
-  'bottle', 'bottles',
-  'box', 'boxes',
-  'bag', 'bags',
-  'cube', 'cubes',
-  'fillet', 'fillets',
-  'strip', 'strips',
-]);
 
 /**
  * Short, human-friendly unit suggestions for the import preview's optional unit
@@ -116,9 +60,6 @@ export const UNIT_SUGGESTIONS = [
   'pinch',
 ] as const;
 
-/** Ounce-unit tokens, used to recognise the two-word "fl oz". */
-const OUNCE_TOKENS = new Set(['oz', 'ounce', 'ounces']);
-
 /**
  * Leading *size* descriptors that read better as a trailing parenthetical than as
  * part of the noun ("medium tomatoes" → "tomatoes (medium)"). Deliberately size
@@ -127,27 +68,6 @@ const OUNCE_TOKENS = new Set(['oz', 'ounce', 'ounces']);
  * "extra-large" form is handled separately and normalised to `extra-large`.
  */
 const SIZE_DESCRIPTORS = new Set(['small', 'medium', 'large', 'jumbo', 'baby']);
-
-/** Lower-case a unit token and drop a trailing period (`Tbsp.` → `tbsp`). */
-function cleanToken(token: string): string {
-  return token.replace(/\.$/, '').toLowerCase();
-}
-
-/**
- * Normalize the measure region so the spaced / unspaced / glued dual-measure
- * variants collapse into one code path before any unit lookup:
- *   - space out a `/` separator (`cups/70` → `cups / 70`);
- *   - split a number glued to a *known unit* (`100g` → `100 g`, `3.5oz` → `3.5 oz`).
- * The glue split is gated on the trailing letters being a known unit so a
- * name-leading alphanumeric that is *not* a measure (e.g. "7Up") is left intact.
- */
-function normalizeMeasureRegion(s: string): string {
-  let out = s.replace(/\s*\/\s*/g, ' / ');
-  out = out.replace(/(\d+(?:\.\d+)?)([a-zA-Z]+)/g, (match, num: string, unit: string) =>
-    UNITS.has(unit.toLowerCase()) ? `${num} ${unit}` : match,
-  );
-  return out.replace(/\s+/g, ' ').trim();
-}
 
 /** Strip a leading quantity (or range) if present; returns the remainder. */
 function stripLeadingQuantity(s: string): string {

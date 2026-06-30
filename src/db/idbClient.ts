@@ -277,6 +277,26 @@ async function upgrade(
       await storesStore.put({ ...general, address: 'Any ol\' store' });
     }
   }
+
+  if (oldVersion < 9) {
+    // Eat tab Phase 3 (ADR-0026): create the four Eat data-model stores in one
+    // append-only case. This is purely additive — no existing store is altered
+    // or dropped, and all four start empty (recipes are user data, never seeded),
+    // so a populated v8 DB upgrades with every existing row intact. Only
+    // `recipes` + `recipe_ingredients` get hook/UI behaviour this phase;
+    // `meal_plan_entries` (Phase 5) and `nutrition_cache` (Phase 4) are created
+    // now so their phases need no further DB bump.
+    db.createObjectStore('recipes', { keyPath: 'id' });
+
+    const recipeIngredients = db.createObjectStore('recipe_ingredients', { keyPath: 'id' });
+    recipeIngredients.createIndex('recipe_id', 'recipe_id');
+    recipeIngredients.createIndex('item_id', 'item_id');
+
+    const mealPlanEntries = db.createObjectStore('meal_plan_entries', { keyPath: 'id' });
+    mealPlanEntries.createIndex('recipe_id', 'recipe_id');
+
+    db.createObjectStore('nutrition_cache', { keyPath: 'fdc_id' });
+  }
 }
 
 async function seedDatabase(db: IDBPDatabase<ShoopDB>): Promise<void> {
