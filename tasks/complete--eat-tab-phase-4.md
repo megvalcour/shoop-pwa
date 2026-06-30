@@ -1,7 +1,7 @@
 ---
 epic: eat-tab
 phase: 4
-status: active
+status: complete
 class: standard
 e2e_required: true
 clarifications: |
@@ -453,3 +453,29 @@ edge, as `nutritionTargets` does). Fully unit-tested incl. the partial case.
   leave it for Phase 5? (Recommend leave it; keep Phase 4 nutrition-only.)
 - **`pinch`/`dash`** — fixed nominal grams vs always-manual? (Recommend a small
   fixed nominal so a common recipe isn't blocked on a pinch of salt.)
+
+---
+
+## Completion note (resolved as built)
+
+- **No migration:** shipped with `DB_VERSION` unchanged. `NutritionCacheEntry.payload`
+  refined `unknown` → `FdcNutrientPanel` (type-level only). Not a `feat(db)` commit.
+- **Enrich trigger:** lazy, user-triggered on the recipe detail ("Match ingredients").
+- **Function shape:** one endpoint, `/api/nutrition?op=search|detail`.
+- **Density / per-piece tables:** shipped the small curated v1 set with a manual-gram
+  fallback for everything unresolved (`recipe_ingredients.grams` escape hatch).
+- **`item_id` linkage:** left for Phase 5 (Phase 4 stayed nutrition-only).
+- **`pinch`/`dash`:** fixed nominal grams.
+- **Embedding rerank:** shipped as an internal, **non-blocking** refinement. The live
+  Spike-1 numbers were never produced (egress was blocked in Phase 0), so per the plan
+  this is treated as an internal refinement and correctness rides on the FDC top-hit +
+  manual-pick fallback. The driver (`services/fdcMatcher.ts`) mirrors
+  `useAisleMatcher`'s pattern: it warms the embedding worker in the background and
+  resolves `null` (→ top hit) immediately until the model signals `ready`, so the
+  first (cold) enrich is never blocked on the model compile/download. ADR-0027 is
+  Accepted/immutable, so this outcome is recorded here rather than appended to the ADR.
+- **E2E note:** `e2e/eat-nutrition.spec.ts` passes deterministically on a cold Vite
+  cache because the enrich no longer awaits the cold worker. `e2e/eat-recipes.spec.ts`
+  ingredient assertions were scoped to the ingredient section (the new nutrition
+  section also lists ingredient names). Full suite green (`npm run test:e2e`), with
+  `npm run validate` and `npm run build` (incl. `tsconfig.functions.json`) clean.

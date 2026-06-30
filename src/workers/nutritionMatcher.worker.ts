@@ -25,9 +25,13 @@ interface RawCandidate {
   description: string;
 }
 
-type WorkerRequest = { type: 'rerank'; id: string; query: string; candidates: RawCandidate[] };
+type WorkerRequest =
+  | { type: 'warmup' }
+  | { type: 'rerank'; id: string; query: string; candidates: RawCandidate[] };
 
 type WorkerResponse =
+  | { type: 'ready' }
+  | { type: 'load_failed' }
   | { type: 'result'; id: string; scored: ScoredCandidate[] }
   | { type: 'failed'; id: string };
 
@@ -53,6 +57,20 @@ async function embed(text: string): Promise<number[]> {
   return output.tolist()[0];
 }
 
+/**
+ * Load the model once in the background and report readiness. The main-thread
+ * driver primes this without blocking any caller, so the first (cold) enrich falls
+ * back to the FDC top hit while the model compiles/loads here.
+ */
+async function warmup(): Promise<void> {
+  try {
+    await ensurePipe();
+    ctx.postMessage({ type: 'ready' });
+  } catch {
+    ctx.postMessage({ type: 'load_failed' });
+  }
+}
+
 async function rerank(id: string, query: string, candidates: RawCandidate[]): Promise<void> {
   try {
     await ensurePipe();
@@ -74,7 +92,9 @@ async function rerank(id: string, query: string, candidates: RawCandidate[]): Pr
 
 ctx.onmessage = (event) => {
   const data = event.data;
-  if (data.type === 'rerank') {
+  if (data.type === 'warmup') {
+    void warmup();
+  } else if (data.type === 'rerank') {
     void rerank(data.id, data.query, data.candidates);
   }
 };

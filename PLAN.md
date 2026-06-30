@@ -26,15 +26,31 @@
   `/eat/recipes/*`. Confirmed decisions: all four stores created now; quantity/unit
   auto-parsed on the recipe path (ranges take the low value); reset does NOT wipe
   recipes. Plan in `tasks/complete--eat-tab-phase-3.md`.
-- **Eat Tab — Phase 4 (active, planned):** nutrition enrichment pipeline. Adds the
+- **Eat Tab — Phase 4 (complete):** nutrition enrichment pipeline shipped. Added the
   second first-party Cloudflare Function (`/api/nutrition`, ADR-0027) proxying USDA
-  FDC with the key server-side; ingredient→FDC matching with embedding rerank +
-  manual-pick fallback; quantity→grams conversion (Spike-2 ladder); writes the
-  `nutrition_cache` store (created empty at v9) and back-fills
-  `recipe_ingredients.fdc_id`/`grams`; per-recipe per-serving + whole-recipe
-  rollup shown on recipe detail. No `DB_VERSION` bump (refines `payload`'s type
-  only), no weekly plan/scoring (Phase 5). Full plan in
-  `tasks/active--eat-tab-phase-4.md` (open questions to confirm before coding).
+  FDC with the key server-side (single-host allowlist, token gate, no user-supplied
+  destination URL); a pure `parseFdcFood` mapper; the Spike-2 `toGrams` ladder
+  (mass → density → FDC `foodPortions` → manual-gram fallback); lazy, user-triggered
+  enrichment (`useNutrition`) that caches each food in `nutrition_cache` and
+  back-fills `recipe_ingredients.fdc_id`/`grams`; and a per-serving / whole-recipe
+  rollup (keyed to the Phase 2 `nutritionTargets` micros) shown on recipe detail
+  with per-row match status, manual re-pick, and an explicit "needs connection"
+  offline state. **No `DB_VERSION` bump** — it only refined `NutritionCacheEntry.payload`
+  from `unknown` to `FdcNutrientPanel` (a type-level change), so not a `feat(db)`
+  migration. No `package.json` change; `.env.example` gained empty `FDC_API_KEY=` /
+  `VITE_NUTRITION_TOKEN=` placeholders only. Resolved open questions: enrich is
+  **lazy-on-first-view** (rate-limit-friendly); **no pre-warm** in v1; `nutrition_cache`
+  has **no eviction** (`fetched_at` captured per ADR-0027); `item_id` linkage left for
+  Phase 5. Embedding rerank ships as an internal, **non-blocking** refinement
+  (mirrors `useAisleMatcher`: the model warms in a background worker and the first,
+  cold enrich falls back to the FDC top hit immediately rather than blocking on the
+  model load) — correctness rides on the top-hit + manual-pick fallback, so the
+  absent live Spike-1 numbers (egress was blocked in Phase 0) don't gate the phase.
+  Plan in `tasks/complete--eat-tab-phase-4.md`.
+- **Next — Eat Tab Phase 5 (weekly plan & scoring):** turn enriched recipes into a
+  weekly meal plan scored against the Phase 2 targets (`meal_plan_entries`, the one
+  store still unwired). Promote `tasks/backlog--eat-tab.md`'s Phase 5 to `active--`
+  and fully plan it (with ADR review) before implementation.
 
 ## Backlog
 

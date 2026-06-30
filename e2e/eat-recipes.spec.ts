@@ -16,6 +16,14 @@ const RECIPE = {
 
 const RECIPE_URL = 'https://example.com/recipe';
 
+/** The recipe-detail ingredient section (the one headed "N ingredient(s)"), as
+ *  opposed to the Phase 4 nutrition section, which also lists ingredient names. */
+function ingredientList(page: Page) {
+  return page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: /\d+ ingredients?/ }) });
+}
+
 async function mockImportEndpoint(page: Page): Promise<void> {
   await page.route('**/api/import-recipe**', (route) =>
     route.fulfill({
@@ -42,7 +50,9 @@ test.describe('Eat tab — persisted recipes', () => {
     await expect(page).toHaveURL(/\/eat\/recipes\/[0-9a-f-]{36}/);
     await expect(page.getByRole('heading', { name: 'Chocolate Chip Cookies' })).toBeVisible();
     await expect(page.getByText('4 servings', { exact: true })).toBeVisible();
-    await expect(page.getByText('All-purpose flour', { exact: true })).toBeVisible();
+    // Scope to the ingredient list: Phase 4's nutrition section also lists each
+    // ingredient name (with its match status), so an unscoped match is ambiguous.
+    await expect(ingredientList(page).getByText('All-purpose flour', { exact: true })).toBeVisible();
 
     // Reload mid-flow: the recipe persisted in IndexedDB.
     await page.reload();
@@ -81,8 +91,8 @@ test.describe('Eat tab — persisted recipes', () => {
     // Detail for the new recipe.
     await expect(page).toHaveURL(/\/eat\/recipes\/[0-9a-f-]{36}/);
     await expect(page.getByRole('heading', { name: 'Weeknight Chili' })).toBeVisible();
-    await expect(page.getByText('Black beans', { exact: true })).toBeVisible();
-    await expect(page.getByText('Ground beef', { exact: true })).toBeVisible();
+    await expect(ingredientList(page).getByText('Black beans', { exact: true })).toBeVisible();
+    await expect(ingredientList(page).getByText('Ground beef', { exact: true })).toBeVisible();
 
     // Edit: change the title.
     await page.getByRole('button', { name: /^Edit$/ }).click();
