@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faCalendarWeek } from '@fortawesome/free-solid-svg-icons';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 import BottomSheet from '@/components/molecules/BottomSheet';
 import Button from '@/components/atoms/Button';
 import DailyTargets from '@/components/organisms/DailyTargets';
 import EatProfileForm from '@/components/organisms/EatProfileForm';
 import RecipeLibrary from '@/components/organisms/RecipeLibrary';
+import WeeklyPlan from '@/components/organisms/WeeklyPlan';
 import { useEatProfile } from '@/hooks/useEatProfile';
 import { ACTIVITY_LABELS, computeTargets } from '@/services/nutritionTargets';
 import { kgToLb } from '@/services/units';
@@ -23,33 +23,10 @@ import type { EatProfile } from '@/db/schema';
  * route owns the profile→targets computation and the display stays presentational.
  *
  * Phase 3 replaces the static Recipes stub with the state-aware `RecipeLibrary`
- * (persisted recipes). The Weekly Plan section remains a Phase 1 "coming soon"
- * stub (Phase 5). The whole surface retheme greens via the data-theme="eat"
- * cascade (ADR-0028); these components use role tokens only.
+ * (persisted recipes). Phase 5 replaces the "coming soon" Weekly Plan stub with the
+ * live `WeeklyPlan` organism (plan + scoring). The whole surface retheme greens via
+ * the data-theme="eat" cascade (ADR-0028); these components use role tokens only.
  */
-
-interface ComingSoonSectionProps {
-  icon: IconDefinition;
-  title: string;
-  description: string;
-}
-
-function ComingSoonSection({ icon, title, description }: ComingSoonSectionProps) {
-  return (
-    <section className="px-4 pt-6">
-      <h2 className="font-display font-bold text-text text-lg mb-3">{title}</h2>
-      <div className="flex items-start gap-3 px-4 py-4 bg-card rounded-xl shadow-card">
-        <FontAwesomeIcon icon={icon} className="text-text-muted text-lg mt-0.5 shrink-0" />
-        <div className="flex flex-col gap-1">
-          <span className="text-text-muted text-sm">{description}</span>
-          <span className="text-text-muted/70 text-xs font-medium uppercase tracking-wide">
-            Coming soon
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /** A short "62 yr · Female · 154 lb · 5 ft 9 in" line for the populated summary. */
 function profileSummary(profile: EatProfile): string {
@@ -113,11 +90,7 @@ export default function EatRoute() {
 
       <RecipeLibrary />
 
-      <ComingSoonSection
-        icon={faCalendarWeek}
-        title="Weekly Plan"
-        description="Lay out your meals for the week and see how they stack up against your targets."
-      />
+      <WeeklyPlan />
 
       {isFormOpen ? (
         <BottomSheet

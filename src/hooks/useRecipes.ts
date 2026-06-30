@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dbPromise } from '@/db/idbClient';
 import type { Recipe, RecipeIngredient } from '@/db/schema';
+import { MEAL_PLAN_KEY } from '@/hooks/useMealPlan';
+import { MEAL_PLAN_NUTRITION_KEY } from '@/hooks/useMealPlanNutrition';
 
 /**
  * Persistent recipe data layer (Eat tab, Phase 3 — ADR-0004/0026). All recipe
@@ -166,25 +168,39 @@ export function useUpdateRecipe() {
   });
 }
 
-/** Delete a recipe and cascade its `recipe_ingredients` in one transaction. */
+/**
+ * Delete a recipe and cascade its `recipe_ingredients` AND its weekly-plan
+ * placements (`meal_plan_entries`, via the `recipe_id` index) in ONE transaction,
+ * so deleting a recipe can never leave a plan entry pointing at a ghost (Phase 5).
+ */
 export function useDeleteRecipe() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
     mutationFn: async (id) => {
       const db = await dbPromise;
-      const tx = db.transaction(['recipes', 'recipe_ingredients'], 'readwrite');
+      const tx = db.transaction(
+        ['recipes', 'recipe_ingredients', 'meal_plan_entries'],
+        'readwrite',
+      );
       const ingredientKeys = await tx
         .objectStore('recipe_ingredients')
         .index('recipe_id')
         .getAllKeys(id);
+      const planKeys = await tx
+        .objectStore('meal_plan_entries')
+        .index('recipe_id')
+        .getAllKeys(id);
       tx.objectStore('recipes').delete(id);
       for (const key of ingredientKeys) tx.objectStore('recipe_ingredients').delete(key);
+      for (const key of planKeys) tx.objectStore('meal_plan_entries').delete(key);
       await tx.done;
     },
     onSuccess: (_data, id) =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: RECIPES_KEY }),
         queryClient.invalidateQueries({ queryKey: [...RECIPES_KEY, id] }),
+        queryClient.invalidateQueries({ queryKey: MEAL_PLAN_KEY }),
+        queryClient.invalidateQueries({ queryKey: MEAL_PLAN_NUTRITION_KEY }),
       ]),
   });
 }
