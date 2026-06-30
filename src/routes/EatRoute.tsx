@@ -1,22 +1,29 @@
+import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faBookOpen, faCalendarWeek } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import BottomSheet from '@/components/molecules/BottomSheet';
+import Button from '@/components/atoms/Button';
+import DailyTargets from '@/components/organisms/DailyTargets';
+import EatProfileForm from '@/components/organisms/EatProfileForm';
+import { useEatProfile } from '@/hooks/useEatProfile';
+import { ACTIVITY_LABELS, computeTargets } from '@/services/nutritionTargets';
+import { kgToLb } from '@/services/units';
+import type { EatProfile } from '@/db/schema';
 
 /**
- * Eat tab landing screen (Phase 1 — shell + theme only).
+ * Eat tab landing screen.
  *
- * Presentational by design: the profile / recipe / weekly-plan object stores do
- * not exist until Phases 2–5 (ADR-0026 ships the migration later), so this
- * screen reads no hooks and persists nothing. It renders a static intro plus
- * three "coming soon" placeholder sections, each structured so the matching
- * later phase can swap the stub body in place without restructuring the page:
- *   - Profile      → Phase 2 (profile capture + locally-computed targets)
- *   - Recipes      → Phase 3 (recipe library)
- *   - Weekly Plan  → Phase 5 (plan grid + scoring)
+ * Phase 2 hangs real, data-driven content on the Phase 1 shell: the static
+ * Profile stub is replaced by a state-aware Profile section — an empty-state CTA
+ * when no profile exists, or a compact summary + computed daily targets once one
+ * is set. The profile lives as a JSON value in the `preferences` store (no schema
+ * change); targets are pure on-device math (services/nutritionTargets.ts), so the
+ * route owns the profile→targets computation and the display stays presentational.
  *
- * The StoreHeader and bottom nav remain visible and retheme green via the
- * data-theme="eat" cascade (ADR-0028); an Eat-specific header is a later-phase
- * consideration, not Phase 1 scope.
+ * The Recipes and Weekly Plan sections remain Phase 1 "coming soon" stubs
+ * (Phases 3 & 5). The whole surface retheme greens via the data-theme="eat"
+ * cascade (ADR-0028); these components use role tokens only.
  */
 
 interface ComingSoonSectionProps {
@@ -42,7 +49,21 @@ function ComingSoonSection({ icon, title, description }: ComingSoonSectionProps)
   );
 }
 
+/** A short "62 yr · Female · 154 lb · 5 ft 9 in" line for the populated summary. */
+function profileSummary(profile: EatProfile): string {
+  const sex = profile.sex === 'male' ? 'Male' : 'Female';
+  const activity = ACTIVITY_LABELS[profile.activity].split(' — ')[0];
+  const weight =
+    profile.units === 'metric'
+      ? `${Math.round(profile.weightKg)} kg`
+      : `${Math.round(kgToLb(profile.weightKg))} lb`;
+  return `${profile.age} yr · ${sex} · ${weight} · ${activity}`;
+}
+
 export default function EatRoute() {
+  const { data: profile, isLoading } = useEatProfile();
+  const [isFormOpen, setFormOpen] = useState(false);
+
   return (
     <div className="relative flex flex-col pb-24">
       <section className="px-4 pt-6">
@@ -53,11 +74,40 @@ export default function EatRoute() {
         </p>
       </section>
 
-      <ComingSoonSection
-        icon={faUser}
-        title="Profile"
-        description="Set your age, sex, weight, height, and activity level so Shoop can compute your daily nutrition targets locally."
-      />
+      <section className="px-4 pt-6">
+        <h2 className="font-display font-bold text-text text-lg mb-3">Profile</h2>
+
+        {isLoading ? null : !profile ? (
+          <div className="flex flex-col gap-3 px-4 py-4 bg-card rounded-xl shadow-card">
+            <div className="flex items-start gap-3">
+              <FontAwesomeIcon icon={faUser} className="text-text-muted text-lg mt-0.5 shrink-0" />
+              <span className="text-text-muted text-sm">
+                Set up your profile to see your daily nutrition targets, computed locally from your
+                age, sex, weight, height, and activity level.
+              </span>
+            </div>
+            <Button variant="primary" onClick={() => setFormOpen(true)} className="self-start">
+              Set up your profile
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-card rounded-xl shadow-card">
+              <div className="flex items-center gap-3 min-w-0">
+                <FontAwesomeIcon icon={faUser} className="text-text-muted text-lg shrink-0" />
+                <span className="text-text text-sm font-medium truncate">
+                  {profileSummary(profile)}
+                </span>
+              </div>
+              <Button variant="secondary" onClick={() => setFormOpen(true)} className="shrink-0">
+                Edit
+              </Button>
+            </div>
+
+            <DailyTargets targets={computeTargets(profile)} />
+          </div>
+        )}
+      </section>
 
       <ComingSoonSection
         icon={faBookOpen}
@@ -70,6 +120,15 @@ export default function EatRoute() {
         title="Weekly Plan"
         description="Lay out your meals for the week and see how they stack up against your targets."
       />
+
+      {isFormOpen ? (
+        <BottomSheet
+          title={profile ? 'Edit profile' : 'Set up your profile'}
+          onClose={() => setFormOpen(false)}
+        >
+          <EatProfileForm onSaved={() => setFormOpen(false)} />
+        </BottomSheet>
+      ) : null}
     </div>
   );
 }

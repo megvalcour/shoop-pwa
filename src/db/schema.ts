@@ -42,6 +42,36 @@ export interface Preference {
   value: string;
 }
 
+export type Sex = 'female' | 'male';
+export type ActivityLevel =
+  | 'sedentary' // 1.2
+  | 'light' // 1.375
+  | 'moderate' // 1.55
+  | 'active' // 1.725
+  | 'very_active'; // 1.9
+export type UnitSystem = 'imperial' | 'metric';
+
+/**
+ * The single user's body/lifestyle profile (Eat tab, Phase 2). Persisted as JSON
+ * under the `eat_profile` key in the `preferences` store — deliberately NOT a
+ * dedicated object store, so Phase 2 ships schema-free (no `DB_VERSION` bump;
+ * ADR-0026's reserved Eat stores stay for Phase 3/4).
+ *
+ * Canonical fields are METRIC (kg, cm); `units` records only the user's preferred
+ * DISPLAY system so the form re-renders in their chosen units. The targets math
+ * always runs on the metric fields, so toggling display units never drifts the
+ * stored value.
+ */
+export interface EatProfile {
+  age: number; // years
+  sex: Sex;
+  weightKg: number; // canonical metric
+  heightCm: number; // canonical metric
+  activity: ActivityLevel;
+  units: UnitSystem; // display preference only
+  updated_at: number; // epoch ms
+}
+
 export interface DefaultListEntry {
   id: string;
   item_id: string;
