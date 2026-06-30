@@ -63,16 +63,28 @@ describe('useSaveRecipe + useRecipes', () => {
     const wrapper = makeWrapper();
     const { result: save } = renderHook(() => useSaveRecipe(), { wrapper });
 
-    await act(async () => {
-      await save.current.mutateAsync({ ...SAMPLE, title: 'First' });
-    });
-    await act(async () => {
-      await save.current.mutateAsync({
-        ...SAMPLE,
-        title: 'Second',
-        ingredients: [{ raw: 'Salt', name: 'Salt', quantity: 1, unit: '' }],
+    // Stamp strictly-increasing created_at values. Two saves can otherwise land
+    // in the same millisecond, tying `b.created_at - a.created_at` to 0; the
+    // stable sort then falls back to insertion order and the assertion below
+    // flakes (notably under the slower coverage run). A monotonic clock keeps
+    // the ordering deterministic regardless of how often Date.now is called.
+    let clock = 1_700_000_000_000;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => ++clock);
+
+    try {
+      await act(async () => {
+        await save.current.mutateAsync({ ...SAMPLE, title: 'First' });
       });
-    });
+      await act(async () => {
+        await save.current.mutateAsync({
+          ...SAMPLE,
+          title: 'Second',
+          ingredients: [{ raw: 'Salt', name: 'Salt', quantity: 1, unit: '' }],
+        });
+      });
+    } finally {
+      nowSpy.mockRestore();
+    }
 
     const { result: list } = renderHook(() => useRecipes(), { wrapper });
     await waitFor(() => expect(list.current.data?.length).toBe(2));
