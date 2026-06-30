@@ -1,6 +1,7 @@
 ## Current Status
 
-- fix: Playwright/Chromium browser mismatch in web sessions
+- **Eat Tab — Phase 0 (active):** decision spikes & ADRs to de-risk the Eat
+  epic before building. Full plan in `tasks/active--eat-tab-phase-0.md`.
 
 ## Backlog
 
