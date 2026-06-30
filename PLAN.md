@@ -26,9 +26,15 @@
   `/eat/recipes/*`. Confirmed decisions: all four stores created now; quantity/unit
   auto-parsed on the recipe path (ranges take the low value); reset does NOT wipe
   recipes. Plan in `tasks/complete--eat-tab-phase-3.md`.
-- **Next:** Eat Tab Phase 4 (nutrition enrichment pipeline; ADR-0027,
-  `/api/nutrition`) — ingredient→FDC matching, embedding rerank, quantity→grams,
-  populating the `nutrition_cache` store created this phase.
+- **Eat Tab — Phase 4 (active, planned):** nutrition enrichment pipeline. Adds the
+  second first-party Cloudflare Function (`/api/nutrition`, ADR-0027) proxying USDA
+  FDC with the key server-side; ingredient→FDC matching with embedding rerank +
+  manual-pick fallback; quantity→grams conversion (Spike-2 ladder); writes the
+  `nutrition_cache` store (created empty at v9) and back-fills
+  `recipe_ingredients.fdc_id`/`grams`; per-recipe per-serving + whole-recipe
+  rollup shown on recipe detail. No `DB_VERSION` bump (refines `payload`'s type
+  only), no weekly plan/scoring (Phase 5). Full plan in
+  `tasks/active--eat-tab-phase-4.md` (open questions to confirm before coding).
 
 ## Backlog
 
