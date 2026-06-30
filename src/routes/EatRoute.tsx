@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faBookOpen, faCalendarWeek } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCalendarWeek } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import BottomSheet from '@/components/molecules/BottomSheet';
 import Button from '@/components/atoms/Button';
 import DailyTargets from '@/components/organisms/DailyTargets';
 import EatProfileForm from '@/components/organisms/EatProfileForm';
+import RecipeLibrary from '@/components/organisms/RecipeLibrary';
 import { useEatProfile } from '@/hooks/useEatProfile';
 import { ACTIVITY_LABELS, computeTargets } from '@/services/nutritionTargets';
 import { kgToLb } from '@/services/units';
@@ -21,8 +22,9 @@ import type { EatProfile } from '@/db/schema';
  * change); targets are pure on-device math (services/nutritionTargets.ts), so the
  * route owns the profile→targets computation and the display stays presentational.
  *
- * The Recipes and Weekly Plan sections remain Phase 1 "coming soon" stubs
- * (Phases 3 & 5). The whole surface retheme greens via the data-theme="eat"
+ * Phase 3 replaces the static Recipes stub with the state-aware `RecipeLibrary`
+ * (persisted recipes). The Weekly Plan section remains a Phase 1 "coming soon"
+ * stub (Phase 5). The whole surface retheme greens via the data-theme="eat"
  * cascade (ADR-0028); these components use role tokens only.
  */
 
@@ -109,11 +111,7 @@ export default function EatRoute() {
         )}
       </section>
 
-      <ComingSoonSection
-        icon={faBookOpen}
-        title="Recipes"
-        description="Build a library of recipes you can pull from when planning your week."
-      />
+      <RecipeLibrary />
 
       <ComingSoonSection
         icon={faCalendarWeek}

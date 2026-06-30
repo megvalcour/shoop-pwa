@@ -5,7 +5,8 @@ import type { ShoppingList } from '@/db/schema';
 export type ImportTarget =
   | { kind: 'new' }
   | { kind: 'existing'; listId: string }
-  | { kind: 'default' };
+  | { kind: 'default' }
+  | { kind: 'recipe' };
 
 interface TargetOption {
   kind: ImportTarget['kind'];
@@ -39,6 +40,7 @@ export default function ImportTargetPicker({
     { kind: 'new', label: newListLabel },
     ...(lists.length > 0 ? [{ kind: 'existing' as const, label: 'Existing list' }] : []),
     { kind: 'default', label: 'Default list' },
+    { kind: 'recipe', label: 'Save as recipe' },
   ];
 
   function selectKind(kind: ImportTarget['kind']) {

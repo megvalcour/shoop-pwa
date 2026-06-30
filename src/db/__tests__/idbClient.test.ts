@@ -17,7 +17,11 @@ describe('idbClient', () => {
       'item_locations',
       'items',
       'list_items',
+      'meal_plan_entries',
+      'nutrition_cache',
       'preferences',
+      'recipe_ingredients',
+      'recipes',
       'shopping_lists',
       'stores',
     ]);
@@ -114,7 +118,11 @@ describe('idbClient', () => {
       'item_locations',
       'items',
       'list_items',
+      'meal_plan_entries',
+      'nutrition_cache',
       'preferences',
+      'recipe_ingredients',
+      'recipes',
       'shopping_lists',
       'stores',
     ]);
@@ -329,6 +337,77 @@ describe('idbClient', () => {
     const { dbPromise } = await import('@/db/idbClient');
     const db = await dbPromise;
     expect(await db.count('list_items')).toBe(0);
+  });
+
+  it('upgrades a populated v8 DB to v9: existing data survives and the four Eat stores are created empty', async () => {
+    const { openDB } = await import('idb');
+    // A v8-shaped DB (the pre-Eat schema) carrying real user data: a store, a
+    // shopping list with an item, a default-list entry, and a preference.
+    const v8 = await openDB('shoop', 8, {
+      upgrade(db) {
+        db.createObjectStore('stores', { keyPath: 'id' });
+        const aisles = db.createObjectStore('aisles', { keyPath: 'id' });
+        aisles.createIndex('store_id', 'store_id');
+        db.createObjectStore('items', { keyPath: 'id' });
+        const il = db.createObjectStore('item_locations', { keyPath: 'id' });
+        il.createIndex('item_id', 'item_id');
+        il.createIndex('store_id', 'store_id');
+        db.createObjectStore('preferences', { keyPath: 'key' });
+        db.createObjectStore('default_list', { keyPath: 'id' });
+        db.createObjectStore('shopping_lists', { keyPath: 'id' });
+        const li = db.createObjectStore('list_items', { keyPath: 'id' });
+        li.createIndex('list_id', 'list_id');
+      },
+    });
+    await v8.add('stores', {
+      id: 'st-mb',
+      name: 'Oxford Market Basket #62',
+      address: '',
+      slug: 'oxford-62',
+    });
+    await v8.add('items', { id: 'it-1', name: 'Milk', canonical_name: 'milk' });
+    await v8.add('shopping_lists', {
+      id: 'sl-1',
+      name: 'Groceries',
+      created_at: '2026-06-01T00:00:00.000Z',
+    });
+    await v8.add('list_items', {
+      id: 'li-1',
+      list_id: 'sl-1',
+      item_id: 'it-1',
+      quantity: 2,
+      unit: '',
+      checked: false,
+      added_from_default: false,
+      created_at: 1,
+    });
+    await v8.add('default_list', { id: 'dl-1', item_id: 'it-1', quantity: 1, unit: '', notes: '' });
+    await v8.add('preferences', { key: 'active_store_id', value: 'st-mb' });
+    v8.close();
+
+    vi.resetModules();
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+
+    // The four Eat stores now exist (with their indexes) and are empty.
+    const eatStores = ['recipes', 'recipe_ingredients', 'meal_plan_entries', 'nutrition_cache'] as const;
+    for (const name of eatStores) {
+      expect(db.objectStoreNames.contains(name)).toBe(true);
+      expect(await db.count(name)).toBe(0);
+    }
+    expect([...db.transaction('recipe_ingredients').store.indexNames].sort()).toEqual([
+      'item_id',
+      'recipe_id',
+    ]);
+    expect([...db.transaction('meal_plan_entries').store.indexNames]).toEqual(['recipe_id']);
+
+    // Every pre-existing row survives the upgrade untouched.
+    expect(await db.get('stores', 'st-mb')).toMatchObject({ slug: 'oxford-62' });
+    expect(await db.get('items', 'it-1')).toMatchObject({ canonical_name: 'milk' });
+    expect(await db.get('shopping_lists', 'sl-1')).toMatchObject({ name: 'Groceries' });
+    expect(await db.get('list_items', 'li-1')).toMatchObject({ quantity: 2, item_id: 'it-1' });
+    expect(await db.get('default_list', 'dl-1')).toMatchObject({ item_id: 'it-1' });
+    expect((await db.get('preferences', 'active_store_id'))?.value).toBe('st-mb');
   });
 
   it('grafts the General Store into a populated v6 DB missing it', async () => {

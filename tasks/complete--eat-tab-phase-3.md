@@ -1,7 +1,7 @@
 ---
 epic: eat-tab
 phase: 3
-status: active
+status: complete
 class: standard
 e2e_required: true
 clarifications: |

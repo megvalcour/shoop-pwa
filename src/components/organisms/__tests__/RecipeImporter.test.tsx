@@ -22,11 +22,13 @@ vi.mock('@/hooks/useShoppingLists', () => ({
 }));
 vi.mock('@/hooks/useListItems', () => ({ useAddListItem: vi.fn() }));
 vi.mock('@/hooks/useDefaultList', () => ({ useAddDefaultListItem: vi.fn() }));
+vi.mock('@/hooks/useRecipes', () => ({ useSaveRecipe: vi.fn() }));
 
 const mockCreate = vi.fn();
 const mockRename = vi.fn();
 const mockAddListItem = vi.fn();
 const mockAddDefault = vi.fn();
+const mockSaveRecipe = vi.fn();
 
 interface SetupOptions {
   data?: RecipeImportResult;
@@ -53,6 +55,7 @@ async function setup(options: SetupOptions = {}) {
   );
   const { useAddListItem } = await import('@/hooks/useListItems');
   const { useAddDefaultListItem } = await import('@/hooks/useDefaultList');
+  const { useSaveRecipe } = await import('@/hooks/useRecipes');
 
   vi.mocked(useRecipeImport).mockReturnValue({
     data,
@@ -76,6 +79,9 @@ async function setup(options: SetupOptions = {}) {
   vi.mocked(useAddDefaultListItem).mockReturnValue({
     mutateAsync: mockAddDefault,
   } as unknown as ReturnType<typeof useAddDefaultListItem>);
+  vi.mocked(useSaveRecipe).mockReturnValue({
+    mutateAsync: mockSaveRecipe,
+  } as unknown as ReturnType<typeof useSaveRecipe>);
 
   const { default: RecipeImporter } = await import('@/components/organisms/RecipeImporter');
   render(createElement(RecipeImporter, { initialUrl }));
@@ -94,6 +100,7 @@ describe('RecipeImporter', () => {
     mockRename.mockResolvedValue(undefined);
     mockAddListItem.mockResolvedValue(undefined);
     mockAddDefault.mockResolvedValue(undefined);
+    mockSaveRecipe.mockResolvedValue({ id: 'recipe-1' });
   });
 
   it('renders normalized ingredient names with the raw text beneath', async () => {
@@ -136,7 +143,7 @@ describe('RecipeImporter', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Quantity for Flour' }));
     fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
     fireEvent.change(screen.getByLabelText('Unit'), { target: { value: 'cups' } });
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     fireEvent.click(screen.getByRole('button', { name: /add 2 items/i }));
 
@@ -202,6 +209,33 @@ describe('RecipeImporter', () => {
     expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Flour', quantity: 1, unit: undefined });
     expect(mockAddDefault).toHaveBeenCalledWith({ name: 'Salt', quantity: 1, unit: undefined });
     expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('saves a recipe (parser-prefilled quantities) and navigates to its detail', async () => {
+    await setup({ data: SAMPLE });
+
+    // Choose the new "Save as recipe" destination; the parser pre-fills each row's
+    // quantity/unit (the list path defaulted them to ×1 above — ADR-0021 intact).
+    fireEvent.click(screen.getByRole('button', { name: 'Save as recipe' }));
+
+    // A servings input appears (default 4); the commit button becomes "Save recipe".
+    expect(screen.getByLabelText('Servings')).toHaveValue(4);
+    fireEvent.click(screen.getByRole('button', { name: 'Save recipe' }));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/eat/recipes/recipe-1'));
+    expect(mockSaveRecipe).toHaveBeenCalledTimes(1);
+    expect(mockSaveRecipe).toHaveBeenCalledWith({
+      title: 'Pasta Bake',
+      source_url: 'https://example.com/recipe',
+      servings: 4,
+      ingredients: [
+        { raw: '2 cups flour', name: 'Flour', quantity: 2, unit: 'cups' },
+        { raw: '1 tsp salt', name: 'Salt', quantity: 1, unit: 'tsp' },
+      ],
+    });
+    // The list/default paths were not touched.
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockAddListItem).not.toHaveBeenCalled();
   });
 
   it('shows the manual-paste empty state when no URL was shared', async () => {

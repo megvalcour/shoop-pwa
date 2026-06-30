@@ -1,7 +1,7 @@
 import type { DBSchema } from 'idb';
 
 export const DB_NAME = 'shoop';
-export const DB_VERSION = 8;
+export const DB_VERSION = 9;
 
 export interface Store {
   id: string;
@@ -97,6 +97,64 @@ export interface ListItem {
   created_at: number;
 }
 
+/**
+ * A persisted recipe (Eat tab, Phase 3 — ADR-0026). Either imported from a URL
+ * (`source_url` present) or hand-entered. The ingredient lines live in the
+ * `recipe_ingredients` store, scoped by `recipe_id`. `servings` is the recipe's
+ * yield; per-serving nutrition math (Phase 4/5) divides by it.
+ */
+export interface Recipe {
+  id: string; // PK, uuid
+  title: string;
+  source_url?: string; // present when imported from a URL
+  servings: number; // yield; per-serving math (Phase 4/5) divides by this
+  created_at: number; // epoch ms
+}
+
+/**
+ * One ingredient line of a `Recipe` (ADR-0026). Carries the original raw line for
+ * display, the `normalizeIngredient` noun phrase for matching/display, and the
+ * quantity + unit recovered by `parseIngredientMeasure` (a recipe-scoped parser,
+ * separate from `normalizeIngredient` per ADR-0021). `item_id`, `grams`, and
+ * `fdc_id` stay undefined until Phase 4 enrichment.
+ */
+export interface RecipeIngredient {
+  id: string; // PK, uuid
+  recipe_id: string; // Index → recipes.id
+  raw: string; // original ingredient line, preserved for display
+  canonical_name: string; // normalizeIngredient name, lower-cased for matching
+  item_id?: string; // Index → items.id when matched (Phase 4; undefined now)
+  quantity: number; // extracted value (parseIngredientMeasure; default 1)
+  unit: string; // extracted unit token ('' when none)
+  grams?: number; // resolved by Phase 4 enrichment (undefined now)
+  fdc_id?: string; // resolved FDC food (Phase 4; undefined now)
+}
+
+/**
+ * A recipe placed on a day of the weekly meal plan (ADR-0026). The store is
+ * CREATED by the v9 migration but UNUSED until Phase 5 — no hook or UI reads or
+ * writes it this phase. Typed here so the created store stays fully typed.
+ */
+export interface MealPlanEntry {
+  id: string; // PK, uuid
+  recipe_id: string; // Index → recipes.id
+  day: string; // day-of-week or ISO date (Phase 5 decides)
+  planned_servings: number;
+}
+
+/**
+ * A cached USDA FoodData Central nutrition payload (ADR-0026/0027). The store is
+ * CREATED by the v9 migration but UNUSED until Phase 4 — nothing is written to it
+ * this phase. Keyed by the external FDC food id. Typed here so the created store
+ * stays fully typed.
+ */
+export interface NutritionCacheEntry {
+  fdc_id: string; // PK, external (USDA FDC food id)
+  payload: unknown; // per-100g nutrient panel + foodPortions (Phase 4 types it)
+  query: string; // normalized ingredient query that resolved here
+  fetched_at: number; // epoch ms, future staleness policy
+}
+
 export interface ShoopDB extends DBSchema {
   stores: { key: string; value: Store; indexes: Record<never, never> };
   aisles: { key: string; value: Aisle; indexes: { store_id: string } };
@@ -110,4 +168,20 @@ export interface ShoopDB extends DBSchema {
   default_list: { key: string; value: DefaultListEntry; indexes: Record<never, never> };
   shopping_lists: { key: string; value: ShoppingList; indexes: Record<never, never> };
   list_items: { key: string; value: ListItem; indexes: { list_id: string } };
+  recipes: { key: string; value: Recipe; indexes: Record<never, never> };
+  recipe_ingredients: {
+    key: string;
+    value: RecipeIngredient;
+    indexes: { recipe_id: string; item_id: string };
+  };
+  meal_plan_entries: {
+    key: string;
+    value: MealPlanEntry;
+    indexes: { recipe_id: string };
+  };
+  nutrition_cache: {
+    key: string;
+    value: NutritionCacheEntry;
+    indexes: Record<never, never>;
+  };
 }

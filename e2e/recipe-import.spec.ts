@@ -62,7 +62,7 @@ test.describe('Recipe Import', () => {
     // item. The quantity stays at the default ×1.
     await page.getByRole('button', { name: 'Quantity for Eggs (large)' }).click();
     await page.getByLabel('Unit').fill('dozen');
-    await page.getByRole('button', { name: /save/i }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
 
     // Default target is "New list"; commit all three.
     const commit = page.getByRole('button', { name: /add 3 items/i });
