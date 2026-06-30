@@ -8,4 +8,10 @@ interface ImportMetaEnv {
    * Cloudflare Pages project. Not a real secret — it ships in the client bundle.
    */
   readonly VITE_IMPORT_TOKEN?: string;
+  /**
+   * Shared nutrition token sent as `X-Shoop-Nutrition` to `/api/nutrition`
+   * (ADR-0027). Must match the `NUTRITION_TOKEN` bound to the Cloudflare Pages
+   * project. Not a real secret — it ships in the client bundle.
+   */
+  readonly VITE_NUTRITION_TOKEN?: string;
 }

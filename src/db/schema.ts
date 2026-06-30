@@ -143,14 +143,57 @@ export interface MealPlanEntry {
 }
 
 /**
- * A cached USDA FoodData Central nutrition payload (ADR-0026/0027). The store is
- * CREATED by the v9 migration but UNUSED until Phase 4 — nothing is written to it
- * this phase. Keyed by the external FDC food id. Typed here so the created store
- * stays fully typed.
+ * A single household-measure portion from FDC `foodPortions` (e.g. "1 cup" weighs
+ * 160 g). Used by `toGrams` for the count/container conversion path (Phase 4).
+ */
+export interface FdcPortion {
+  unit: string;
+  gramWeight: number;
+  amount: number;
+}
+
+/**
+ * The per-100 g nutrient panel Shoop caches for a matched FDC food (Eat tab,
+ * Phase 4 — ADR-0026/0027). This is the client's copy of the shape produced by
+ * the pure `functions/_lib/parseFdcFood.ts` parser; the two module trees can't
+ * share an import (functions build with no `@` alias), so this interface MUST be
+ * kept in lock-step with that one.
+ *
+ * The `per100g` keys are deliberately the SAME identifiers the `nutritionTargets`
+ * micro panel uses (`fiber`, `sodium`, `calcium`, …) so the Phase 5
+ * rollup-vs-target join is a key match, not a mapping table.
+ */
+export interface FdcNutrientPanel {
+  fdc_id: string;
+  description: string; // FDC food description (shown in the manual picker)
+  per100g: {
+    energyKcal: number;
+    protein: number; // g
+    fat: number; // g
+    carbs: number; // g
+    fiber: number; // g
+    sodium: number; // mg
+    calcium: number; // mg
+    iron: number; // mg
+    potassium: number; // mg
+    vitaminC: number; // mg
+    vitaminD: number; // mcg
+  };
+  foodPortions?: FdcPortion[];
+}
+
+/**
+ * A cached USDA FoodData Central nutrition payload (ADR-0026/0027). Keyed by the
+ * external FDC food id, so the same food fetched for two recipes caches once; the
+ * `query` (an ingredient's `canonical_name`) that first resolved here is kept so a
+ * later ingredient with the same query reuses the food offline. Written by Phase 4
+ * enrichment (`useNutrition`); the v9 store shape is unchanged — only `payload`'s
+ * type is pinned down from `unknown` to {@link FdcNutrientPanel} (a type-level
+ * refinement, NOT a migration: `DB_VERSION` stays 9).
  */
 export interface NutritionCacheEntry {
   fdc_id: string; // PK, external (USDA FDC food id)
-  payload: unknown; // per-100g nutrient panel + foodPortions (Phase 4 types it)
+  payload: FdcNutrientPanel; // per-100g nutrient panel + foodPortions
   query: string; // normalized ingredient query that resolved here
   fetched_at: number; // epoch ms, future staleness policy
 }
