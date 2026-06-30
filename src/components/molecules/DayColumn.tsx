@@ -64,8 +64,8 @@ export default function DayColumn({
             const needsEnrichment = enrichment !== undefined && enrichment.status !== 'enriched';
             return (
               <li key={entry.id} className="flex flex-col gap-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-text text-sm font-medium truncate min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-text text-sm font-medium min-w-0 wrap-break-word">
                     {recipe.title}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
