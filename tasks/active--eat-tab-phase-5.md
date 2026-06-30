@@ -16,8 +16,11 @@ clarifications: |
   - SCORING UNIT: score each day's planned recipes against the Phase 2 DAILY
     targets, plus a weekly summary computed as average-per-day (week total ÷ 7)
     vs the same daily targets ("a typical day this week").
-  - VISUALIZATION: horizontal % -of-target bars (energy + macros + micros) with
-    under/on/over coloring via role tokens, honoring reduced-motion. Not rings.
+  - VISUALIZATION: % -of-target rings (energy + macros + micros) with
+    under/on/over coloring via role tokens, honoring reduced-motion. Each ring
+    pairs with a text value/target + percent label (and aria-label) so the score
+    is legible without relying on the radial fill alone. (User chose rings over
+    bars, 2026-06-30.)
   - SHOPPING-LIST NUTRITION LENS: OUT OF SCOPE for v1 (the backlog's optional
     secondary lens). Deferred — revisit only if cheap on a later pass.
   - NO DB_VERSION BUMP: `meal_plan_entries` already exists (created empty by the
@@ -42,7 +45,7 @@ clarifications: |
   (`hooks/useMealPlan.ts`) with keys/caching defined there only. Ephemeral plan
   UI state (which day's "add recipe" sheet is open, day-vs-week view toggle,
   expanded day) is NOT persisted — component state or a tiny `useUIStore` slice.
-- **ADR-0005** (atomic design) — the score bar is an atom/molecule reading pure
+- **ADR-0005** (atomic design) — the score ring is an atom/molecule reading pure
   props; the per-day column is a molecule; the weekly plan is an organism owning
   the hooks. Reuse existing atoms (`Button`, `Badge`, `Spinner`) and the
   `BottomSheet`/`SelectionList`/`QuantitySheet` molecules for the add-recipe and
@@ -50,7 +53,10 @@ clarifications: |
 - **ADR-0028** (section-scoped green theme) — every Phase 5 surface renders under
   `/eat`, inheriting the green sub-theme. Role tokens only; no hardcoded hexes.
   The scoring visualization MUST honor reduced-motion (`motion-safe:`), the
-  constraint ADR-0028 flagged for "the Phase 5 scoring visualization."
+  constraint ADR-0028 flagged for "the Phase 5 scoring visualization." Rings need
+  it especially: the radial fill must not animate under
+  `prefers-reduced-motion`, and color alone must not carry the under/on/over
+  meaning (pair every ring with a text percent + value/target and an aria-label).
 - **ADR-0001/0002** (single-repo / IndexedDB offline-first) — the plan and its
   scoring compute ENTIRELY from already-persisted data (`meal_plan_entries` +
   `recipes`/`recipe_ingredients`/`nutrition_cache`), so building and viewing a
@@ -67,7 +73,7 @@ Turn enriched recipes into a planned week and score it. The user assigns saved
 recipes (with planned servings) to the seven days of a fixed Mon–Sun grid; each
 day's planned nutrition is summed from the Phase 4 per-serving rollups and scored
 against the Phase 2 daily targets, with a weekly average-per-day summary. The
-scoring is shown as green-themed % -of-target bars (energy + the three macros +
+scoring is shown as green-themed % -of-target rings (energy + the three macros +
 the curated micro panel) with over/under indication. Everything reads from
 persisted data, so the scored week works offline; recipes not yet enriched show a
 partial score and an enrich affordance. The `meal_plan_entries` store is wired
@@ -125,12 +131,17 @@ for the first time. No new schema, no new network surface.
   `NutrientScore[]` + the weekly summary + per-recipe enrichment status
   (enriched / partial / unenriched, from `enrichedCount`/`totalCount`). Offline by
   construction. Keys/caching here only (ADR-0004).
-- **Score bar (atom/molecule):** `src/components/molecules/NutrientBar.tsx` —
-  presentational single bar: label, `value / target` text, a % -of-target fill,
-  under/on/over color via role tokens, `motion-safe:` transition only. Pure props.
+- **Score ring (atom/molecule):** `src/components/molecules/NutrientRing.tsx` —
+  presentational single radial gauge: an SVG ring whose arc length encodes
+  % -of-target (clamped for display; the true percent shown as text), plus label,
+  `value / target` text, the percent, under/on/over color via role tokens, and an
+  `aria-label` ("Protein: 82 of 120 g, 68% of target"). The arc-fill transition is
+  `motion-safe:` only (no animation under `prefers-reduced-motion`). Color never
+  the sole signal — the text percent + status carry the meaning too. Pure props.
 - **Score panel (molecule):** `src/components/molecules/ScorePanel.tsx` — lays out
-  `NutrientBar`s for energy + macros + micros (mirrors `DailyTargets`). Used for
-  both a day and the weekly summary. Pure props; rounding at the display edge.
+  `NutrientRing`s for energy + macros + micros in a responsive grid (mirrors
+  `DailyTargets`' sectioning). Used for both a day and the weekly summary. Pure
+  props; rounding at the display edge.
 - **Day column (molecule):** `src/components/molecules/DayColumn.tsx` — one day of
   the grid: the day label, its planned recipes (title + servings stepper + remove),
   an "add recipe" affordance, and a compact day score (or a "no recipes" empty
@@ -153,12 +164,13 @@ for the first time. No new schema, no new network surface.
 - **Tests:** unit for `mealPlanScore` (flatten, per-nutrient pct/status incl.
   over/under and the `on` band, weekly avg, empty/partial), `useMealPlan`
   (fake-indexeddb CRUD + cascade-on-recipe-delete), `useMealPlanNutrition` (multi-
-  recipe join, unenriched → partial, orphan entry skipped), `NutrientBar`/
-  `ScorePanel`/`DayColumn`/`WeeklyPlan` component tests, and an extended
-  `EatRoute` test. `npm run validate` clean.
+  recipe join, unenriched → partial, orphan entry skipped),
+  `NutrientRing` (arc geometry for 0%/partial/100%/over; reduced-motion class
+  present; aria-label text), `ScorePanel`/`DayColumn`/`WeeklyPlan` component tests,
+  and an extended `EatRoute` test. `npm run validate` clean.
 - **E2E:** `e2e/eat-weekly-plan.spec.ts` — save + enrich a recipe (mock
   `/api/nutrition`, as the Phase 4 E2E does) → add it to a day with planned
-  servings → day score bars appear → weekly summary reflects it; change servings /
+  servings → day score rings appear → weekly summary reflects it; change servings /
   remove → score updates; reload with network off → plan + score persist. Reuse
   the existing IDB-reset/import helpers. `npm run test:e2e` green (`e2e_required`).
 - **Commit:** Conventional Commits — `feat: add Eat weekly meal plan with target
@@ -229,10 +241,12 @@ weekly-plan model & scoring) is drafted at Step 11:
   unenriched-recipe → partial score, orphan entry skipped, no-profile → no targets.
 
 ### Part 4 — UI molecules
-- [ ] `src/components/molecules/NutrientBar.tsx` (+ test) — pure % -of-target bar,
-  role tokens, `motion-safe:` only.
+- [ ] `src/components/molecules/NutrientRing.tsx` (+ test) — pure SVG % -of-target
+  radial gauge: arc encodes percent, with a text value/target + percent label and
+  an `aria-label`; under/on/over via role tokens; arc-fill transition `motion-safe:`
+  only (color is never the sole signal).
 - [ ] `src/components/molecules/ScorePanel.tsx` (+ test) — energy + macros + micros
-  bars; reused for day and week.
+  rings in a responsive grid; reused for day and week.
 - [ ] `src/components/molecules/DayColumn.tsx` (+ test) — a day's recipes, servings
   stepper, remove, add affordance, compact score / empty state. Callbacks up.
 - [ ] `src/components/molecules/AddToPlanSheet.tsx` (+ test) — BottomSheet +
@@ -242,7 +256,7 @@ weekly-plan model & scoring) is drafted at Step 11:
 - [ ] `src/components/organisms/WeeklyPlan.tsx` (+ test) — owns the hooks, the
   7-day grid, day-vs-week view, mutations, and the empty-plan / no-profile /
   unenriched states. Scoring renders only once the plan has ≥1 entry; an empty plan
-  shows an "add a recipe to a day" empty state, NOT all-zero "under" bars.
+  shows an "add a recipe to a day" empty state, NOT all-zero "under" rings.
 - [ ] `src/routes/EatRoute.tsx` (edit) — swap the Weekly Plan `ComingSoonSection`
   for `<WeeklyPlan />`; leave Profile + RecipeLibrary intact.
 - [ ] `src/routes/__tests__/EatRoute.test.tsx` (extend) — weekly-plan section
@@ -250,7 +264,7 @@ weekly-plan model & scoring) is drafted at Step 11:
 
 ### Part 6 — E2E
 - [ ] `e2e/eat-weekly-plan.spec.ts` — mock `/api/nutrition`; save+enrich → add to a
-  day with servings → day bars + weekly summary; edit servings / remove → updates;
+  day with servings → day rings + weekly summary; edit servings / remove → updates;
   reload offline → persists. Reuse existing IDB-reset/import helpers.
 
 ### Part 7 — Validate, offline, docs, ship
@@ -296,8 +310,11 @@ weekly-plan model & scoring) is drafted at Step 11:
 - **No-profile state.** Scoring needs targets; with no profile the plan still
   builds but shows "set up your profile to score" (reuse the EatRoute CTA), not a
   crash or an all-zero score implying a met target.
-- **Reduced-motion.** The bar fills must be `motion-safe:` (ADR-0028 called this
-  out for the scoring viz).
+- **Reduced-motion + color-only meaning (rings).** The ring arc-fill must be
+  `motion-safe:` (ADR-0028 called this out for the scoring viz), and the
+  under/on/over status must NOT be conveyed by ring color alone — pair every ring
+  with a text percent + value/target and an `aria-label`. Rings are harder than
+  bars to keep accessible; this is the load-bearing a11y check for the phase.
 - **Weekly-average semantics.** Week total ÷ 7 means light days dilute heavy ones;
   document this is "typical day," not "did every day hit target." A reviewer should
   confirm the chosen semantics read correctly in the UI copy.
@@ -307,7 +324,7 @@ weekly-plan model & scoring) is drafted at Step 11:
 - **Week model** — fixed Mon–Sun grid (assumed) vs rolling 7 days vs dated weeks?
 - **Day composition** — flat recipe list (assumed) vs breakfast/lunch/dinner slots?
 - **Scoring unit** — per-day + weekly avg (assumed) vs week-total-only vs per-day-only?
-- **Visualization** — % -of-target bars (assumed) vs rings?
+- **Visualization** — % -of-target **rings** (chosen by the user, 2026-06-30).
 - **Shopping-list lens** — deferred (assumed) vs include now?
 - **No migration** — confirm `DB_VERSION` stays 9 (writing the pre-created store).
 
@@ -319,5 +336,12 @@ so detail-score and plan-score can't drift; (2) a `DAYS` constant as the single
 source of truth for grid order + the `day` contract; (3) an explicit empty-plan
 state so an unplanned week never reads as a failed target; (4) the recipe-delete
 cascade also invalidates the meal-plan nutrition query; (5) ADR number reserved as
-0029 (0025 is a gap). Ready to implement, pending user confirmation of the five
-assumed scope decisions.
+0029 (0025 is a gap). Ready to implement, pending user confirmation of the
+remaining assumed scope decisions.
+
+**Update (2026-06-30)**: Visualization changed from % -of-target **bars** to
+**rings** at the user's request. `NutrientBar` → `NutrientRing` (SVG radial gauge),
+with an explicit a11y guard added throughout (text percent + value/target +
+`aria-label`, `motion-safe:` arc-fill, color never the sole status signal) since
+rings are harder than bars to keep accessible. Week-model, day-composition,
+scoring-unit, and shopping-list-lens assumptions are unchanged.
