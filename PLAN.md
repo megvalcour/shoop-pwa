@@ -5,12 +5,15 @@
   green sub-theme (ADR-0028), and a static "coming soon" landing. No schema/DB
   change. Plan in `tasks/complete--eat-tab-phase-1.md`. Phase 0 (decision
   spikes & ADRs 0026/0027/0028) complete: `tasks/complete--eat-tab-phase-0.md`.
-- **Eat Tab — Phase 2 (active, planning):** profile capture + locally-computed
-  nutrition targets. Schema-free (profile persists as a JSON value in the
-  existing `preferences` store — no `DB_VERSION` bump; ADR-0026's stores stay
-  reserved for Phase 3/4); curated micronutrient panel; imperial-default units
-  with a metric toggle; pure `nutritionTargets` service (Mifflin–St Jeor → TDEE
-  → macros + DRI micros). Full plan in `tasks/active--eat-tab-phase-2.md`.
+- **Eat Tab — Phase 2 (complete):** profile capture + locally-computed nutrition
+  targets shipped. Schema-free — the profile persists as a JSON value in the
+  existing `preferences` store under `eat_profile` (no `DB_VERSION` bump;
+  ADR-0026's stores stay reserved for Phase 3/4). Curated micronutrient panel
+  (fiber/sodium/calcium/iron/potassium/vit C/vit D), imperial-default units with
+  a metric toggle (metric-canonical storage), and a pure `nutritionTargets`
+  service (Mifflin–St Jeor → TDEE → macros + DRI micros). `EatRoute` now shows an
+  empty-state CTA or a summary + computed targets. Plan in
+  `tasks/complete--eat-tab-phase-2.md`.
 - **Next:** Eat Tab Phase 3 (persisted recipes) from `tasks/backlog--eat-tab.md`
   — promote to `active--` and plan (with ADR review; this is where DB_VERSION
   bumps to 9 per ADR-0026) before implementation.

@@ -15,6 +15,13 @@ import generalRaw from '@/assets/aisles/general.json';
 /** preferences key holding the id of the currently-active store. */
 export const ACTIVE_STORE_ID_KEY = 'active_store_id';
 
+/**
+ * preferences key holding the single user's Eat profile, JSON-serialized
+ * (Eat tab Phase 2). Stored in `preferences` rather than a dedicated store so
+ * the phase stays schema-free — see `EatProfile` in schema.ts.
+ */
+export const EAT_PROFILE_KEY = 'eat_profile';
+
 // Raw seed shapes. The oxford-62 asset predates ADR-0015 and still carries the
 // per-store fields on each item; we normalize those into `items` +
 // `item_locations` below. The big-y asset is already in the post-0015 shape.
