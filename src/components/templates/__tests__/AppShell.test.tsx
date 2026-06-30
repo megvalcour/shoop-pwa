@@ -29,6 +29,7 @@ function renderWithRouter(initialPath = '/') {
           { index: true, element: <div>Shop content</div> },
           { path: 'lists/:id', element: <div>List detail</div> },
           { path: 'stores/:id', element: <div>Store detail</div> },
+          { path: 'eat', element: <div>Eat content</div> },
           { path: 'settings', element: <SettingsRoute /> },
         ],
       },
@@ -42,10 +43,17 @@ function renderWithRouter(initialPath = '/') {
   );
 }
 
+// The shell root is the outermost div carrying the h-svh layout (and the
+// data-theme attribute under /eat). Grab it via a known descendant.
+function shellRoot() {
+  return document.querySelector('div.flex.flex-col.h-svh');
+}
+
 describe('AppShell', () => {
-  it('renders exactly 2 nav links: Shop and Settings', () => {
+  it('renders exactly 3 nav links: Shop, Eat, and Settings', () => {
     renderWithRouter('/');
     expect(screen.getByText('Shop')).toBeInTheDocument();
+    expect(screen.getByText('Eat')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.queryByText('Default List')).not.toBeInTheDocument();
   });
@@ -53,7 +61,30 @@ describe('AppShell', () => {
   it('Shop link is active on /', () => {
     renderWithRouter('/');
     expect(screen.getByRole('link', { name: /Shop/ })).toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Eat/ })).not.toHaveClass('text-accent');
     expect(screen.getByRole('link', { name: /Settings/ })).not.toHaveClass('text-accent');
+  });
+
+  it('Eat link is active on /eat; Shop and Settings are not', () => {
+    renderWithRouter('/eat');
+    expect(screen.getByRole('link', { name: /Eat/ })).toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Settings/ })).not.toHaveClass('text-accent');
+  });
+
+  it('applies data-theme="eat" on the shell root only under /eat', () => {
+    renderWithRouter('/eat');
+    expect(shellRoot()).toHaveAttribute('data-theme', 'eat');
+  });
+
+  it('does not set data-theme on /', () => {
+    renderWithRouter('/');
+    expect(shellRoot()).not.toHaveAttribute('data-theme');
+  });
+
+  it('does not set data-theme on /settings', () => {
+    renderWithRouter('/settings');
+    expect(shellRoot()).not.toHaveAttribute('data-theme');
   });
 
   it('Settings link becomes active after navigating to /settings', async () => {

@@ -1,7 +1,13 @@
 ## Current Status
 
-- **Eat Tab — Phase 0 (active):** decision spikes & ADRs to de-risk the Eat
-  epic before building. Full plan in `tasks/active--eat-tab-phase-0.md`.
+- **Eat Tab — Phase 1 (complete):** shell + section-scoped green theme + empty
+  landing shipped. Third primary **Eat** tab, `/eat` route, `data-theme="eat"`
+  green sub-theme (ADR-0028), and a static "coming soon" landing. No schema/DB
+  change. Plan in `tasks/complete--eat-tab-phase-1.md`. Phase 0 (decision
+  spikes & ADRs 0026/0027/0028) complete: `tasks/complete--eat-tab-phase-0.md`.
+- **Next:** promote Eat Tab Phase 2 (profile capture + locally-computed
+  targets) from `tasks/backlog--eat-tab.md` to `active--` and plan it before
+  implementation.
 
 ## Backlog
 

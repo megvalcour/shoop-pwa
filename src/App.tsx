@@ -5,6 +5,7 @@ import ShopRoute from '@/routes/ShopRoute';
 import ShoppingListDetailRoute from '@/routes/ShoppingListDetailRoute';
 import DefaultListRoute from '@/routes/DefaultListRoute';
 import SettingsRoute from '@/routes/SettingsRoute';
+import EatRoute from '@/routes/EatRoute';
 import StoreDetailRoute from '@/routes/StoreDetailRoute';
 import AddStoreRoute from '@/routes/AddStoreRoute';
 import ImportRecipeRoute from '@/routes/ImportRecipeRoute';
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
       { path: 'stores/new', element: <AddStoreRoute /> },
       { path: 'stores/:id', element: <StoreDetailRoute /> },
       { path: 'import', element: <ImportRecipeRoute /> },
+      { path: 'eat', element: <EatRoute /> },
       { path: 'settings', element: <SettingsRoute /> },
     ],
   },
