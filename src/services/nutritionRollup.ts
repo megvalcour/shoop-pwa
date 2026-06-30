@@ -30,7 +30,7 @@ export interface NutrientTotals {
 }
 
 /** The nutrient keys summed, in the panel's per-100 g shape. */
-const NUTRIENT_KEYS: ReadonlyArray<keyof NutrientTotals> = [
+export const NUTRIENT_KEYS: ReadonlyArray<keyof NutrientTotals> = [
   'energyKcal',
   'protein',
   'fat',
@@ -61,7 +61,7 @@ export interface NutritionRollup {
   unresolved: string[];
 }
 
-function emptyTotals(): NutrientTotals {
+export function emptyTotals(): NutrientTotals {
   return {
     energyKcal: 0,
     protein: 0,

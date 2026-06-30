@@ -13,6 +13,12 @@ vi.mock('@/hooks/useRecipes', () => ({
   useRecipes: vi.fn(),
 }));
 
+// WeeklyPlan owns its own hooks (plan + scoring) and has dedicated coverage; stub
+// it here so the route test stays focused on EatRoute's composition.
+vi.mock('@/components/organisms/WeeklyPlan', () => ({
+  default: () => <section><h2>Weekly Plan</h2></section>,
+}));
+
 async function renderRoute(
   state: Partial<{ data: EatProfile | null; isLoading: boolean; recipes: RecipeSummary[] }>,
 ) {
@@ -57,14 +63,14 @@ describe('EatRoute', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the intro heading, the Recipes section, and the Weekly Plan stub', async () => {
+  it('renders the intro heading and the Profile, Recipes, and Weekly Plan sections', async () => {
     await renderRoute({ data: null });
     expect(screen.getByRole('heading', { name: /plan your week/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Profile$/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Recipes$/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Weekly Plan$/ })).toBeInTheDocument();
-    // Only Weekly Plan (Phase 5) remains "coming soon"; Recipes is live now.
-    expect(screen.getAllByText(/coming soon/i)).toHaveLength(1);
+    // Every Eat section is live now (Phase 5) — nothing is "coming soon".
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });
 
   it('shows the Recipes empty state when no recipes exist', async () => {

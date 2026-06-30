@@ -17,11 +17,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { dbPromise } from '@/db/idbClient';
 import type { FdcNutrientPanel, RecipeIngredient } from '@/db/schema';
 import { toGrams } from '@/utils/toGrams';
+import { computeNutritionRollup, type NutritionRollup } from '@/services/nutritionRollup';
 import {
-  computeNutritionRollup,
-  type NutritionRollup,
-  type RollupIngredient,
-} from '@/services/nutritionRollup';
+  displayName,
+  readRecipeRollupSource,
+  toRollupIngredients,
+} from '@/db/recipeNutritionRead';
 import { rerankCandidates } from '@/services/fdcMatcher';
 import { selectBestCandidate } from '@/services/fdcRerank';
 
@@ -137,11 +138,6 @@ async function detailFdc(fdcId: string): Promise<FdcNutrientPanel> {
   return (await response.json()) as FdcNutrientPanel;
 }
 
-/** Capitalize a stored (lower-cased) canonical name for display in lists. */
-function displayName(canonical: string): string {
-  return canonical.replace(/[a-z]/i, (ch) => ch.toUpperCase());
-}
-
 /**
  * Persist a matched food: cache its panel (keyed by fdc_id, with the resolving
  * query) and write `fdc_id` + the computed `grams` back onto the ingredient — both
@@ -201,45 +197,24 @@ export function useRecipeNutrition(recipeId: string | undefined) {
     enabled: recipeId !== undefined,
     queryFn: async (): Promise<RecipeNutritionData | null> => {
       const db = await dbPromise;
-      const recipe = await db.get('recipes', recipeId!);
-      if (!recipe) return null;
-      const ingredients = await db.getAllFromIndex('recipe_ingredients', 'recipe_id', recipeId!);
+      // Shared join (db/recipeNutritionRead) so a recipe's detail score and its
+      // weekly-plan score (Phase 5) are built from the exact same code path.
+      const source = await readRecipeRollupSource(db, recipeId!);
+      if (!source) return null;
 
-      // Join each matched ingredient to its cached panel.
-      const panels = new Map<string, FdcNutrientPanel>();
-      for (const ingredient of ingredients) {
-        if (ingredient.fdc_id && !panels.has(ingredient.fdc_id)) {
-          const entry = await db.get('nutrition_cache', ingredient.fdc_id);
-          if (entry) panels.set(ingredient.fdc_id, entry.payload);
-        }
-      }
-
-      const rows: IngredientNutrition[] = ingredients.map((ingredient) => {
-        const panel = ingredient.fdc_id ? panels.get(ingredient.fdc_id) : undefined;
+      const rows: IngredientNutrition[] = source.ingredients.map(({ ingredient, name, panel }) => {
         const status: IngredientStatus = !panel
           ? 'unmatched'
           : ingredient.grams === undefined
             ? 'matched-no-grams'
             : 'enriched';
-        return {
-          ingredient,
-          name: displayName(ingredient.canonical_name),
-          panel,
-          matchedDescription: panel?.description,
-          status,
-        };
+        return { ingredient, name, panel, matchedDescription: panel?.description, status };
       });
 
-      const rollupInput: RollupIngredient[] = rows.map((row) => ({
-        name: row.name,
-        grams: row.ingredient.grams,
-        panel: row.panel,
-      }));
-
       return {
-        servings: recipe.servings,
+        servings: source.servings,
         rows,
-        rollup: computeNutritionRollup(rollupInput, recipe.servings),
+        rollup: computeNutritionRollup(toRollupIngredients(source.ingredients), source.servings),
       };
     },
   });

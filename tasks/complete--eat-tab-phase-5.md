@@ -1,7 +1,7 @@
 ---
 step: 5
 substep: 3
-status: plan_review
+status: complete
 class: standard
 e2e_required: true
 clarifications: |

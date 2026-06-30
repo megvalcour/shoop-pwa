@@ -47,19 +47,34 @@
   model load) — correctness rides on the top-hit + manual-pick fallback, so the
   absent live Spike-1 numbers (egress was blocked in Phase 0) don't gate the phase.
   Plan in `tasks/complete--eat-tab-phase-4.md`.
+- **Eat Tab — Phase 5 (complete):** weekly plan & scoring shipped. Wires the last
+  unused Eat store (`meal_plan_entries`) to place saved recipes — with planned
+  servings — on a fixed Mon–Sun day-of-week grid (`mealPlanDays.ts` is the single
+  source of truth for grid order + the `day` contract), then scores each day's
+  planned nutrition against the Phase 2 daily targets (plus a weekly average-per-day
+  "typical day" summary) using the Phase 4 per-serving rollups. A pure
+  `mealPlanScore` service (`flattenTargets` / `sumDayTotals` / `scoreTotals` with a
+  90–110% on-band + per-nutrient direction / `weeklyAveragePerDay`); a
+  `useMealPlan` CRUD layer + a single `useMealPlanNutrition` join query (no
+  per-recipe hook); a shared `db/recipeNutritionRead` join so detail-score and
+  plan-score can't drift; the recipe-delete cascade extended to `meal_plan_entries`.
+  Visualized as green-themed % -of-target rings (`NutrientRing` → `ScorePanel`,
+  `motion-safe:` arc-fill, text percent + value/target + `aria-label`, color never
+  the sole signal). Everything computes from persisted data, so a scored week works
+  offline; unenriched planned recipes degrade to a partial score with an "enrich to
+  score" link. **No `DB_VERSION` bump** (the v9 store already exists), no new network
+  surface, no `package.json`/`.env` change. Confirmed decisions captured in
+  **ADR-0029** (Eat weekly-plan model & scoring): day-of-week grid, flat
+  recipe-per-day (no meal slots), per-day-vs-daily-target scoring + weekly avg, rings,
+  shopping-list lens deferred. Plan in `tasks/complete--eat-tab-phase-5.md`.
+
 ## Active
 
-- **Eat Tab — Phase 5 (weekly plan & scoring) — PLANNED, not yet implemented:**
-  full implementation plan in `tasks/active--eat-tab-phase-5.md`. Wires the one
-  still-unused store (`meal_plan_entries`) to assign saved recipes — with planned
-  servings — to a fixed Mon–Sun grid, then scores each day's planned nutrition
-  against the Phase 2 daily targets (plus a weekly avg-per-day summary) using the
-  Phase 4 per-serving rollups, visualized as green-themed % -of-target rings. No
-  `DB_VERSION` bump (the v9 store already exists), no new network surface. Key
-  decisions: rings chosen by the user; still-assumed-pending-confirmation are
-  day-of-week grid, flat recipe-per-day (no meal slots), per-day-vs-daily-target
-  scoring, and shopping-list lens deferred. ADR-0029 (weekly-plan model & scoring)
-  to be drafted at wrap-up.
+- **Eat Tab — Phase 6 (offline/polish/a11y/E2E hardening) — NEXT, not yet planned:**
+  promote from the backlog outline and fully plan (with ADR review) before
+  implementation. Targets the Phase 0/5 carry-forwards: the Phase 6 accessibility
+  pass on the green ramp + scoring rings (ADR-0028), offline/PWA polish, and E2E
+  hardening.
 
 ## Backlog
 
