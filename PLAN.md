@@ -14,9 +14,19 @@
   service (Mifflin–St Jeor → TDEE → macros + DRI micros). `EatRoute` now shows an
   empty-state CTA or a summary + computed targets. Plan in
   `tasks/complete--eat-tab-phase-2.md`.
-- **Next:** Eat Tab Phase 3 (persisted recipes) from `tasks/backlog--eat-tab.md`
-  — promote to `active--` and plan (with ADR review; this is where DB_VERSION
-  bumps to 9 per ADR-0026) before implementation.
+- **Eat Tab — Phase 3 (planned, active):** persisted recipes. Promoted from the
+  backlog and planned in full in `tasks/active--eat-tab-phase-3.md` (ADR review
+  complete). This is the first Eat phase that bumps the schema: `DB_VERSION`
+  8 → 9 creating ADR-0026's four stores (`recipes`, `recipe_ingredients`,
+  `meal_plan_entries`, `nutrition_cache`), with only `recipes` +
+  `recipe_ingredients` wired into hooks/UI this phase. Adds a "Save as recipe"
+  import destination, a recipe-scoped quantity/unit parser (leaves ADR-0021's
+  `normalizeIngredient` untouched), and a recipe library/detail/manual-entry
+  surface inside Eat. Open questions to confirm with the user before coding are
+  listed at the bottom of the plan file. Not yet implemented.
+- **Next:** implement Phase 3 against the active plan (after confirming its open
+  questions), then Eat Tab Phase 4 (nutrition enrichment pipeline; ADR-0027,
+  `/api/nutrition`).
 
 ## Backlog
 
