@@ -87,7 +87,50 @@ plan's daily request quota.
 > (the free plan hard-stops at quota with no overage billing). See ADR-0019 for
 > the full threat model.
 
-### 5. Coverage badge — Gist setup
+### 5. Nutrition enrichment — Pages Function setup (ADR-0027)
+
+Eat's nutrition enrichment calls a second Cloudflare Pages Function at
+`/api/nutrition` (source: `functions/api/nutrition.ts`), proxying USDA
+FoodData Central (FDC). Like recipe import (step 4), Pages picks up the
+function automatically with no extra build config. Three manual steps turn the
+feature on; like the import token these are environment config rather than
+source secrets, so they live here rather than in the repo.
+
+**a) Bind the shared nutrition token.** The function rejects calls whose
+`X-Shoop-Nutrition` header doesn't match the `NUTRITION_TOKEN` env var, and the
+client sends that header from the build-time `VITE_NUTRITION_TOKEN`. Both must
+hold the same value — this mirrors `IMPORT_TOKEN`/`VITE_IMPORT_TOKEN` exactly.
+
+1. In the Cloudflare Pages project (**Workers & Pages → shoop-pwa → Settings →
+   Variables and Secrets**), add `NUTRITION_TOKEN` for **both** Production and
+   Preview environments. Use a long random string (e.g. `openssl rand -hex 24`).
+   This is the **runtime** (server-side) value the function reads.
+2. Set the same value as a **GitHub Actions secret** named `VITE_NUTRITION_TOKEN`
+   (**repo → Settings → Secrets and variables → Actions**). As with
+   `VITE_IMPORT_TOKEN`, Vite inlines this at **build time** and the build runs in
+   GitHub Actions (Direct Upload), so a value set only in the Cloudflare build
+   environment is a no-op and produces an empty client token. (Locally, copy
+   `.env.example` to `.env.local` and set `VITE_NUTRITION_TOKEN` there — never
+   commit it.) The token is baked into the bundle at build time, so a value
+   change only takes effect on the **next deploy**.
+
+**b) Bind the real FDC API key.** Unlike the shared token, `FDC_API_KEY` is a
+genuine secret — it is read server-side only and never sent to the client.
+
+1. Get a free key from [api.data.gov](https://api.data.gov/signup/) (used by
+   USDA FDC).
+2. In the Cloudflare Pages project (**Settings → Variables and Secrets**), add
+   `FDC_API_KEY` for **both** Production and Preview, marked **Encrypt**.
+
+Both the token and key check return `401`: `not_configured` if either
+server-side var is unbound, `unauthorized` if the tokens are bound but differ
+(including an empty client token from a build that never received
+`VITE_NUTRITION_TOKEN`).
+
+**c) (Deferred once on custom domain) Add a per-IP rate-limit rule.** Same
+process as step 4(b), matched to the `/api/nutrition` path instead.
+
+### 6. Coverage badge — Gist setup
 
 The README test-coverage badge is rendered by shields.io from a **public Gist**
 that the CI `coverage` job rewrites on every push to `main`. The Gist is the
@@ -126,12 +169,12 @@ validate → e2e-tests → release → build-and-deploy
 coverage  (parallel, non-gating)
 ```
 
-| Job                | What it does                                                                                       |
-| ------------------ | -------------------------------------------------------------------------------------------------- |
-| `validate`         | Runs `npm run validate` (typecheck + lint + Vitest unit tests)                                     |
-| `e2e-tests`        | Runs the full Playwright suite against a local dev server; uploads HTML report as a build artifact |
-| `release`          | Runs semantic-release: tags the version, bumps `package.json`, generates release notes             |
-| `build-and-deploy` | Runs `npm run build`, then deploys `dist/` to Cloudflare Pages via Wrangler                        |
+| Job                | What it does                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `validate`         | Runs `npm run validate` (typecheck + lint + Vitest unit tests)                                               |
+| `e2e-tests`        | Runs the full Playwright suite against a local dev server; uploads HTML report as a build artifact           |
+| `release`          | Runs semantic-release: tags the version, bumps `package.json`, generates release notes                       |
+| `build-and-deploy` | Runs `npm run build`, then deploys `dist/` to Cloudflare Pages via Wrangler                                  |
 | `coverage`         | Runs `vitest --coverage` and pushes the line % to the badge Gist (see setup step 5); not in the deploy chain |
 
 A deploy only lands if **both** `validate` and `e2e-tests` pass. A failure in either gate blocks the version tag and leaves the current production deployment untouched.
@@ -178,12 +221,12 @@ for support.
 
 ### Commit type → version bump
 
-| Commit type               | semver bump | `DB_VERSION` changes?                              |
-| ------------------------- | ----------- | -------------------------------------------------- |
-| `fix:` / `fix(scope):`    | patch       | no                                                 |
-| `feat:` / `feat(scope):`  | minor       | only if a migration is also added in the same PR   |
-| `feat(db):`               | minor       | yes (canonical scope for schema migrations)        |
-| `BREAKING CHANGE:` footer | major       | no — `DB_VERSION` never resets on a product major  |
+| Commit type               | semver bump | `DB_VERSION` changes?                             |
+| ------------------------- | ----------- | ------------------------------------------------- |
+| `fix:` / `fix(scope):`    | patch       | no                                                |
+| `feat:` / `feat(scope):`  | minor       | only if a migration is also added in the same PR  |
+| `feat(db):`               | minor       | yes (canonical scope for schema migrations)       |
+| `BREAKING CHANGE:` footer | major       | no — `DB_VERSION` never resets on a product major |
 
 **Schema migrations:** any PR that increments `DB_VERSION` in `schema.ts` must
 include at least one `feat:` commit (use `feat(db):` as the canonical scope). The

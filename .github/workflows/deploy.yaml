@@ -140,13 +140,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # Vite inlines VITE_IMPORT_TOKEN at build time, and this GitHub Actions
-      # job — not Cloudflare — runs the build (Direct Upload, see docs/releases.md).
-      # The token must therefore be injected here from a repo Actions secret;
-      # a VITE_IMPORT_TOKEN set in the Cloudflare build env is a no-op.
+      # Vite inlines VITE_IMPORT_TOKEN/VITE_NUTRITION_TOKEN at build time, and this
+      # GitHub Actions job — not Cloudflare — runs the build (Direct Upload, see
+      # docs/releases.md). The tokens must therefore be injected here from repo
+      # Actions secrets; setting them in the Cloudflare build env is a no-op.
       - run: npm run build
         env:
           VITE_IMPORT_TOKEN: ${{ secrets.VITE_IMPORT_TOKEN }}
+          VITE_NUTRITION_TOKEN: ${{ secrets.VITE_NUTRITION_TOKEN }}
       - uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
