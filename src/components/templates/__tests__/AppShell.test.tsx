@@ -29,6 +29,7 @@ function renderWithRouter(initialPath = '/') {
           { index: true, element: <div>Shop content</div> },
           { path: 'lists/:id', element: <div>List detail</div> },
           { path: 'stores/:id', element: <div>Store detail</div> },
+          { path: 'eat', element: <div>Eat content</div> },
           { path: 'settings', element: <SettingsRoute /> },
         ],
       },
@@ -43,9 +44,10 @@ function renderWithRouter(initialPath = '/') {
 }
 
 describe('AppShell', () => {
-  it('renders exactly 2 nav links: Shop and Settings', () => {
+  it('renders exactly 3 nav links: Shop, Eat and Settings', () => {
     renderWithRouter('/');
     expect(screen.getByText('Shop')).toBeInTheDocument();
+    expect(screen.getByText('Eat')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.queryByText('Default List')).not.toBeInTheDocument();
   });
@@ -53,6 +55,16 @@ describe('AppShell', () => {
   it('Shop link is active on /', () => {
     renderWithRouter('/');
     expect(screen.getByRole('link', { name: /Shop/ })).toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Eat/ })).not.toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Settings/ })).not.toHaveClass('text-accent');
+  });
+
+  it('Eat link becomes active after navigating to /eat, and others are not', async () => {
+    const user = userEvent.setup();
+    renderWithRouter('/');
+    await user.click(screen.getByRole('link', { name: /Eat/ }));
+    expect(screen.getByRole('link', { name: /Eat/ })).toHaveClass('text-accent');
+    expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-accent');
     expect(screen.getByRole('link', { name: /Settings/ })).not.toHaveClass('text-accent');
   });
 
@@ -80,6 +92,18 @@ describe('AppShell', () => {
     renderWithRouter('/stores/some-uuid');
     expect(screen.getByRole('link', { name: /Settings/ })).toHaveClass('text-accent');
     expect(screen.getByRole('link', { name: /Shop/ })).not.toHaveClass('text-accent');
+  });
+
+  it('shell root carries data-theme="eat" on /eat', () => {
+    const { container } = renderWithRouter('/eat');
+    expect(container.firstChild).toHaveAttribute('data-theme', 'eat');
+  });
+
+  it('shell root has no data-theme attribute off /eat', () => {
+    const { container: home } = renderWithRouter('/');
+    expect(home.firstChild).not.toHaveAttribute('data-theme');
+    const { container: settings } = renderWithRouter('/settings');
+    expect(settings.firstChild).not.toHaveAttribute('data-theme');
   });
 
   it('StoreHeader renders Oxford store name after DB loads', async () => {

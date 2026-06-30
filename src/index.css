@@ -26,6 +26,40 @@
   --font-body: 'Nunito', system-ui, sans-serif;
 }
 
+/* Section-scoped green sub-theme for the "Eat" tab (ADR-0028). Activated by a
+   `data-theme="eat"` attribute on the AppShell root (set route-driven in
+   AppShell.tsx), this overrides only the hue-carrying tokens for descendants of
+   the shell root — the default blue @theme palette (ADR-0020) is untouched
+   everywhere else. The override wins by cascade proximity: `:root` (from
+   @theme) and `[data-theme='eat']` share specificity, but the attribute sits on
+   a descendant of :root, so the closer declaration applies under /eat.
+
+   Contrast (WCAG AA, verified at implementation per ADR-0028's deferred audit):
+     --color-text-muted on --color-surface ......... 5.85:1 (≥4.5 body text) ✓
+     --color-primary-foreground on --color-primary . 4.87:1 (≥4.5 chrome label) ✓
+     --color-accent on --color-primary (active nav)  3.33:1 — a decorative
+       "spark" matching the blue identity's 3.36:1 (#6FA8FF on #0B4DA2); the
+       active nav also has a bg-accent/15 tint backing the label. */
+[data-theme='eat'] {
+  --color-ink: #0b3d24; /* deepest green: display headings */
+  --color-primary: #1b7a43; /* green chrome: app bar, nav, FAB, key actions */
+  --color-primary-foreground: #eaf7ee; /* text/icons on green */
+  --color-accent: #7be0a4; /* the one bright spark: active nav, reads on green */
+  --color-tint: #d6f0e0; /* tonal surface tint: checked rows, filled nodes */
+  --color-surface: #eef7f1; /* page background (elevation 0) */
+  --color-card: #ffffff; /* resting card (elevation 1), kept for clarity */
+  --color-text: #0e1f16;
+  --color-text-muted: #4a6555; /* ≥4.5:1 on surface (WCAG AA) */
+  --color-border: #c2e6d0;
+  --color-background: #eef7f1;
+
+  /* Elevation re-tinted green to match elevation-as-accent (ADR-0020). */
+  --shadow-card: 0 1px 2px rgb(11 61 36 / 0.08);
+  --shadow-raised: 0 2px 8px rgb(11 61 36 / 0.12);
+  --shadow-float: 0 8px 24px rgb(11 61 36 / 0.18);
+  /* --color-destructive intentionally NOT re-tinted (error red is global). */
+}
+
 @font-face {
   font-family: 'Nunito';
   font-style: normal;
