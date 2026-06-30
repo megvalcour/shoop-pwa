@@ -4,6 +4,17 @@
 
 ## Backlog
 
+### "Eat" Tab (Meal Planning + Nutrition)
+
+- Add a third main tab — **Eat** — that turns persisted recipes into a weekly meal
+  plan scored against targets computed locally from the user's age/sex/weight/
+  height/activity. Nutrition data from USDA FoodData Central via a first-party
+  Cloudflare Function (extends ADR-0019) cached in IndexedDB; ingredient→food
+  matching reuses the in-browser embedding model; entering Eat applies a
+  section-scoped green sub-theme. Multi-phase outline in `tasks/backlog--eat-tab.md`;
+  each phase to be promoted to `active--` and fully planned (with ADR review)
+  before implementation.
+
 ### iOS App (Capacitor Shared-Pipeline Wrapper)
 
 - Wrap Shoop as an installable iOS app via a thin Capacitor shell over the same web
