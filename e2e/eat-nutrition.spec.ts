@@ -43,6 +43,9 @@ const PANELS: Record<string, Panel> = {
   '1': panel('1', 'Onions, raw', 40, [{ unit: 'cup', gramWeight: 160, amount: 1 }]),
   '2': panel('2', 'Onion rings', 400),
   '3': panel('3', 'Garlic, raw', 149, [{ unit: 'clove', gramWeight: 3, amount: 1 }]),
+  // Cilantro carries only a "cup" portion, so a "bunch" unit can't match it exactly
+  // and falls to the curated estimate — the seam this suite exercises.
+  '4': panel('4', 'Coriander (cilantro) leaves, raw', 23, [{ unit: 'cup', gramWeight: 16, amount: 1 }]),
 };
 
 async function mockNutritionEndpoint(page: Page): Promise<void> {
@@ -53,10 +56,12 @@ async function mockNutritionEndpoint(page: Page): Promise<void> {
       const q = url.searchParams.get('q') ?? '';
       const candidates = q.includes('garlic')
         ? [{ fdcId: '3', description: 'Garlic, raw', dataType: 'SR Legacy' }]
-        : [
-            { fdcId: '1', description: 'Onions, raw', dataType: 'Foundation' },
-            { fdcId: '2', description: 'Onion rings', dataType: 'Branded' },
-          ];
+        : q.includes('cilantro')
+          ? [{ fdcId: '4', description: 'Coriander (cilantro) leaves, raw', dataType: 'SR Legacy' }]
+          : [
+              { fdcId: '1', description: 'Onions, raw', dataType: 'Foundation' },
+              { fdcId: '2', description: 'Onion rings', dataType: 'Branded' },
+            ];
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -86,6 +91,23 @@ async function createRecipe(page: Page): Promise<void> {
   await page.getByRole('button', { name: /save recipe/i }).click();
   await expect(page).toHaveURL(/\/eat\/recipes\/[0-9a-f-]{36}/);
   await expect(page.getByRole('heading', { name: 'Veggie Bowl' })).toBeVisible();
+}
+
+/** Add a recipe with `lines.length` ingredients and land on its detail page. */
+async function addRecipe(page: Page, title: string, lines: string[]): Promise<void> {
+  // Navigate straight to the form: the /eat landing carries per-day "Add a recipe
+  // to {day}" buttons that would make a name-based click ambiguous.
+  await page.goto('/eat/recipes/new');
+  await page.getByLabel('Title').fill(title);
+  await page.getByLabel('Servings').fill('1');
+  await page.getByLabel('Ingredient 1', { exact: true }).fill(lines[0]);
+  for (let i = 1; i < lines.length; i += 1) {
+    await page.getByRole('button', { name: /add ingredient/i }).click();
+    await page.getByLabel(`Ingredient ${i + 1}`, { exact: true }).fill(lines[i]);
+  }
+  await page.getByRole('button', { name: /save recipe/i }).click();
+  await expect(page).toHaveURL(/\/eat\/recipes\/[0-9a-f-]{36}/);
+  await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
 test.describe('Eat tab — nutrition enrichment', () => {
@@ -130,5 +152,40 @@ test.describe('Eat tab — nutrition enrichment', () => {
 
     await expect(page.getByText('Matched to Onion rings')).toBeVisible();
     await expect(page.getByText('Matched to Onions, raw')).toHaveCount(0);
+  });
+
+  test('estimates a count unit, remembers a correction, and reuses it', async ({ page }) => {
+    await mockNutritionEndpoint(page);
+
+    // Recipe 1: "1 bunch cilantro" has no exact FDC portion for "bunch", so it
+    // auto-resolves as a labeled estimate (badge + adjust affordance) rather than
+    // blocking on a gram weight the user doesn't know.
+    await addRecipe(page, 'Herb Salad', ['1 bunch cilantro']);
+    await page.getByRole('button', { name: 'Match ingredients' }).click();
+    await expect(page.getByText('1 of 1 matched')).toBeVisible();
+    await expect(page.getByText('≈ est.')).toBeVisible();
+
+    // Correct it through the portion picker: pick "1 cup — 16 g". The row becomes a
+    // user-set weight (badge clears) and the correction is remembered.
+    await page.getByRole('button', { name: /estimated weight · adjust/ }).click();
+    await page.getByRole('button', { name: 'Use' }).click();
+    await expect(page.getByText('≈ est.')).toHaveCount(0);
+    await expect(page.getByText('1 of 1 matched')).toBeVisible();
+
+    // The corrected weight persists offline across a reload (read path is local).
+    await page.route('**/api/nutrition**', (route) => route.abort());
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Herb Salad' })).toBeVisible();
+    await expect(page.getByText('1 of 1 matched')).toBeVisible();
+    await expect(page.getByText('≈ est.')).toHaveCount(0);
+
+    // Recipe 2 with the same ingredient+unit auto-sizes from the remembered weight —
+    // no estimate badge, sized with no interaction.
+    await page.unroute('**/api/nutrition**');
+    await mockNutritionEndpoint(page);
+    await addRecipe(page, 'Fresh Salsa', ['2 bunches cilantro']);
+    await page.getByRole('button', { name: 'Match ingredients' }).click();
+    await expect(page.getByText('1 of 1 matched')).toBeVisible();
+    await expect(page.getByText('≈ est.')).toHaveCount(0);
   });
 });

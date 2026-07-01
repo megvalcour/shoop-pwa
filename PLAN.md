@@ -1,19 +1,23 @@
 ## Current Status
 
-- feat: adds a day detail view (full macros/micros) to the Eat tab weekly plan.
+- feat: friendlier ingredient weight sizing in Eat nutrition — count/container units
+  now resolve to labeled estimates, a household-portion picker replaces the bare
+  grams prompt, and resolved weights are remembered per ingredient. ADR for the
+  labeled-estimate + override posture is deferred pending the ADR granularity audit.
 
 ## Active
 
-- **Ingredient weight-sizing UX** (`tasks/active--ingredient-weight-sizing-ux.md`) —
-  a focused improvement to the Phase 4 nutrition pipeline: replace the bare
-  "couldn't size this — add a weight" grams prompt with (C) estimate-aware gram
-  resolution for common count/container units, (A) a household-portion picker over
-  the food's already-cached `foodPortions`, and (B) remembered per-ingredient
-  weights in `preferences` so the same item never needs sizing twice. Needs proposed
-  ADR-0030 (labeled-estimate + override posture) confirmed before coding; no
-  `DB_VERSION` bump.
+- _(none)_
 
 ## Backlog
+
+### ADR Granularity Audit
+
+- Audit the current ADRs (`docs/adrs/`) for excessive granularity: several decisions
+  may be finer-grained than warranted (e.g. per-phase Eat decisions, closely-related
+  visual/identity records). Identify candidates to consolidate or retire and propose a
+  right-sized structure, keeping the immutability rules (supersede, never edit).
+  One-liner in `tasks/backlog--adr-granularity-audit.md`.
 
 ### "Eat" Tab (Meal Planning + Nutrition)
 

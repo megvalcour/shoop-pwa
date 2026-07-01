@@ -233,13 +233,15 @@ manual path. This is the substance of proposed ADR-0030.
 
 ## Implementation Steps
 
-### Part 0 — ADR (do first; gates the rest)
-- [ ] `docs/adrs/0030-ingredient-weight-estimate-and-overrides.md` (proposed →
-  Accepted after user confirms): records the shift from ADR-0027's "unresolved
-  rather than invent" to "labeled estimate + remembered override," the precedence
-  order, the `'estimate'`/`'override'` source tags, and the `preferences`-KV
-  (no-migration) choice for remembered weights. Leave ADR-0027 `Status` untouched
-  (refinement, not supersession).
+### Part 0 — ADR (DEFERRED)
+- [~] ADR-0030 **deferred by direction**: rather than add another fine-grained ADR
+  now, a backlog task was filed to first audit the current ADRs for excessive
+  granularity (`tasks/backlog--adr-granularity-audit.md`), after which the
+  labeled-estimate + remembered-override posture will be recorded at the right
+  altitude. The behavioural shift itself (ADR-0027's "unresolved rather than invent"
+  → "labeled estimate + user override," the `'estimate'`/`'override'` source tags,
+  and the `preferences`-KV no-migration choice) is documented in the code and in
+  this task file; ADR-0027's `Status` is left untouched.
 
 ### Part 1 — Pure `toGrams` widening (C)
 - [ ] `src/utils/toGrams.ts` — widen `PER_PIECE_G`, add `CONTAINER_G`, make
