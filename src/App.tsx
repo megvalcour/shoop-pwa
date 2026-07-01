@@ -6,6 +6,7 @@ import ShoppingListDetailRoute from '@/routes/ShoppingListDetailRoute';
 import DefaultListRoute from '@/routes/DefaultListRoute';
 import SettingsRoute from '@/routes/SettingsRoute';
 import EatRoute from '@/routes/EatRoute';
+import DayDetailRoute from '@/routes/DayDetailRoute';
 import RecipeDetailRoute from '@/routes/RecipeDetailRoute';
 import RecipeFormRoute from '@/routes/RecipeFormRoute';
 import StoreDetailRoute from '@/routes/StoreDetailRoute';
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'stores/:id', element: <StoreDetailRoute /> },
       { path: 'import', element: <ImportRecipeRoute /> },
       { path: 'eat', element: <EatRoute /> },
+      { path: 'eat/plan/:day', element: <DayDetailRoute /> },
       { path: 'eat/recipes/new', element: <RecipeFormRoute /> },
       { path: 'eat/recipes/:id', element: <RecipeDetailRoute /> },
       { path: 'eat/recipes/:id/edit', element: <RecipeFormRoute /> },

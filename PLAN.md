@@ -1,10 +1,10 @@
 ## Current Status
 
-- fix: corrects overflow issue with long recipe titles in a day column.
+- feat: adds a day detail view (full macros/micros) to the Eat tab weekly plan.
 
 ## Active
 
-Day detail view for daily macros/micros in the Eat tab: `active--eat-day-detail.md`
+Nothing active — promote the next backlog item.
 
 ## Backlog
 

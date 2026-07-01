@@ -132,6 +132,16 @@ test.describe('Eat tab — weekly plan & scoring', () => {
     await expect(page.getByText(/typical day this week/i)).toBeVisible();
     await expect(page.getByRole('img', { name: /^Protein:/ }).first()).toBeVisible();
 
+    // The day heading links to a read-only detail view with the FULL panel — a
+    // micro readout (Potassium) the compact week card doesn't surface.
+    await monday.getByRole('button', { name: /view monday details/i }).click();
+    await expect(page).toHaveURL(/\/eat\/plan\/mon$/);
+    await expect(page.getByRole('heading', { name: 'Monday', level: 1 })).toBeVisible();
+    await expect(page.getByText('Veggie Bowl')).toBeVisible();
+    await expect(page.getByRole('img', { name: /^Potassium:/ })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'Weekly Plan' })).toBeVisible();
+
     // Increase planned servings — the plan stays scored (read recomputes).
     await monday.getByRole('button', { name: /increase servings for veggie bowl/i }).click();
     await expect(monday.getByLabel('3 servings')).toBeVisible();

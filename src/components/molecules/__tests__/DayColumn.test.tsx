@@ -42,10 +42,30 @@ describe('DayColumn', () => {
         onChangeServings={noop}
         onRemove={noop}
         onEnrich={noop}
+        onViewDay={noop}
       />,
     );
     expect(screen.getByText(/nothing planned/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add a recipe to monday/i })).toBeInTheDocument();
+  });
+
+  it('fires onViewDay when the day heading is tapped', () => {
+    const onViewDay = vi.fn();
+    render(
+      <DayColumn
+        label="Monday"
+        planned={[]}
+        score={null}
+        enrichmentByRecipe={{}}
+        onAddRecipe={noop}
+        onChangeServings={noop}
+        onRemove={noop}
+        onEnrich={noop}
+        onViewDay={onViewDay}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /view monday details/i }));
+    expect(onViewDay).toHaveBeenCalled();
   });
 
   it('renders placed recipes with a compact score and fires servings/remove callbacks', () => {
@@ -61,6 +81,7 @@ describe('DayColumn', () => {
         onChangeServings={onChangeServings}
         onRemove={onRemove}
         onEnrich={noop}
+        onViewDay={noop}
       />,
     );
     expect(screen.getByText('Chili')).toBeInTheDocument();
@@ -87,6 +108,7 @@ describe('DayColumn', () => {
         onChangeServings={noop}
         onRemove={noop}
         onEnrich={onEnrich}
+        onViewDay={noop}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: /enrich to score/i }));

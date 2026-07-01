@@ -112,6 +112,7 @@ export default function WeeklyPlan() {
                 }
                 onRemove={(entryId) => removeFromPlan.mutate(entryId)}
                 onEnrich={(recipeId) => navigate(`/eat/recipes/${recipeId}`)}
+                onViewDay={() => navigate(`/eat/plan/${day.key}`)}
               />
             ))}
           </div>

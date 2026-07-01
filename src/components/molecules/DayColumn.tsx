@@ -9,7 +9,7 @@
  * (ADR-0005). Role tokens only, so it themes green under /eat (ADR-0028).
  */
 
-import { faMinus, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faMinus, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
 import ScorePanel from '@/components/molecules/ScorePanel';
@@ -26,6 +26,7 @@ export interface DayColumnProps {
   onChangeServings: (entryId: string, plannedServings: number) => void;
   onRemove: (entryId: string) => void;
   onEnrich: (recipeId: string) => void;
+  onViewDay: () => void;
 }
 
 export default function DayColumn({
@@ -37,13 +38,22 @@ export default function DayColumn({
   onChangeServings,
   onRemove,
   onEnrich,
+  onViewDay,
 }: DayColumnProps) {
   const hasRecipes = planned.length > 0;
 
   return (
     <section className="flex flex-col gap-3 px-4 py-3 bg-card rounded-xl shadow-card">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-display font-bold text-text">{label}</h3>
+        <button
+          type="button"
+          onClick={onViewDay}
+          aria-label={`View ${label} details`}
+          className="flex items-center gap-1.5 min-w-0"
+        >
+          <h3 className="font-display font-bold text-text">{label}</h3>
+          <Icon icon={faChevronRight} className="text-text-muted text-xs" />
+        </button>
         <Button
           variant="secondary"
           onClick={onAddRecipe}
