@@ -16,17 +16,17 @@ import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleCheck, faCircleExclamation, faWifi } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
+import Badge from '@/components/atoms/Badge';
 import Spinner from '@/components/atoms/Spinner';
 import NutritionPanel from '@/components/molecules/NutritionPanel';
 import FoodPickerSheet from '@/components/molecules/FoodPickerSheet';
+import PortionPicker from '@/components/molecules/PortionPicker';
 import {
   useRecipeNutrition,
   useEnrichRecipe,
   usePickFood,
   useSetIngredientGrams,
   useFoodCandidates,
-  type IngredientNutrition,
 } from '@/hooks/useNutrition';
 import type { RecipeIngredient } from '@/db/schema';
 
@@ -42,8 +42,9 @@ export default function RecipeNutrition({ recipeId }: RecipeNutritionProps) {
 
   const [view, setView] = useState<'perServing' | 'whole'>('perServing');
   const [picking, setPicking] = useState<RecipeIngredient | null>(null);
-  const [gramsEditId, setGramsEditId] = useState<string | null>(null);
-  const [gramsValue, setGramsValue] = useState('');
+  // The estimate row whose adjust affordance is expanded (matched-no-grams rows
+  // always show the picker, so they need no toggle).
+  const [adjustId, setAdjustId] = useState<string | null>(null);
 
   const candidates = useFoodCandidates(picking?.canonical_name, picking !== null);
 
@@ -78,17 +79,11 @@ export default function RecipeNutrition({ recipeId }: RecipeNutritionProps) {
     );
   }
 
-  function startGrams(row: IngredientNutrition) {
-    setGramsEditId(row.ingredient.id);
-    setGramsValue(row.ingredient.grams !== undefined ? String(row.ingredient.grams) : '');
-  }
-
-  function saveGrams(ingredientId: string) {
-    const grams = Number(gramsValue);
+  function saveGrams(ingredientId: string, grams: number) {
     if (!Number.isFinite(grams) || grams <= 0) return;
     setGrams.mutate(
       { recipeId, ingredientId, grams },
-      { onSuccess: () => setGramsEditId(null) },
+      { onSuccess: () => setAdjustId(null) },
     );
   }
 
@@ -178,6 +173,7 @@ export default function RecipeNutrition({ recipeId }: RecipeNutritionProps) {
                   <FontAwesomeIcon icon={faCircleExclamation} className="text-text-muted shrink-0" />
                 )}
                 <span className="text-text font-medium truncate">{row.name}</span>
+                {row.gramsSource === 'estimate' && <Badge variant="muted">≈ est.</Badge>}
               </span>
               {row.status !== 'unmatched' && (
                 <Button
@@ -191,45 +187,41 @@ export default function RecipeNutrition({ recipeId }: RecipeNutritionProps) {
             </div>
 
             {row.status === 'enriched' && row.matchedDescription && (
-              <span className="text-text-muted text-xs pl-6 truncate">
-                Matched to {row.matchedDescription}
-              </span>
+              <div className="flex flex-col gap-1 pl-6">
+                <span className="text-text-muted text-xs truncate">
+                  Matched to {row.matchedDescription}
+                </span>
+                {row.gramsSource === 'estimate' &&
+                  (adjustId === row.ingredient.id ? (
+                    <PortionPicker
+                      portions={row.panel?.foodPortions ?? []}
+                      onPick={(grams) => saveGrams(row.ingredient.id, grams)}
+                      isSaving={setGrams.isPending}
+                      initialGrams={row.ingredient.grams}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setAdjustId(row.ingredient.id)}
+                      className="self-start text-text-muted text-xs underline"
+                    >
+                      ≈ estimated weight · adjust
+                    </button>
+                  ))}
+              </div>
             )}
 
             {row.status === 'matched-no-grams' && (
-              <div className="flex flex-col gap-1 pl-6">
+              <div className="flex flex-col gap-2 pl-6">
                 <span className="text-text-muted text-xs">
-                  Matched to {row.matchedDescription} — couldn’t size{' '}
-                  {row.ingredient.unit ? `"${row.ingredient.unit}"` : 'this'}. Add a weight:
+                  Matched to {row.matchedDescription}. How much is{' '}
+                  {row.ingredient.quantity} {row.ingredient.unit || 'of this'}?
                 </span>
-                {gramsEditId === row.ingredient.id ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={gramsValue}
-                      onChange={(e) => setGramsValue(e.target.value)}
-                      aria-label={`Grams for ${row.name}`}
-                      className="w-24"
-                    />
-                    <span className="text-text-muted text-sm">g</span>
-                    <Button
-                      variant="primary"
-                      onClick={() => saveGrams(row.ingredient.id)}
-                      className="text-xs px-2 py-1"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    onClick={() => startGrams(row)}
-                    className="self-start text-xs px-2 py-1"
-                  >
-                    Set weight
-                  </Button>
-                )}
+                <PortionPicker
+                  portions={row.panel?.foodPortions ?? []}
+                  onPick={(grams) => saveGrams(row.ingredient.id, grams)}
+                  isSaving={setGrams.isPending}
+                />
               </div>
             )}
 

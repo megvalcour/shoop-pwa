@@ -13,6 +13,7 @@ vi.mock('@/hooks/useNutrition', () => ({
 }));
 
 const mockEnrich = vi.fn();
+const mockSetGrams = vi.fn();
 
 function ingredient(partial: Partial<RecipeIngredient>): RecipeIngredient {
   return {
@@ -68,7 +69,7 @@ async function setup(options: {
     isPending: false,
   } as unknown as ReturnType<typeof usePickFood>);
   vi.mocked(useSetIngredientGrams).mockReturnValue({
-    mutate: vi.fn(),
+    mutate: mockSetGrams,
     isPending: false,
   } as unknown as ReturnType<typeof useSetIngredientGrams>);
   vi.mocked(useFoodCandidates).mockReturnValue({
@@ -168,5 +169,118 @@ describe('RecipeNutrition', () => {
 
     expect(screen.getByText(/Couldn’t connect to enrich/)).toBeInTheDocument();
     expect(screen.getByText('Needs a connection to match.')).toBeInTheDocument();
+  });
+
+  it('badges an estimated row and lets the user adjust it via the portion picker', async () => {
+    await setup({
+      data: {
+        servings: 1,
+        rows: [
+          {
+            ingredient: ingredient({ fdc_id: '1', grams: 150, unit: 'bunch', canonical_name: 'cilantro' }),
+            name: 'Cilantro',
+            panel: {
+              fdc_id: '1',
+              description: 'Cilantro, raw',
+              per100g: totals(),
+              foodPortions: [{ unit: 'cup', gramWeight: 16, amount: 1 }],
+            },
+            matchedDescription: 'Cilantro, raw',
+            status: 'enriched',
+            gramsSource: 'estimate',
+          },
+        ],
+        rollup: {
+          whole: totals({ energyKcal: 10 }),
+          perServing: totals({ energyKcal: 10 }),
+          enrichedCount: 1,
+          totalCount: 1,
+          unresolved: [],
+        },
+      },
+    });
+
+    expect(screen.getByText('≈ est.')).toBeInTheDocument();
+    // The picker is collapsed until the user chooses to adjust.
+    expect(screen.queryByRole('button', { name: 'Use' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /estimated weight · adjust/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use' }));
+    expect(mockSetGrams).toHaveBeenCalledWith(
+      expect.objectContaining({ recipeId: 'r1', ingredientId: 'i1', grams: 16 }),
+      expect.anything(),
+    );
+  });
+
+  it('sizes a matched-no-grams row from a portion pick', async () => {
+    await setup({
+      data: {
+        servings: 1,
+        rows: [
+          {
+            ingredient: ingredient({ fdc_id: '1', unit: 'bunch', quantity: 1, canonical_name: 'cilantro' }),
+            name: 'Cilantro',
+            panel: {
+              fdc_id: '1',
+              description: 'Cilantro, raw',
+              per100g: totals(),
+              foodPortions: [{ unit: 'cup', gramWeight: 16, amount: 1 }],
+            },
+            matchedDescription: 'Cilantro, raw',
+            status: 'matched-no-grams',
+          },
+        ],
+        rollup: {
+          whole: totals(),
+          perServing: totals(),
+          enrichedCount: 0,
+          totalCount: 1,
+          unresolved: ['Cilantro'],
+        },
+      },
+    });
+
+    expect(screen.getByText(/How much is 1 bunch/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Use' }));
+    expect(mockSetGrams).toHaveBeenCalledWith(
+      expect.objectContaining({ ingredientId: 'i1', grams: 16 }),
+      expect.anything(),
+    );
+  });
+
+  it('falls back to a grams entry when the matched food has no portions', async () => {
+    await setup({
+      data: {
+        servings: 1,
+        rows: [
+          {
+            ingredient: ingredient({ fdc_id: '1', unit: 'knob', quantity: 1, canonical_name: 'butter' }),
+            name: 'Butter',
+            panel: {
+              fdc_id: '1',
+              description: 'Butter, salted',
+              per100g: totals(),
+            },
+            matchedDescription: 'Butter, salted',
+            status: 'matched-no-grams',
+          },
+        ],
+        rollup: {
+          whole: totals(),
+          perServing: totals(),
+          enrichedCount: 0,
+          totalCount: 1,
+          unresolved: ['Butter'],
+        },
+      },
+    });
+
+    expect(screen.queryByRole('button', { name: 'Use' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Grams'), { target: { value: '50' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(mockSetGrams).toHaveBeenCalledWith(
+      expect.objectContaining({ ingredientId: 'i1', grams: 50 }),
+      expect.anything(),
+    );
   });
 });

@@ -15,8 +15,14 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { dbPromise } from '@/db/idbClient';
-import type { FdcNutrientPanel, RecipeIngredient } from '@/db/schema';
-import { toGrams } from '@/utils/toGrams';
+import type { FdcNutrientPanel, GramsSource, RecipeIngredient } from '@/db/schema';
+import { toGrams, overrideKey } from '@/utils/toGrams';
+import {
+  readPortionOverrides,
+  writePortionOverride,
+  PORTION_OVERRIDES_QUERY_KEY,
+  type PortionOverrides,
+} from '@/hooks/usePortionOverrides';
 import { computeNutritionRollup, type NutritionRollup } from '@/services/nutritionRollup';
 import {
   displayName,
@@ -140,22 +146,34 @@ async function detailFdc(fdcId: string): Promise<FdcNutrientPanel> {
 
 /**
  * Persist a matched food: cache its panel (keyed by fdc_id, with the resolving
- * query) and write `fdc_id` + the computed `grams` back onto the ingredient — both
- * in one transaction so the cache and the row can never diverge. `grams` may stay
- * undefined when the unit is unresolvable (the row then prompts a manual entry).
+ * query) and write `fdc_id` + the computed `grams`/`grams_source` back onto the
+ * ingredient — both in one transaction so the cache and the row can never diverge.
+ * A remembered weight for this ingredient+unit (from `overrides`) sizes the row
+ * with no user interaction; a curated coarse default sizes it as an `'estimate'`.
+ * `grams` stays undefined only when nothing resolves (the row then prompts input).
  */
-async function persistMatch(ingredient: RecipeIngredient, panel: FdcNutrientPanel): Promise<void> {
+async function persistMatch(
+  ingredient: RecipeIngredient,
+  panel: FdcNutrientPanel,
+  overrides: PortionOverrides,
+): Promise<void> {
   const db = await dbPromise;
-  const grams = toGrams({
+  const result = toGrams({
     quantity: ingredient.quantity,
     unit: ingredient.unit,
     canonical_name: ingredient.canonical_name,
     foodPortions: panel.foodPortions,
-  }).grams;
+    overrideGramsPerUnit: overrides[overrideKey(ingredient.canonical_name, ingredient.unit)],
+  });
 
   const updated: RecipeIngredient = { ...ingredient, fdc_id: panel.fdc_id };
-  if (grams !== undefined) updated.grams = grams;
-  else delete updated.grams;
+  if (result.grams !== undefined) {
+    updated.grams = result.grams;
+    updated.grams_source = result.source;
+  } else {
+    delete updated.grams;
+    delete updated.grams_source;
+  }
 
   const tx = db.transaction(['nutrition_cache', 'recipe_ingredients'], 'readwrite');
   tx.objectStore('nutrition_cache').put({
@@ -178,6 +196,8 @@ export interface IngredientNutrition {
   /** The matched FDC food description, when matched (shown with a re-pick affordance). */
   matchedDescription?: string;
   status: IngredientStatus;
+  /** Which ladder rung sized `grams` — lets the UI badge an `'estimate'` row. */
+  gramsSource?: GramsSource;
 }
 
 export interface RecipeNutritionData {
@@ -208,7 +228,14 @@ export function useRecipeNutrition(recipeId: string | undefined) {
           : ingredient.grams === undefined
             ? 'matched-no-grams'
             : 'enriched';
-        return { ingredient, name, panel, matchedDescription: panel?.description, status };
+        return {
+          ingredient,
+          name,
+          panel,
+          matchedDescription: panel?.description,
+          status,
+          gramsSource: ingredient.grams_source,
+        };
       });
 
       return {
@@ -250,6 +277,8 @@ export function useEnrichRecipe() {
       for (const entry of await db.getAll('nutrition_cache')) {
         if (!byQuery.has(entry.query)) byQuery.set(entry.query, entry.payload);
       }
+      // Remembered weights auto-size count/container rows with no user interaction.
+      const overrides = await readPortionOverrides(db);
 
       let enriched = 0;
       const unmatched: string[] = [];
@@ -266,7 +295,7 @@ export function useEnrichRecipe() {
 
         const cached = byQuery.get(query);
         if (cached) {
-          await persistMatch(ingredient, cached);
+          await persistMatch(ingredient, cached, overrides);
           enriched += 1;
           continue;
         }
@@ -311,7 +340,7 @@ export function useEnrichRecipe() {
         }
 
         byQuery.set(query, panel);
-        await persistMatch(ingredient, panel);
+        await persistMatch(ingredient, panel, overrides);
         enriched += 1;
       }
 
@@ -339,7 +368,8 @@ export function usePickFood() {
       const db = await dbPromise;
       const cached = await db.get('nutrition_cache', fdcId);
       const panel = cached ? cached.payload : await detailFdc(fdcId);
-      await persistMatch(ingredient, panel);
+      const overrides = await readPortionOverrides(db);
+      await persistMatch(ingredient, panel, overrides);
     },
     onSettled: (_data, _error, { recipeId }) =>
       Promise.all([
@@ -355,7 +385,14 @@ interface SetGramsInput {
   grams: number;
 }
 
-/** Persist a manual gram weight for an ingredient the ladder couldn't resolve. */
+/**
+ * Persist a user-resolved weight for an ingredient — from a portion pick OR a typed
+ * grams value; both funnel here as a TOTAL grams for the row's `quantity`. The row
+ * is tagged `grams_source: 'override'` (user-supplied, never badged as an estimate),
+ * and the per-unit weight is remembered so the same `canonical_name|unit` auto-sizes
+ * in every future recipe. `grams` is the total; `writePortionOverride` divides by
+ * the ingredient's quantity to store a per-unit value.
+ */
 export function useSetIngredientGrams() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, SetGramsInput>({
@@ -363,12 +400,19 @@ export function useSetIngredientGrams() {
       const db = await dbPromise;
       const ingredient = await db.get('recipe_ingredients', ingredientId);
       if (!ingredient) throw new Error(`Ingredient not found: ${ingredientId}`);
-      await db.put('recipe_ingredients', { ...ingredient, grams });
+      await db.put('recipe_ingredients', { ...ingredient, grams, grams_source: 'override' });
+      await writePortionOverride(db, {
+        canonical_name: ingredient.canonical_name,
+        unit: ingredient.unit,
+        grams,
+        quantity: ingredient.quantity,
+      });
     },
     onSettled: (_data, _error, { recipeId }) =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: recipeNutritionKey(recipeId) }),
         queryClient.invalidateQueries({ queryKey: recipeDetailKey(recipeId) }),
+        queryClient.invalidateQueries({ queryKey: PORTION_OVERRIDES_QUERY_KEY }),
       ]),
   });
 }

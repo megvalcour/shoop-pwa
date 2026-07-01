@@ -198,6 +198,88 @@ describe('useRecipeNutrition', () => {
   });
 });
 
+describe('remembered weights (portion overrides)', () => {
+  it('auto-sizes a previously-unresolvable unit from a remembered weight, tagged override', async () => {
+    globalThis.fetch = mockNutritionFetch() as unknown as typeof fetch;
+    // "knob" is not a known unit, and ONION_PANEL carries no portions, so without a
+    // remembered weight this row would stay unresolved (no grams).
+    const { recipeId, ingredients } = await seedRecipe([
+      { canonical_name: 'onion', quantity: 2, unit: 'knob' },
+    ]);
+
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    const { writePortionOverride } = await import('@/hooks/usePortionOverrides');
+    await writePortionOverride(db, { canonical_name: 'onion', unit: 'knob', grams: 55, quantity: 1 });
+
+    const { useEnrichRecipe } = await import('@/hooks/useNutrition');
+    const { result } = renderHook(() => useEnrichRecipe(), { wrapper: makeWrapper() });
+    await act(async () => {
+      await result.current.mutateAsync({ recipeId, ingredients });
+    });
+
+    const persisted = await db.get('recipe_ingredients', ingredients[0].id);
+    expect(persisted?.fdc_id).toBe('169967');
+    expect(persisted?.grams).toBe(110); // 55 g per knob × 2
+    expect(persisted?.grams_source).toBe('override');
+  });
+
+  it('persists an override when the user manually sets a weight', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('no network')) as unknown as typeof fetch;
+    const { recipeId, ingredients } = await seedRecipe([
+      { canonical_name: 'onion', quantity: 2, unit: 'knob' },
+    ]);
+
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    // Pretend it was matched but couldn't be sized.
+    await db.put('recipe_ingredients', { ...ingredients[0], fdc_id: '169967' });
+
+    const { useSetIngredientGrams } = await import('@/hooks/useNutrition');
+    const { result } = renderHook(() => useSetIngredientGrams(), { wrapper: makeWrapper() });
+    await act(async () => {
+      await result.current.mutateAsync({ recipeId, ingredientId: ingredients[0].id, grams: 120 });
+    });
+
+    const persisted = await db.get('recipe_ingredients', ingredients[0].id);
+    expect(persisted?.grams).toBe(120);
+    expect(persisted?.grams_source).toBe('override');
+
+    const { readPortionOverrides } = await import('@/hooks/usePortionOverrides');
+    expect(await readPortionOverrides(db)).toEqual({ 'onion|knob': 60 }); // 120 g ÷ 2
+  });
+
+  it('reports gramsSource on each row from the persisted value', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('read path is offline')) as unknown as typeof fetch;
+    const { recipeId, ingredients } = await seedRecipe([
+      { canonical_name: 'onion', quantity: 1, unit: 'bunch' },
+    ]);
+
+    const { dbPromise } = await import('@/db/idbClient');
+    const db = await dbPromise;
+    await db.put('nutrition_cache', {
+      fdc_id: '169967',
+      payload: ONION_PANEL,
+      query: 'onion',
+      fetched_at: Date.now(),
+    });
+    await db.put('recipe_ingredients', {
+      ...ingredients[0],
+      fdc_id: '169967',
+      grams: 150,
+      grams_source: 'estimate',
+    });
+
+    const { useRecipeNutrition } = await import('@/hooks/useNutrition');
+    const { result } = renderHook(() => useRecipeNutrition(recipeId), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const row = result.current.data!.rows[0];
+    expect(row.status).toBe('enriched');
+    expect(row.gramsSource).toBe('estimate');
+  });
+});
+
 describe('usePickFood', () => {
   it('persists a manually picked food from the cache without a fetch', async () => {
     const fetchMock = mockNutritionFetch();

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { toGrams, type GramsResult, type GramsSource } from '@/utils/toGrams';
+import {
+  toGrams,
+  overrideKey,
+  singularizeUnit,
+  type GramsResult,
+  type GramsSource,
+} from '@/utils/toGrams';
 import type { FdcPortion } from '@/db/schema';
 
 /** Narrow a result to a resolved one, failing the test if it is unresolved. */
@@ -77,9 +83,112 @@ describe('toGrams — count / container via FDC portions', () => {
     expect(r).toEqual({ grams: 60, source: 'portion' });
   });
 
-  it('falls back to the per-piece table when FDC has no matching portion', () => {
+  it('falls back to the curated per-piece estimate when FDC has no matching portion', () => {
     const r = toGrams({ quantity: 3, unit: 'clove', canonical_name: 'garlic' });
-    expect(r).toEqual({ grams: 9, source: 'portion' });
+    expect(r).toEqual({ grams: 9, source: 'estimate' });
+  });
+
+  it('matches a plural ingredient unit against a singular FDC portion label', () => {
+    const clovePortions: FdcPortion[] = [{ unit: 'clove', gramWeight: 3, amount: 1 }];
+    const r = toGrams({ quantity: 4, unit: 'cloves', canonical_name: 'garlic', foodPortions: clovePortions });
+    expect(r).toEqual({ grams: 12, source: 'portion' });
+  });
+
+  it('strips a size modifier so a "medium" portion matches a bare-count unit', () => {
+    const onionPortions: FdcPortion[] = [{ unit: 'medium onion', gramWeight: 110, amount: 1 }];
+    const r = toGrams({ quantity: 2, unit: 'onion', canonical_name: 'onion', foodPortions: onionPortions });
+    expect(r).toEqual({ grams: 220, source: 'portion' });
+  });
+
+  it('treats a can as a container so a "container" portion matches', () => {
+    const beanPortions: FdcPortion[] = [{ unit: 'container', gramWeight: 425, amount: 1 }];
+    const r = toGrams({ quantity: 1, unit: 'can', canonical_name: 'black beans', foodPortions: beanPortions });
+    expect(r).toEqual({ grams: 425, source: 'portion' });
+  });
+});
+
+describe('toGrams — curated estimates (count / container)', () => {
+  it('resolves widened count units to a labeled estimate, not unresolved', () => {
+    expect(toGrams({ quantity: 2, unit: 'bunch', canonical_name: 'cilantro' })).toEqual({
+      grams: 300,
+      source: 'estimate',
+    });
+    expect(toGrams({ quantity: 3, unit: 'sprigs', canonical_name: 'thyme' })).toEqual({
+      grams: 9,
+      source: 'estimate',
+    });
+    expect(toGrams({ quantity: 1, unit: 'head', canonical_name: 'lettuce' })).toEqual({
+      grams: 500,
+      source: 'estimate',
+    });
+  });
+
+  it('resolves container units to a labeled estimate', () => {
+    expect(toGrams({ quantity: 2, unit: 'cans', canonical_name: 'tomatoes' })).toEqual({
+      grams: 800,
+      source: 'estimate',
+    });
+    expect(toGrams({ quantity: 1, unit: 'jar', canonical_name: 'salsa' })).toEqual({
+      grams: 340,
+      source: 'estimate',
+    });
+  });
+
+  it('prefers an exact FDC portion over the curated estimate', () => {
+    const portions: FdcPortion[] = [{ unit: 'bunch', gramWeight: 25, amount: 1 }];
+    const r = toGrams({ quantity: 1, unit: 'bunch', canonical_name: 'parsley', foodPortions: portions });
+    expect(r).toEqual({ grams: 25, source: 'portion' });
+  });
+});
+
+describe('toGrams — remembered override', () => {
+  it('uses the remembered per-unit weight, tagged override, over an estimate', () => {
+    const r = toGrams({
+      quantity: 2,
+      unit: 'bunch',
+      canonical_name: 'cilantro',
+      overrideGramsPerUnit: 23,
+    });
+    expect(r).toEqual({ grams: 46, source: 'override' });
+  });
+
+  it('lets an override beat an exact FDC portion', () => {
+    const portions: FdcPortion[] = [{ unit: 'bunch', gramWeight: 25, amount: 1 }];
+    const r = toGrams({
+      quantity: 1,
+      unit: 'bunch',
+      canonical_name: 'parsley',
+      foodPortions: portions,
+      overrideGramsPerUnit: 40,
+    });
+    expect(r).toEqual({ grams: 40, source: 'override' });
+  });
+
+  it('ignores a non-positive override and falls back to the estimate', () => {
+    const r = toGrams({ quantity: 1, unit: 'bunch', canonical_name: 'cilantro', overrideGramsPerUnit: 0 });
+    expect(r).toEqual({ grams: 150, source: 'estimate' });
+  });
+
+  it('does not let a mass/volume unit be overridden — exact rungs win', () => {
+    const mass = toGrams({ quantity: 100, unit: 'g', canonical_name: 'flour', overrideGramsPerUnit: 999 });
+    expect(mass).toEqual({ grams: 100, source: 'mass' });
+  });
+});
+
+describe('overrideKey / singularizeUnit', () => {
+  it('singularizes -s and -es plurals but leaves short/`-ss` tokens', () => {
+    expect(singularizeUnit('bunches')).toBe('bunch');
+    expect(singularizeUnit('boxes')).toBe('box');
+    expect(singularizeUnit('cloves')).toBe('clove');
+    expect(singularizeUnit('Cups')).toBe('cup');
+    expect(singularizeUnit('oz')).toBe('oz');
+    expect(singularizeUnit('g')).toBe('g');
+  });
+
+  it('collapses case + plural into one stable key', () => {
+    expect(overrideKey('Cilantro', 'Bunches')).toBe('cilantro|bunch');
+    expect(overrideKey('cilantro', 'bunch')).toBe('cilantro|bunch');
+    expect(overrideKey('egg', '')).toBe('egg|');
   });
 });
 
@@ -119,17 +228,25 @@ describe('toGrams — bare count (no unit)', () => {
 });
 
 describe('toGrams — unresolved', () => {
-  it('returns unresolved for an unknown unit with no portion', () => {
+  it('returns unresolved for an unknown unit with no portion, estimate, or override', () => {
     expect(toGrams({ quantity: 1, unit: 'glug', canonical_name: 'olive oil' })).toEqual({
       grams: undefined,
       reason: 'unresolved',
     });
   });
 
-  it('does not match a non-existent portion unit', () => {
+  it('falls through a non-matching portion to the curated estimate for a known unit', () => {
+    // 'cup' portion doesn't match 'sprig', but 'sprig' is now a curated estimate.
     const portions: FdcPortion[] = [{ unit: 'cup', gramWeight: 160, amount: 1 }];
     expect(
       toGrams({ quantity: 1, unit: 'sprig', canonical_name: 'thyme', foodPortions: portions }),
+    ).toEqual({ grams: 3, source: 'estimate' });
+  });
+
+  it('stays unresolved for an unknown unit even when the food carries portions', () => {
+    const portions: FdcPortion[] = [{ unit: 'cup', gramWeight: 160, amount: 1 }];
+    expect(
+      toGrams({ quantity: 1, unit: 'glug', canonical_name: 'olive oil', foodPortions: portions }),
     ).toEqual({ grams: undefined, reason: 'unresolved' });
   });
 });

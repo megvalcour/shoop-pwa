@@ -118,6 +118,17 @@ export interface Recipe {
  * separate from `normalizeIngredient` per ADR-0021). `item_id`, `grams`, and
  * `fdc_id` stay undefined until Phase 4 enrichment.
  */
+/**
+ * Which rung of the `toGrams` ladder resolved an ingredient's weight (Phase 4.1).
+ * Exact rungs (`mass`/`density`/`portion`/`nominal`) render plainly; `estimate`
+ * marks a coarse curated count/container default the UI badges and invites
+ * correction; `override` marks a value the user themselves supplied (a portion
+ * pick or a typed weight), which outranks every estimate. Persisted on the row so
+ * the offline read path can distinguish an exact size from a labeled estimate
+ * without recomputing.
+ */
+export type GramsSource = 'mass' | 'density' | 'portion' | 'nominal' | 'estimate' | 'override';
+
 export interface RecipeIngredient {
   id: string; // PK, uuid
   recipe_id: string; // Index → recipes.id
@@ -127,6 +138,7 @@ export interface RecipeIngredient {
   quantity: number; // extracted value (parseIngredientMeasure; default 1)
   unit: string; // extracted unit token ('' when none)
   grams?: number; // resolved by Phase 4 enrichment (undefined now)
+  grams_source?: GramsSource; // which ladder rung resolved `grams` (Phase 4.1)
   fdc_id?: string; // resolved FDC food (Phase 4; undefined now)
 }
 

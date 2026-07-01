@@ -22,6 +22,14 @@ export const ACTIVE_STORE_ID_KEY = 'active_store_id';
  */
 export const EAT_PROFILE_KEY = 'eat_profile';
 
+/**
+ * preferences key holding the user's remembered ingredient weights (Eat tab Phase
+ * 4.1), a JSON `{ "canonical_name|unit": gramsPerUnit }` map. Stored in
+ * `preferences` rather than a dedicated store so it ships schema-free — no
+ * `DB_VERSION` bump — exactly like `eat_profile`. See `usePortionOverrides`.
+ */
+export const PORTION_OVERRIDES_KEY = 'eat_portion_overrides';
+
 // Raw seed shapes. The oxford-62 asset predates ADR-0015 and still carries the
 // per-store fields on each item; we normalize those into `items` +
 // `item_locations` below. The big-y asset is already in the post-0015 shape.
