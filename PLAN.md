@@ -4,7 +4,14 @@
 
 ## Active
 
-Nothing active — promote the next backlog item.
+- **Ingredient weight-sizing UX** (`tasks/active--ingredient-weight-sizing-ux.md`) —
+  a focused improvement to the Phase 4 nutrition pipeline: replace the bare
+  "couldn't size this — add a weight" grams prompt with (C) estimate-aware gram
+  resolution for common count/container units, (A) a household-portion picker over
+  the food's already-cached `foodPortions`, and (B) remembered per-ingredient
+  weights in `preferences` so the same item never needs sizing twice. Needs proposed
+  ADR-0030 (labeled-estimate + override posture) confirmed before coding; no
+  `DB_VERSION` bump.
 
 ## Backlog
 
